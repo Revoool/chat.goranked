@@ -42,38 +42,55 @@ function createWindow() {
       mainWindow?.webContents.openDevTools();
     }, 1000);
   } else {
-    // In production, electron-builder packages files
-    // __dirname points to the directory where main.js is located
-    // In packaged app, this is inside app.asar or Resources/app/dist/
-    // index.html should be in the same directory as main.js
-    const indexPath = path.join(__dirname, 'index.html');
-    console.log('Loading from file:', indexPath);
+    // In production, electron-builder packages files in app.asar
+    // __dirname points to the directory inside app.asar where main.js is located
+    // index.html is in the same directory as main.js (both in dist/)
+    // When packaged, both are inside app.asar at the same level
+    let indexPath = path.join(__dirname, 'index.html');
+    console.log('=== Production Load Debug ===');
     console.log('__dirname:', __dirname);
     console.log('app.getAppPath():', app.getAppPath());
     console.log('app.isPackaged:', app.isPackaged);
+    console.log('Initial indexPath:', indexPath);
     
     const fs = require('fs');
-    console.log('File exists at indexPath:', fs.existsSync(indexPath));
+    let pathExists = fs.existsSync(indexPath);
+    console.log('indexPath exists:', pathExists);
+    
+    if (!pathExists) {
+      // Try alternative paths
+      const alternatives = [
+        path.join(__dirname, '../index.html'),
+        path.join(app.getAppPath(), 'index.html'),
+        path.join(app.getAppPath(), 'dist', 'index.html'),
+      ];
+      
+      for (const altPath of alternatives) {
+        const exists = fs.existsSync(altPath);
+        console.log('Trying alternative:', altPath, 'exists:', exists);
+        if (exists) {
+          indexPath = altPath;
+          pathExists = true;
+          break;
+        }
+      }
+    }
     
     if (mainWindow) {
-      mainWindow.loadFile(indexPath).catch((err) => {
-        console.error('Error loading file:', err);
-        console.error('Error details:', err.message);
-        // Try using app.getAppPath() as fallback
+      console.log('Final indexPath:', indexPath);
+      mainWindow.loadFile(indexPath).catch((err: any) => {
+        console.error('❌ Failed to load file:', err);
+        console.error('Error code:', err.code);
+        console.error('Error message:', err.message);
+        // Show error to user
         if (mainWindow) {
-          const appPath = app.getAppPath();
-          const altPath = path.join(appPath, 'dist', 'index.html');
-          console.log('Trying alternative path:', altPath);
-          console.log('Alternative path exists:', fs.existsSync(altPath));
-          mainWindow.loadFile(altPath).catch((err2) => {
-            console.error('Alternative path also failed:', err2);
-            // Last resort: try loading from app path root
-            const lastResort = path.join(appPath, 'index.html');
-            console.log('Trying last resort path:', lastResort);
-            if (mainWindow && fs.existsSync(lastResort)) {
-              mainWindow.loadFile(lastResort);
-            }
-          });
+          mainWindow.webContents.executeJavaScript(`
+            document.body.innerHTML = '<div style="padding: 20px; color: white; font-family: system-ui;">
+              <h2>Ошибка загрузки приложения</h2>
+              <p>Не удалось загрузить index.html</p>
+              <p>Проверьте логи в Console.app</p>
+            </div>';
+          `).catch(() => {});
         }
       });
     }
