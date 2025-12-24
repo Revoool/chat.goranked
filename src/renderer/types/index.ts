@@ -3,6 +3,9 @@ export interface User {
   name: string;
   email: string;
   role: 'agent' | 'supervisor' | 'admin';
+  avatar?: string;
+  is_online?: boolean;
+  last_seen_at?: string;
 }
 
 export interface Client {
@@ -66,7 +69,13 @@ export interface Chat {
   client_avatar?: string; // computed field
   // Relations
   clientUser?: User; // User object for client
-  assignedManager?: User; // User object for assigned manager
+  assigned_manager?: {
+    id: number;
+    name: string;
+    email: string;
+    avatar?: string;
+  }; // Assigned manager object
+  assignedManager?: User; // User object for assigned manager (alias)
   messages?: Message[]; // Last 50 messages (from getChat)
   last_message?: Message; // Last message preview (from getChats)
   metrics?: any;

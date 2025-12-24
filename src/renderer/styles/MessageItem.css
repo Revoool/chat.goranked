@@ -31,6 +31,17 @@
   color: var(--text-muted);
   margin-bottom: 4px;
   padding: 0 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.message-author-avatar {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
 }
 
 .message-bubble {

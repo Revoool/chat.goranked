@@ -172,7 +172,12 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId }) => {
   }, [chatId, updateChat, queryClient]);
 
   // Use chat from store if API data not loaded yet
-  const displayChat = chatData || chatFromStore;
+  // Normalize assigned_manager field
+  const normalizedChat = chatData ? {
+    ...chatData,
+    assignedManager: chatData.assigned_manager || chatData.assignedManager,
+  } : null;
+  const displayChat = normalizedChat || chatFromStore;
   
   if (chatLoading || messagesLoading) {
     return <div className="chat-window-loading">Загрузка...</div>;

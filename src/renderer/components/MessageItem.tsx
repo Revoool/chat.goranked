@@ -20,12 +20,25 @@ const MessageItem: React.FC<MessageItemProps> = ({ message }) => {
   };
 
   const authorName = message.user?.name || 'Agent';
+  const authorAvatar = message.user?.avatar;
 
   return (
     <div className={`message-item ${isClient ? 'message-item-client' : 'message-item-agent'}`}>
       <div className="message-content">
         {!isClient && (
-          <div className="message-author">{authorName}</div>
+          <div className="message-author">
+            {authorAvatar && (
+              <img 
+                src={authorAvatar} 
+                alt={authorName}
+                className="message-author-avatar"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).style.display = 'none';
+                }}
+              />
+            )}
+            <span>{authorName}</span>
+          </div>
         )}
           <div className="message-bubble">
           <div className="message-text">{messageText}</div>

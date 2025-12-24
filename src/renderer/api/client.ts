@@ -483,6 +483,42 @@ class ApiClient {
       throw error;
     }
   }
+
+  // Client info (информация о клиенте)
+  async getClientInfo(chatId: number): Promise<any> {
+    console.log('👤 Requesting client info for chat:', chatId);
+    try {
+      const response = await this.client.get(`/api/manager-client-chats/${chatId}/client-info`);
+      return response.data;
+    } catch (error: any) {
+      console.error('❌ Error fetching client info:', error);
+      throw error;
+    }
+  }
+
+  // Get available managers for assignment
+  async getAvailableManagers(): Promise<any> {
+    console.log('👥 Requesting available managers');
+    try {
+      const response = await this.client.get('/api/manager-kpi/managers');
+      return response.data;
+    } catch (error: any) {
+      console.error('❌ Error fetching managers:', error);
+      throw error;
+    }
+  }
+
+  // Get user by ID (для получения аватара и дополнительной информации)
+  async getUser(userId: number): Promise<any> {
+    console.log('👤 Requesting user info:', userId);
+    try {
+      const response = await this.client.get(`/api/users/${userId}`);
+      return response.data;
+    } catch (error: any) {
+      console.error('❌ Error fetching user:', error);
+      throw error;
+    }
+  }
 }
 
 export const apiClient = new ApiClient();

@@ -42,6 +42,7 @@ const ChatListItem: React.FC<ChatListItemProps> = ({ chat, onClick }) => {
   // Use clientUser relation or fallback to client_name
   const client = chat.clientUser;
   const clientName = client?.name || chat.client_name || 'Unknown';
+  const clientAvatar = chat.client_avatar || client?.avatar;
   const source = chat.source || 'unknown';
 
   return (
@@ -52,7 +53,22 @@ const ChatListItem: React.FC<ChatListItemProps> = ({ chat, onClick }) => {
       <div className="chat-item-header">
         <div className="chat-item-client">
           <div className="chat-item-avatar">
-            {clientName.charAt(0).toUpperCase()}
+            {clientAvatar ? (
+              <img 
+                src={clientAvatar} 
+                alt={clientName}
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.style.display = 'none';
+                  const parent = target.parentElement;
+                  if (parent) {
+                    parent.textContent = clientName.charAt(0).toUpperCase();
+                  }
+                }}
+              />
+            ) : (
+              clientName.charAt(0).toUpperCase()
+            )}
           </div>
           <div className="chat-item-info">
             <div className="chat-item-name">{clientName}</div>
