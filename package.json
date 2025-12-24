@@ -37,7 +37,6 @@
           ]
         }
       ],
-      "icon": "assets/icon.icns",
       "category": "public.app-category.business",
       "artifactName": "${productName}-${version}-${arch}.${ext}"
     },
@@ -50,7 +49,6 @@
           ]
         }
       ],
-      "icon": "assets/icon.ico",
       "artifactName": "${productName}-Setup-${version}.${ext}"
     },
     "files": [
@@ -67,30 +65,6 @@
         ]
       }
     ],
-    "win": {
-      "target": [
-        {
-          "target": "nsis",
-          "arch": [
-            "x64"
-          ]
-        }
-      ],
-      "icon": "assets/icon.ico"
-    },
-    "mac": {
-      "target": [
-        {
-          "target": "dmg",
-          "arch": [
-            "x64",
-            "arm64"
-          ]
-        }
-      ],
-      "icon": "assets/icon.icns",
-      "category": "public.app-category.business"
-    },
     "publish": [
       {
         "provider": "github",
