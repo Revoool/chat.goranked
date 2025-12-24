@@ -1,0 +1,128 @@
+.sidebar {
+  width: 240px;
+  background: var(--graphite-medium);
+  border-right: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.sidebar-header {
+  padding: 24px 20px;
+  border-bottom: 1px solid var(--border-color);
+  -webkit-app-region: drag; /* Allow window dragging from header */
+  user-select: none; /* Prevent text selection while dragging */
+}
+
+.sidebar-logo {
+  font-family: 'Gilroy', sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--flame-orange);
+  margin-bottom: 4px;
+  -webkit-app-region: drag; /* Logo area is draggable */
+  cursor: move;
+}
+
+.sidebar-slogan {
+  font-size: 10px;
+  color: var(--champion-gold);
+  font-style: italic;
+}
+
+.sidebar-nav {
+  flex: 1;
+  padding: 16px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  -webkit-app-region: no-drag; /* Buttons should not be draggable */
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 14px;
+  text-align: left;
+  transition: all 0.2s;
+  border: none;
+}
+
+.nav-item:hover {
+  background: var(--graphite-light);
+  color: var(--text-primary);
+}
+
+.nav-item.active {
+  background: var(--graphite-light);
+  color: var(--flame-orange);
+  border-left: 3px solid var(--flame-orange);
+}
+
+.nav-item span:first-child {
+  font-size: 18px;
+}
+
+.sidebar-footer {
+  padding: 16px 20px;
+  border-top: 1px solid var(--border-color);
+  -webkit-app-region: no-drag; /* Footer buttons should not be draggable */
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.user-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--flame-orange);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  color: white;
+  font-size: 16px;
+}
+
+.user-details {
+  flex: 1;
+}
+
+.user-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.user-role {
+  font-size: 12px;
+  color: var(--text-muted);
+  text-transform: capitalize;
+}
+
+.logout-button {
+  width: 100%;
+  padding: 8px 16px;
+  background: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  color: var(--text-secondary);
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.logout-button:hover {
+  background: var(--graphite-light);
+  border-color: var(--error);
+  color: var(--error);
+}
+

@@ -1,0 +1,116 @@
+{
+  "name": "goranked-chat-desk",
+  "version": "1.0.0",
+  "description": "GoRanked Chat Desk - Desktop application for support operators",
+  "main": "dist/main.js",
+  "author": "GoRanked",
+  "license": "ISC",
+  "scripts": {
+    "dev": "npm run build:main && npm run build:preload && concurrently \"npm run dev:webpack\" \"npm run dev:electron\"",
+    "dev:webpack": "webpack serve --mode development --config webpack.config.js",
+    "dev:electron": "wait-on http://localhost:3000 && electron .",
+    "build": "npm run build:main && npm run build:preload && npm run build:renderer && npm run copy:assets && electron-builder",
+    "build:main": "webpack --mode production --config webpack.main.config.js",
+    "build:preload": "webpack --mode production --config webpack.preload.config.js",
+    "build:renderer": "webpack --mode production --config webpack.config.js",
+    "copy:assets": "mkdir -p dist/sound && cp -r src/renderer/sound/* dist/sound/ 2>/dev/null || xcopy /E /I /Y src\\renderer\\sound dist\\sound 2>nul || true",
+    "build:win": "npm run build && electron-builder --win",
+    "build:mac": "npm run build && electron-builder --mac",
+    "build:linux": "npm run build && electron-builder --linux",
+    "start": "electron .",
+    "lint": "eslint src --ext .ts,.tsx"
+  },
+  "build": {
+    "appId": "com.goranked.chatdesk",
+    "productName": "GoRanked Chat Desk",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "package.json",
+      "!dist/**/*.map"
+    ],
+    "extraResources": [
+      {
+        "from": "dist/sound",
+        "to": "sound",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "assets/icon.ico"
+    },
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ],
+      "icon": "assets/icon.icns",
+      "category": "public.app-category.business"
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "Revoool",
+        "repo": "chat.goranked"
+      }
+    ],
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
+  },
+  "devDependencies": {
+    "@types/node": "^25.0.3",
+    "@types/react": "^19.2.7",
+    "@types/react-dom": "^19.2.3",
+    "@typescript-eslint/eslint-plugin": "^8.50.1",
+    "@typescript-eslint/parser": "^8.50.1",
+    "concurrently": "^9.2.1",
+    "css-loader": "^7.1.2",
+    "electron": "^39.2.7",
+    "electron-builder": "^26.0.12",
+    "electron-updater": "^6.6.2",
+    "eslint": "^9.39.2",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "html-webpack-plugin": "^5.6.5",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3",
+    "style-loader": "^4.0.0",
+    "ts-loader": "^9.5.4",
+    "typescript": "^5.9.3",
+    "wait-on": "^9.0.3",
+    "webpack": "^5.104.1",
+    "webpack-cli": "^6.0.1",
+    "webpack-dev-server": "^5.2.2"
+  },
+  "dependencies": {
+    "@tanstack/react-query": "^5.90.12",
+    "@types/react-router-dom": "^5.3.3",
+    "@types/react-window": "^1.8.8",
+    "@types/ws": "^8.18.1",
+    "axios": "^1.13.2",
+    "keytar": "^7.9.0",
+    "react-router-dom": "^7.11.0",
+    "react-window": "^2.2.3",
+    "ws": "^8.18.3",
+    "zustand": "^5.0.9"
+  }
+}
