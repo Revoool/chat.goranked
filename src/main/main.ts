@@ -99,10 +99,15 @@ if (app.isPackaged) {
   // Check for updates on startup
   autoUpdater.checkForUpdatesAndNotify();
   
-  // Check for updates every 4 hours
+  // Check for updates every 30 minutes (чаще проверяем обновления)
   setInterval(() => {
     autoUpdater.checkForUpdatesAndNotify();
-  }, 4 * 60 * 60 * 1000);
+  }, 30 * 60 * 1000);
+  
+  // Также проверяем при активации окна (когда пользователь возвращается к приложению)
+  app.on('activate', () => {
+    autoUpdater.checkForUpdatesAndNotify();
+  });
 
   // Auto-updater events
   autoUpdater.on('update-available', (info) => {
@@ -115,25 +120,34 @@ if (app.isPackaged) {
   autoUpdater.on('update-downloaded', (info) => {
     console.log('✅ Update downloaded:', info.version);
     
-    // ПРИНУДИТЕЛЬНОЕ ОБНОВЛЕНИЕ (раскомментируйте для включения)
-    // autoUpdater.quitAndInstall(false, true);
-    // return;
-    
-    // ОБЫЧНОЕ ОБНОВЛЕНИЕ (с выбором пользователя)
+    // Автоматически устанавливаем обновление через 5 секунд
+    // Пользователь может отменить, закрыв диалог
     if (mainWindow) {
       const response = dialog.showMessageBoxSync(mainWindow, {
         type: 'info',
         title: 'Обновление готово',
-        message: `Доступна новая версия ${info.version}. Перезапустить приложение сейчас?`,
-        detail: 'Приложение будет перезапущено для установки обновления.',
-        buttons: ['Перезапустить', 'Позже'],
+        message: `Доступна новая версия ${info.version}. Приложение будет перезапущено через 5 секунд.`,
+        detail: 'Нажмите "Отмена" чтобы отложить обновление.',
+        buttons: ['Перезапустить сейчас', 'Отмена'],
         defaultId: 0,
         cancelId: 1,
       });
       
       if (response === 0) {
+        // Перезапустить сразу
         autoUpdater.quitAndInstall(false, true);
+      } else {
+        // Автоматически установить через 5 секунд
+        setTimeout(() => {
+          console.log('🔄 Auto-installing update after delay');
+          autoUpdater.quitAndInstall(false, true);
+        }, 5000);
       }
+    } else {
+      // Если окно закрыто, установить при следующем запуске
+      setTimeout(() => {
+        autoUpdater.quitAndInstall(false, true);
+      }, 5000);
     }
   });
 

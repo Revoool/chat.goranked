@@ -39,6 +39,7 @@ jobs:
           name: Release ${{ github.ref }}
           draft: false
           prerelease: false
+          generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -72,6 +73,7 @@ jobs:
         with:
           files: release/*.exe
           tag_name: ${{ github.ref }}
+          generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
