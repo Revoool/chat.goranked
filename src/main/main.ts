@@ -42,10 +42,21 @@ function createWindow() {
       mainWindow?.webContents.openDevTools();
     }, 1000);
   } else {
-    const indexPath = path.join(__dirname, '../renderer/index.html');
+    // In production, files are in dist/ folder
+    // __dirname points to dist/ (where main.js is)
+    // index.html is in dist/ (same level as main.js)
+    const indexPath = path.join(__dirname, 'index.html');
     console.log('Loading from file:', indexPath);
+    console.log('__dirname:', __dirname);
+    console.log('File exists:', require('fs').existsSync(indexPath));
     mainWindow.loadFile(indexPath).catch((err) => {
       console.error('Error loading file:', err);
+      // Fallback: try alternative path
+      const altPath = path.join(__dirname, '../dist/index.html');
+      console.log('Trying alternative path:', altPath);
+      mainWindow.loadFile(altPath).catch((err2) => {
+        console.error('Alternative path also failed:', err2);
+      });
     });
   }
 
