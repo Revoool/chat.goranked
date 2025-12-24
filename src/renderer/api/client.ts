@@ -302,6 +302,20 @@ class ApiClient {
     return response.data;
   }
 
+  // Update chat metadata (including tags)
+  async updateChatMetadata(chatId: number, metadata: any): Promise<any> {
+    console.log('🏷️ Updating chat metadata:', chatId, metadata);
+    try {
+      const response = await this.client.patch(`/api/manager-client-chats/${chatId}`, {
+        metadata,
+      });
+      return response.data;
+    } catch (error: any) {
+      console.error('❌ Error updating chat metadata:', error);
+      throw error;
+    }
+  }
+
   // Tags are stored in metadata field, no separate endpoint
   async updateChatTags(chatId: number, tags: string[]): Promise<any> {
     console.warn('⚠️ Tags endpoint not available. Tags should be stored in metadata field.');

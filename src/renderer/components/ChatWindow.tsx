@@ -6,6 +6,9 @@ import { wsClient } from '../api/websocket';
 import { useAuthStore } from '../store/authStore';
 import MessageList from './MessageList';
 import MessageInput from './MessageInput';
+import AssignModal from './AssignModal';
+import StatusModal from './StatusModal';
+import TagsModal from './TagsModal';
 import '../styles/ChatWindow.css';
 
 interface ChatWindowProps {
@@ -14,6 +17,9 @@ interface ChatWindowProps {
 
 const ChatWindow: React.FC<ChatWindowProps> = ({ chatId }) => {
   const [isTyping, setIsTyping] = useState(false);
+  const [showAssignModal, setShowAssignModal] = useState(false);
+  const [showStatusModal, setShowStatusModal] = useState(false);
+  const [showTagsModal, setShowTagsModal] = useState(false);
   const { updateChat, chats, toggleClientCard, isClientCardOpen } = useChatStore();
   const queryClient = useQueryClient();
 
@@ -202,9 +208,24 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId }) => {
               <path d="M10 7V10M10 13H10.01" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
             </svg>
           </button>
-          <button className="chat-action-btn">Назначить</button>
-          <button className="chat-action-btn">Статус</button>
-          <button className="chat-action-btn">Теги</button>
+          <button 
+            className="chat-action-btn"
+            onClick={() => setShowAssignModal(true)}
+          >
+            Назначить
+          </button>
+          <button 
+            className={`chat-action-btn ${displayChat?.status === 'in_progress' ? 'active' : ''}`}
+            onClick={() => setShowStatusModal(true)}
+          >
+            Статус
+          </button>
+          <button 
+            className="chat-action-btn"
+            onClick={() => setShowTagsModal(true)}
+          >
+            Теги
+          </button>
         </div>
       </div>
 
@@ -214,6 +235,30 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId }) => {
         onSend={handleSendMessage}
         disabled={sendMessageMutation.isPending}
       />
+
+      {showAssignModal && (
+        <AssignModal
+          chatId={chatId}
+          currentManagerId={displayChat?.assigned_manager_id}
+          onClose={() => setShowAssignModal(false)}
+        />
+      )}
+
+      {showStatusModal && displayChat && (
+        <StatusModal
+          chatId={chatId}
+          currentStatus={displayChat.status}
+          onClose={() => setShowStatusModal(false)}
+        />
+      )}
+
+      {showTagsModal && (
+        <TagsModal
+          chatId={chatId}
+          currentTags={displayChat?.metadata?.tags || []}
+          onClose={() => setShowTagsModal(false)}
+        />
+      )}
     </div>
   );
 };
