@@ -70,6 +70,7 @@ jobs:
         run: npm ci
       
       - name: Build for Windows
+        shell: pwsh
         run: |
           npm run build:main
           npm run build:preload
