@@ -68,13 +68,7 @@
         ]
       }
     ],
-    "publish": [
-      {
-        "provider": "github",
-        "owner": "Revoool",
-        "repo": "chat.goranked"
-      }
-    ],
+    "publish": null,
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,

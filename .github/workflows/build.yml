@@ -113,6 +113,8 @@ jobs:
           npm run build:win 2>&1
         env:
           NODE_ENV: production
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CSC_IDENTITY_AUTO_DISCOVERY: false
       
       - name: Organize release files
         shell: pwsh
