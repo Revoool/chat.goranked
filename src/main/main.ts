@@ -42,22 +42,41 @@ function createWindow() {
       mainWindow?.webContents.openDevTools();
     }, 1000);
   } else {
-    // In production, files are in dist/ folder
-    // __dirname points to dist/ (where main.js is)
-    // index.html is in dist/ (same level as main.js)
+    // In production, electron-builder packages files
+    // __dirname points to the directory where main.js is located
+    // In packaged app, this is inside app.asar or Resources/app/dist/
+    // index.html should be in the same directory as main.js
     const indexPath = path.join(__dirname, 'index.html');
     console.log('Loading from file:', indexPath);
     console.log('__dirname:', __dirname);
-    console.log('File exists:', require('fs').existsSync(indexPath));
-    mainWindow.loadFile(indexPath).catch((err) => {
-      console.error('Error loading file:', err);
-      // Fallback: try alternative path
-      const altPath = path.join(__dirname, '../dist/index.html');
-      console.log('Trying alternative path:', altPath);
-      mainWindow.loadFile(altPath).catch((err2) => {
-        console.error('Alternative path also failed:', err2);
+    console.log('app.getAppPath():', app.getAppPath());
+    console.log('app.isPackaged:', app.isPackaged);
+    
+    const fs = require('fs');
+    console.log('File exists at indexPath:', fs.existsSync(indexPath));
+    
+    if (mainWindow) {
+      mainWindow.loadFile(indexPath).catch((err) => {
+        console.error('Error loading file:', err);
+        console.error('Error details:', err.message);
+        // Try using app.getAppPath() as fallback
+        if (mainWindow) {
+          const appPath = app.getAppPath();
+          const altPath = path.join(appPath, 'dist', 'index.html');
+          console.log('Trying alternative path:', altPath);
+          console.log('Alternative path exists:', fs.existsSync(altPath));
+          mainWindow.loadFile(altPath).catch((err2) => {
+            console.error('Alternative path also failed:', err2);
+            // Last resort: try loading from app path root
+            const lastResort = path.join(appPath, 'index.html');
+            console.log('Trying last resort path:', lastResort);
+            if (mainWindow && fs.existsSync(lastResort)) {
+              mainWindow.loadFile(lastResort);
+            }
+          });
+        }
       });
-    });
+    }
   }
 
   mainWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL) => {
