@@ -157,6 +157,51 @@
   font-style: italic;
 }
 
+.settings-update-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.settings-update-btn {
+  padding: 10px 20px;
+  background: var(--flame-orange);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  align-self: flex-start;
+}
+
+.settings-update-btn:hover:not(:disabled) {
+  background: #ff8c33;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(255, 107, 0, 0.3);
+}
+
+.settings-update-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.settings-update-status {
+  font-size: 13px;
+  color: var(--text-secondary);
+  padding: 8px 12px;
+  background: var(--graphite-light);
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+}
+
+.settings-update-status.error {
+  color: #ff6b6b;
+  background: rgba(255, 107, 107, 0.1);
+  border-color: #ff6b6b;
+}
+
 @media (max-width: 768px) {
   .settings-page {
     padding: 16px;

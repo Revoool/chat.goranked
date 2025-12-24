@@ -393,3 +393,32 @@ ipcMain.handle('delete-token', async () => {
   }
 });
 
+// IPC handler for checking updates manually
+ipcMain.handle('check-for-updates', async () => {
+  if (!app.isPackaged) {
+    return { success: false, message: 'Updates are only available in production builds' };
+  }
+  
+  try {
+    console.log('🔄 Manual update check requested');
+    const result = await autoUpdater.checkForUpdates();
+    return { 
+      success: true, 
+      message: 'Проверка обновлений запущена',
+      updateInfo: result?.updateInfo || null
+    };
+  } catch (error: any) {
+    console.error('❌ Error checking for updates:', error);
+    return { 
+      success: false, 
+      error: error?.message || String(error),
+      message: 'Ошибка при проверке обновлений'
+    };
+  }
+});
+
+// IPC handler for getting app version
+ipcMain.handle('get-app-version', async () => {
+  return { version: app.getVersion() };
+});
+

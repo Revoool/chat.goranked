@@ -70,6 +70,28 @@ const App: React.FC = () => {
     };
   }, [token, user]);
 
+  // Listen for update events from main process
+  useEffect(() => {
+    if (window.electronAPI) {
+      const handleUpdateAvailable = (info: any) => {
+        console.log('🔄 Update available notification:', info);
+        // The main process already shows a dialog, but we can show additional UI feedback if needed
+      };
+
+      // Listen for update-available event from main process
+      const { ipcRenderer } = require('electron');
+      ipcRenderer.on('update-available', (_event: any, info: any) => {
+        handleUpdateAvailable(info);
+      });
+
+      return () => {
+        if (ipcRenderer) {
+          ipcRenderer.removeAllListeners('update-available');
+        }
+      };
+    }
+  }, []);
+
   if (isLoading) {
     return (
       <div style={{ 

@@ -18,6 +18,46 @@ interface SettingsState {
 
 const Settings: React.FC = () => {
   const { user } = useAuthStore();
+  const [appVersion, setAppVersion] = useState<string>('1.0.0');
+  const [isCheckingUpdates, setIsCheckingUpdates] = useState(false);
+  const [updateStatus, setUpdateStatus] = useState<string | null>(null);
+  
+  useEffect(() => {
+    // Get app version
+    if (window.electronAPI) {
+      window.electronAPI.getAppVersion().then((result) => {
+        setAppVersion(result.version);
+      });
+    } else {
+      // Fallback to package.json version in dev mode
+      setAppVersion(process.env.npm_package_version || '1.0.0');
+    }
+  }, []);
+  
+  const handleCheckForUpdates = async () => {
+    if (!window.electronAPI) {
+      setUpdateStatus('Проверка обновлений доступна только в установленной версии приложения');
+      return;
+    }
+    
+    setIsCheckingUpdates(true);
+    setUpdateStatus(null);
+    
+    try {
+      const result = await window.electronAPI.checkForUpdates();
+      if (result.success) {
+        setUpdateStatus('Проверка обновлений запущена. Если доступна новая версия, вы получите уведомление.');
+      } else {
+        setUpdateStatus(result.message || result.error || 'Ошибка при проверке обновлений');
+      }
+    } catch (error: any) {
+      setUpdateStatus('Ошибка: ' + (error.message || 'Неизвестная ошибка'));
+    } finally {
+      setIsCheckingUpdates(false);
+      // Clear status message after 5 seconds
+      setTimeout(() => setUpdateStatus(null), 5000);
+    }
+  };
   
   const [settings, setSettings] = useState<SettingsState>({
     language: (localStorage.getItem('settings.language') as 'ru' | 'uk' | 'en') || 'ru',
@@ -228,11 +268,32 @@ const Settings: React.FC = () => {
           <div className="settings-section-content">
             <div className="settings-field">
               <label>Версия</label>
-              <div className="settings-value">1.0.0</div>
+              <div className="settings-value">{appVersion}</div>
             </div>
             <div className="settings-field">
               <label>Название</label>
-              <div className="settings-value">Goranked Chat Desk</div>
+              <div className="settings-value">GoRanked Chat Desk</div>
+            </div>
+            <div className="settings-field">
+              <label>Обновления</label>
+              <div className="settings-update-section">
+                <button
+                  className="settings-update-btn"
+                  onClick={handleCheckForUpdates}
+                  disabled={isCheckingUpdates || !window.electronAPI}
+                >
+                  {isCheckingUpdates ? 'Проверка...' : 'Проверить обновления'}
+                </button>
+                {updateStatus && (
+                  <p className={`settings-update-status ${updateStatus.includes('Ошибка') ? 'error' : ''}`}>
+                    {updateStatus}
+                  </p>
+                )}
+                <p className="settings-hint">
+                  Приложение автоматически проверяет обновления каждые 30 минут. 
+                  Вы также можете проверить вручную.
+                </p>
+              </div>
             </div>
           </div>
         </section>

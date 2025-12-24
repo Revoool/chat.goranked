@@ -4,5 +4,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   storeToken: (token: string) => ipcRenderer.invoke('store-token', token),
   getToken: () => ipcRenderer.invoke('get-token'),
   deleteToken: () => ipcRenderer.invoke('delete-token'),
+  checkForUpdates: () => ipcRenderer.invoke('check-for-updates'),
+  getAppVersion: () => ipcRenderer.invoke('get-app-version'),
 });
 
