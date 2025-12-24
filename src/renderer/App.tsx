@@ -72,21 +72,18 @@ const App: React.FC = () => {
 
   // Listen for update events from main process
   useEffect(() => {
-    if (window.electronAPI) {
+    if (window.electronAPI && window.electronAPI.onUpdateAvailable) {
       const handleUpdateAvailable = (info: any) => {
         console.log('🔄 Update available notification:', info);
         // The main process already shows a dialog, but we can show additional UI feedback if needed
       };
 
-      // Listen for update-available event from main process
-      const { ipcRenderer } = require('electron');
-      ipcRenderer.on('update-available', (_event: any, info: any) => {
-        handleUpdateAvailable(info);
-      });
+      // Listen for update-available event from main process via preload
+      const cleanup = window.electronAPI.onUpdateAvailable(handleUpdateAvailable);
 
       return () => {
-        if (ipcRenderer) {
-          ipcRenderer.removeAllListeners('update-available');
+        if (cleanup) {
+          cleanup();
         }
       };
     }
@@ -108,8 +105,8 @@ const App: React.FC = () => {
 
   return (
     <Routes>
-      <Route path="/login" element={!user ? <LoginPage /> : <Navigate to="/" />} />
-      <Route path="/" element={user ? <MainDesk /> : <Navigate to="/login" />} />
+      <Route path="/login" element={!user ? <LoginPage /> : <Navigate to="/" replace />} />
+      <Route path="/" element={user ? <MainDesk /> : <Navigate to="/login" replace />} />
     </Routes>
   );
 };

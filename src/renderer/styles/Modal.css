@@ -320,6 +320,66 @@
   font-style: italic;
 }
 
+/* Priority Modal Styles */
+.priority-options {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.priority-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 16px;
+  background: var(--graphite-dark);
+  border: 2px solid var(--border-color);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.priority-option:hover {
+  background: var(--graphite-light);
+  transform: translateY(-2px);
+}
+
+.priority-option.active {
+  border-color: currentColor;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.priority-option.current {
+  border-style: dashed;
+}
+
+.priority-icon {
+  font-size: 24px;
+  line-height: 1;
+}
+
+.priority-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.priority-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--flame-orange);
+  background: var(--graphite-medium);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
 .tags-list {
   display: flex;
   flex-wrap: wrap;

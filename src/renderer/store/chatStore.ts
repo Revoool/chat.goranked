@@ -28,9 +28,11 @@ export const useChatStore = create<ChatState>((set) => ({
   setSelectedChat: (chatId) => set({ selectedChatId: chatId, isClientCardOpen: false }), // Close card when switching chats
   setFilters: (filters) => set((state) => ({ filters: { ...state.filters, ...filters } })),
   setChats: (chats) => {
-    console.log('💾 Setting chats in store:', chats.length, 'chats');
-    console.log('💾 Chats data:', chats);
-    set({ chats });
+    // Ensure chats is always an array
+    const safeChats = Array.isArray(chats) ? chats : [];
+    console.log('💾 Setting chats in store:', safeChats.length, 'chats');
+    console.log('💾 Chats data:', safeChats);
+    set({ chats: safeChats });
   },
   updateChat: (chatId, updates) =>
     set((state) => ({

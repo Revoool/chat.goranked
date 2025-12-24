@@ -13,16 +13,24 @@ interface TagsModalProps {
 const TagsModal: React.FC<TagsModalProps> = ({ chatId, currentTags = [], onClose }) => {
   const { updateChat, chats } = useChatStore();
   const queryClient = useQueryClient();
-  const [tags, setTags] = useState<string[]>(currentTags);
+  // Ensure currentTags is always an array
+  const safeCurrentTags = Array.isArray(currentTags) ? currentTags : [];
+  const [tags, setTags] = useState<string[]>(safeCurrentTags);
   const [newTag, setNewTag] = useState('');
 
   // Get tags from chat metadata if available
   useEffect(() => {
     const chat = chats.find(c => c.id === chatId);
-    if (chat?.metadata?.tags && Array.isArray(chat.metadata.tags)) {
-      setTags(chat.metadata.tags);
+    if (chat?.metadata?.tags) {
+      // Ensure tags is an array
+      const chatTags = Array.isArray(chat.metadata.tags) 
+        ? chat.metadata.tags 
+        : (typeof chat.metadata.tags === 'string' ? [chat.metadata.tags] : []);
+      setTags(chatTags);
+    } else {
+      setTags(safeCurrentTags);
     }
-  }, [chatId, chats]);
+  }, [chatId, chats, safeCurrentTags]);
 
   const updateTagsMutation = useMutation({
     mutationFn: async (newTags: string[]) => {

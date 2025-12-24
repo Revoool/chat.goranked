@@ -1,0 +1,140 @@
+.quick-replies {
+  position: relative;
+  margin-bottom: 8px;
+}
+
+.quick-replies-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--graphite-light);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  color: var(--text-secondary);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+  width: 100%;
+  justify-content: space-between;
+}
+
+.quick-replies-toggle:hover {
+  background: var(--graphite-medium);
+  border-color: var(--flame-orange);
+  color: var(--text-primary);
+}
+
+.quick-replies-toggle svg:first-child {
+  flex-shrink: 0;
+}
+
+.quick-replies-arrow {
+  transition: transform 0.2s;
+  flex-shrink: 0;
+}
+
+.quick-replies-arrow.expanded {
+  transform: rotate(180deg);
+}
+
+.quick-replies-loading {
+  padding: 8px 12px;
+  color: var(--text-muted);
+  font-size: 13px;
+  text-align: center;
+}
+
+.quick-replies-dropdown {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  right: 0;
+  margin-bottom: 8px;
+  background: var(--graphite-dark);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  max-height: 300px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  z-index: 1000;
+  animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.quick-replies-header {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-color);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.quick-replies-list {
+  overflow-y: auto;
+  max-height: 250px;
+  padding: 4px;
+}
+
+.quick-reply-item {
+  width: 100%;
+  padding: 10px 12px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.15s;
+  margin-bottom: 2px;
+}
+
+.quick-reply-item:hover {
+  background: var(--graphite-medium);
+  color: var(--flame-orange);
+}
+
+.quick-reply-item:active {
+  background: var(--graphite-light);
+}
+
+.quick-reply-text {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Scrollbar styling */
+.quick-replies-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.quick-replies-list::-webkit-scrollbar-track {
+  background: var(--graphite-dark);
+}
+
+.quick-replies-list::-webkit-scrollbar-thumb {
+  background: var(--graphite-medium);
+  border-radius: 3px;
+}
+
+.quick-replies-list::-webkit-scrollbar-thumb:hover {
+  background: var(--graphite-light);
+}
+

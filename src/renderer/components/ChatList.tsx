@@ -25,11 +25,18 @@ const ChatList: React.FC = () => {
       console.log('📋 Full data object:', JSON.stringify(data, null, 2));
       
       // Try different possible response structures
-      const chatsArray = data.data || data.chats || data || [];
+      let chatsArray = data.data || data.chats || data;
+      
+      // Ensure it's an array
+      if (!Array.isArray(chatsArray)) {
+        console.warn('⚠️ Chats data is not an array, converting:', typeof chatsArray);
+        chatsArray = [];
+      }
+      
       console.log('📋 Extracted chats array:', chatsArray);
       console.log('📋 Chats array length:', chatsArray.length);
       
-      if (Array.isArray(chatsArray) && chatsArray.length > 0) {
+      if (chatsArray.length > 0) {
         console.log('✅ Setting chats:', chatsArray.length, 'chats');
         setChats(chatsArray);
       } else {

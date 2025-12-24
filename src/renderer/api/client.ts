@@ -306,10 +306,32 @@ class ApiClient {
   async updateChatMetadata(chatId: number, metadata: any): Promise<any> {
     console.log('🏷️ Updating chat metadata:', chatId, metadata);
     try {
-      const response = await this.client.patch(`/api/manager-client-chats/${chatId}`, {
-        metadata,
-      });
-      return response.data;
+      // Try POST to metadata endpoint first
+      try {
+        const response = await this.client.post(`/api/manager-client-chats/${chatId}/metadata`, {
+          metadata,
+        });
+        console.log('✅ Metadata updated via /metadata endpoint');
+        return response.data;
+      } catch (metadataError: any) {
+        // If metadata endpoint doesn't exist, try PUT instead of PATCH
+        console.log('⚠️ /metadata endpoint not available, trying PUT');
+        try {
+          const response = await this.client.put(`/api/manager-client-chats/${chatId}`, {
+            metadata,
+          });
+          console.log('✅ Metadata updated via PUT');
+          return response.data;
+        } catch (putError: any) {
+          // If PUT also fails, try POST to /update endpoint
+          console.log('⚠️ PUT not available, trying POST to /update');
+          const response = await this.client.post(`/api/manager-client-chats/${chatId}/update`, {
+            metadata,
+          });
+          console.log('✅ Metadata updated via /update endpoint');
+          return response.data;
+        }
+      }
     } catch (error: any) {
       console.error('❌ Error updating chat metadata:', error);
       throw error;
@@ -360,6 +382,106 @@ class ApiClient {
   async uploadFile(file: File): Promise<any> {
     console.warn('⚠️ Separate file upload endpoint not available for manager-client-chats. Files should be uploaded with messages.');
     return Promise.reject(new Error('Use sendMessage with file parameter instead'));
+  }
+
+  // Quick Replies (Быстрые ответы)
+  async getQuickReplies(locale?: string): Promise<any> {
+    console.log('⚡ Requesting quick replies', locale ? `for locale: ${locale}` : '');
+    try {
+      const params: any = {};
+      if (locale) {
+        params.locale = locale;
+      }
+      const response = await this.client.get('/api/quick-replies', { params });
+      console.log('✅ Quick replies received:', response.data);
+      return response.data;
+    } catch (error: any) {
+      console.error('❌ Error fetching quick replies:', error);
+      throw error;
+    }
+  }
+
+  async getQuickReply(id: number): Promise<any> {
+    console.log('⚡ Requesting quick reply:', id);
+    try {
+      const response = await this.client.get(`/api/quick-replies/${id}`);
+      return response.data;
+    } catch (error: any) {
+      console.error('❌ Error fetching quick reply:', error);
+      throw error;
+    }
+  }
+
+  // Priority management
+  async updateChatPriority(chatId: number, priority: 'low' | 'normal' | 'high' | 'urgent'): Promise<any> {
+    console.log('🎯 Updating chat priority:', chatId, priority);
+    try {
+      const response = await this.client.put(`/api/manager-client-chats/${chatId}/priority`, {
+        priority,
+      });
+      return response.data;
+    } catch (error: any) {
+      console.error('❌ Error updating chat priority:', error);
+      throw error;
+    }
+  }
+
+  // SLA violations
+  async getSlaViolations(): Promise<any> {
+    console.log('⚠️ Requesting SLA violations');
+    try {
+      const response = await this.client.get('/api/manager-client-chats/sla/violations');
+      return response.data;
+    } catch (error: any) {
+      console.error('❌ Error fetching SLA violations:', error);
+      throw error;
+    }
+  }
+
+  async getSlaStats(): Promise<any> {
+    console.log('📊 Requesting SLA stats');
+    try {
+      const response = await this.client.get('/api/manager-client-chats/sla/stats');
+      return response.data;
+    } catch (error: any) {
+      console.error('❌ Error fetching SLA stats:', error);
+      throw error;
+    }
+  }
+
+  async ignoreSlaViolation(chatId: number): Promise<any> {
+    console.log('✅ Ignoring SLA violation for chat:', chatId);
+    try {
+      const response = await this.client.post(`/api/manager-client-chats/${chatId}/ignore-sla`);
+      return response.data;
+    } catch (error: any) {
+      console.error('❌ Error ignoring SLA violation:', error);
+      throw error;
+    }
+  }
+
+  // Unread count
+  async getUnreadCount(): Promise<any> {
+    console.log('🔔 Requesting unread count');
+    try {
+      const response = await this.client.get('/api/manager-client-chats/unread-count');
+      return response.data;
+    } catch (error: any) {
+      console.error('❌ Error fetching unread count:', error);
+      throw error;
+    }
+  }
+
+  // Chat config
+  async getChatConfig(): Promise<any> {
+    console.log('⚙️ Requesting chat config');
+    try {
+      const response = await this.client.get('/api/manager-client-chats/config');
+      return response.data;
+    } catch (error: any) {
+      console.error('❌ Error fetching chat config:', error);
+      throw error;
+    }
   }
 }
 

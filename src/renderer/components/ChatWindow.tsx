@@ -9,6 +9,7 @@ import MessageInput from './MessageInput';
 import AssignModal from './AssignModal';
 import StatusModal from './StatusModal';
 import TagsModal from './TagsModal';
+import PriorityModal from './PriorityModal';
 import '../styles/ChatWindow.css';
 
 interface ChatWindowProps {
@@ -20,6 +21,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId }) => {
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [showTagsModal, setShowTagsModal] = useState(false);
+  const [showPriorityModal, setShowPriorityModal] = useState(false);
   const { updateChat, chats, toggleClientCard, isClientCardOpen } = useChatStore();
   const queryClient = useQueryClient();
 
@@ -226,14 +228,69 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId }) => {
           >
             Теги
           </button>
+          <button 
+            className={`chat-action-btn priority-btn priority-${displayChat?.priority || 'normal'}`}
+            onClick={() => setShowPriorityModal(true)}
+            title={`Приоритет: ${displayChat?.priority || 'normal'}`}
+          >
+            <span className="priority-icon">
+              {displayChat?.priority === 'urgent' ? '🔴' : 
+               displayChat?.priority === 'high' ? '⬆️' : 
+               displayChat?.priority === 'low' ? '⬇️' : '➡️'}
+            </span>
+            Приоритет
+          </button>
         </div>
       </div>
+
+      {/* SLA Violation Warning */}
+      {displayChat?.active_sla_violation && (
+        <div className="sla-violation-banner">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path
+              d="M10 2L2 18H18L10 2Z"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              fill="none"
+            />
+            <path
+              d="M10 7V11M10 14H10.01"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+            />
+          </svg>
+          <span>
+            Нарушение SLA: {displayChat.active_sla_violation.sla_violation_type === 'response_time' 
+              ? 'Превышено время ответа' 
+              : 'Нарушение SLA'}
+          </span>
+          <button
+            className="sla-ignore-btn"
+            onClick={async () => {
+              try {
+                await apiClient.ignoreSlaViolation(chatId);
+                queryClient.invalidateQueries({ queryKey: ['chat', chatId] });
+                queryClient.invalidateQueries({ queryKey: ['chats'] });
+              } catch (error) {
+                console.error('Failed to ignore SLA violation:', error);
+              }
+            }}
+            title="Игнорировать нарушение"
+          >
+            ×
+          </button>
+        </div>
+      )}
 
       <MessageList messages={messagesData?.data || messagesData || []} />
 
       <MessageInput
         onSend={handleSendMessage}
         disabled={sendMessageMutation.isPending}
+        chatId={chatId}
       />
 
       {showAssignModal && (
@@ -255,8 +312,16 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId }) => {
       {showTagsModal && (
         <TagsModal
           chatId={chatId}
-          currentTags={displayChat?.metadata?.tags || []}
+          currentTags={Array.isArray(displayChat?.metadata?.tags) ? displayChat.metadata.tags : []}
           onClose={() => setShowTagsModal(false)}
+        />
+      )}
+
+      {showPriorityModal && displayChat && (
+        <PriorityModal
+          chatId={chatId}
+          currentPriority={displayChat.priority || 'normal'}
+          onClose={() => setShowPriorityModal(false)}
         />
       )}
     </div>

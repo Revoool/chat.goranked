@@ -6,5 +6,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
   deleteToken: () => ipcRenderer.invoke('delete-token'),
   checkForUpdates: () => ipcRenderer.invoke('check-for-updates'),
   getAppVersion: () => ipcRenderer.invoke('get-app-version'),
+  onUpdateAvailable: (callback: (info: any) => void) => {
+    ipcRenderer.on('update-available', (_event, info) => callback(info));
+    // Return cleanup function
+    return () => {
+      ipcRenderer.removeAllListeners('update-available');
+    };
+  },
 });
 

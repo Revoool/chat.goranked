@@ -1,6 +1,6 @@
 {
   "name": "goranked-chat-desk",
-  "version": "1.0.11",
+  "version": "1.0.12",
   "description": "GoRanked Chat Desk - Desktop application for support operators",
   "main": "dist/main.js",
   "author": "GoRanked",
@@ -15,7 +15,7 @@
     "build:renderer": "webpack --mode production --config webpack.config.js",
     "copy:assets": "node -e \"const fs=require('fs');const path=require('path');const src=path.join('src','renderer','sound');const dst=path.join('dist','sound');if(fs.existsSync(src)){if(!fs.existsSync(dst))fs.mkdirSync(dst,{recursive:true});fs.readdirSync(src).forEach(f=>{const srcPath=path.join(src,f);const dstPath=path.join(dst,f);if(fs.statSync(srcPath).isFile())fs.copyFileSync(srcPath,dstPath);});}\"",
     "clean:release": "node -e \"const fs=require('fs');const path=require('path');const releaseDir=path.join('release','win-unpacked');if(fs.existsSync(releaseDir)){try{fs.rmSync(releaseDir,{recursive:true,force:true});console.log('Cleaned release directory');}catch(e){console.log('Could not clean release directory:',e.message);}}\"",
-    "build:win": "npm run clean:release && npm run build && set CSC_IDENTITY_AUTO_DISCOVERY=false && electron-builder --win --x64",
+    "build:win": "npm run clean:release && npm run build && set CSC_IDENTITY_AUTO_DISCOVERY=false && electron-builder --win --x64 --publish never",
     "build:win:publish": "npm run build:win && echo Build completed. Now create a GitHub Release and upload the files from release/ folder.",
     "build:mac": "npm run build && electron-builder --mac",
     "build:linux": "npm run build && electron-builder --linux",

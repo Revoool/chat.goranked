@@ -1,18 +1,23 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import QuickReplies from './QuickReplies';
+import { apiClient } from '../api/client';
 import '../styles/MessageInput.css';
 
 interface MessageInputProps {
   onSend: (text: string, attachments: any[]) => void;
   disabled?: boolean;
+  chatId?: number;
 }
 
-const MessageInput: React.FC<MessageInputProps> = ({ onSend, disabled }) => {
+const MessageInput: React.FC<MessageInputProps> = ({ onSend, disabled, chatId }) => {
   const [text, setText] = useState('');
   const [attachments, setAttachments] = useState<any[]>([]);
   const [sendMessageKey, setSendMessageKey] = useState<'enter' | 'ctrl-enter'>(
     (localStorage.getItem('settings.sendMessageKey') as 'enter' | 'ctrl-enter') || 'enter'
   );
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const lastTypingTimeRef = useRef<number>(0);
 
   // Listen for settings changes
   React.useEffect(() => {
@@ -49,9 +54,69 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSend, disabled }) => {
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSubmit(e);
+    if (sendMessageKey === 'enter') {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        handleSubmit(e);
+      }
+    } else {
+      if (e.key === 'Enter' && e.ctrlKey) {
+        e.preventDefault();
+        handleSubmit(e);
+      }
+    }
+  };
+
+  // Handle typing indicator
+  useEffect(() => {
+    if (!chatId) return;
+
+    const handleTyping = async () => {
+      const now = Date.now();
+      // Throttle typing indicator to avoid too many requests
+      if (now - lastTypingTimeRef.current < 2000) {
+        return;
+      }
+      lastTypingTimeRef.current = now;
+
+      try {
+        await apiClient.sendTyping(chatId, true);
+      } catch (error) {
+        console.warn('Failed to send typing indicator:', error);
+      }
+
+      // Clear previous timeout
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+
+      // Send false after 3 seconds of inactivity
+      typingTimeoutRef.current = setTimeout(async () => {
+        try {
+          await apiClient.sendTyping(chatId, false);
+        } catch (error) {
+          console.warn('Failed to send typing stop:', error);
+        }
+      }, 3000);
+    };
+
+    if (text.trim()) {
+      handleTyping();
+    }
+
+    return () => {
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+    };
+  }, [text, chatId]);
+
+  const handleQuickReplySelect = (replyText: string) => {
+    setText(replyText);
+    if (textareaRef.current) {
+      textareaRef.current.focus();
+      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
     }
   };
 
@@ -68,6 +133,7 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSend, disabled }) => {
 
   return (
     <form className="message-input" onSubmit={handleSubmit}>
+      {chatId && <QuickReplies onSelect={handleQuickReplySelect} />}
       {attachments.length > 0 && (
         <div className="message-input-attachments">
           {attachments.map((att, idx) => (

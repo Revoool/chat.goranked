@@ -117,3 +117,100 @@
   color: var(--text-muted);
 }
 
+/* Priority Button Styles */
+.priority-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.priority-btn .priority-icon {
+  font-size: 14px;
+}
+
+.priority-btn.priority-urgent {
+  border-color: #d0021b;
+  color: #d0021b;
+}
+
+.priority-btn.priority-urgent:hover {
+  background: #d0021b;
+  color: white;
+}
+
+.priority-btn.priority-high {
+  border-color: #f5a623;
+  color: #f5a623;
+}
+
+.priority-btn.priority-high:hover {
+  background: #f5a623;
+  color: white;
+}
+
+.priority-btn.priority-low {
+  border-color: #4a90e2;
+  color: #4a90e2;
+}
+
+.priority-btn.priority-low:hover {
+  background: #4a90e2;
+  color: white;
+}
+
+/* SLA Violation Banner */
+.sla-violation-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  background: linear-gradient(135deg, #d0021b15, #f5a62315);
+  border-bottom: 2px solid #d0021b;
+  color: #d0021b;
+  font-size: 13px;
+  font-weight: 500;
+  animation: slideDown 0.3s ease-out;
+}
+
+.sla-violation-banner svg {
+  flex-shrink: 0;
+  animation: pulse 2s infinite;
+}
+
+.sla-violation-banner span {
+  flex: 1;
+}
+
+.sla-ignore-btn {
+  background: transparent;
+  border: 1px solid currentColor;
+  color: currentColor;
+  border-radius: 4px;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.sla-ignore-btn:hover {
+  background: currentColor;
+  color: white;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
