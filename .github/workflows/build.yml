@@ -80,13 +80,16 @@ jobs:
           NODE_ENV: production
       
       - name: Organize release files
+        shell: pwsh
         run: |
-          mkdir -p release/mac release/windows
-          mv release/*.exe release/windows/ 2>/dev/null || true
-          mv release/*.blockmap release/windows/ 2>/dev/null || true
-          mv release/win* release/windows/ 2>/dev/null || true
-          ls -la release/
-          ls -la release/windows/ || echo "windows folder empty"
+          New-Item -ItemType Directory -Force -Path release/mac, release/windows | Out-Null
+          Move-Item -Path release/*.exe -Destination release/windows/ -ErrorAction SilentlyContinue
+          Move-Item -Path release/*.blockmap -Destination release/windows/ -ErrorAction SilentlyContinue
+          Move-Item -Path release/win* -Destination release/windows/ -ErrorAction SilentlyContinue
+          Write-Host "Release folder contents:"
+          Get-ChildItem -Path release/ -Recurse | Format-Table Name, Length
+          Write-Host "Windows folder contents:"
+          Get-ChildItem -Path release/windows/ -ErrorAction SilentlyContinue | Format-Table Name, Length
       
       - name: Upload Windows artifacts
         uses: actions/upload-artifact@v3
