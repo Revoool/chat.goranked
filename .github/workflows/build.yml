@@ -8,6 +8,8 @@ on:
 jobs:
   build-mac:
     runs-on: macos-latest
+    permissions:
+      contents: write
     
     steps:
       - uses: actions/checkout@v4
@@ -76,7 +78,11 @@ jobs:
           files: |
             release/mac/*.dmg
           tag_name: ${{ github.ref }}
-          generate_release_notes: false
+          body: |
+            ## macOS Build
+            - DMG installer for macOS (x64 and arm64)
+          draft: false
+          prerelease: false
           make_latest: false
           fail_on_unmatched_files: false
         env:
@@ -85,6 +91,8 @@ jobs:
 
   build-windows:
     runs-on: windows-latest
+    permissions:
+      contents: write
     
     steps:
       - uses: actions/checkout@v4
@@ -152,7 +160,12 @@ jobs:
             release/windows/*.exe
             release/latest.yml
           tag_name: ${{ github.ref }}
-          generate_release_notes: false
+          body: |
+            ## Windows Build
+            - NSIS installer for Windows (x64)
+            - Auto-update configuration (latest.yml)
+          draft: false
+          prerelease: false
           make_latest: true
           fail_on_unmatched_files: false
         env:
