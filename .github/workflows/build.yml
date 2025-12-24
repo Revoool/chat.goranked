@@ -75,9 +75,9 @@ jobs:
         with:
           files: |
             release/mac/*.dmg
-            release/mac/*.yml
           tag_name: ${{ github.ref }}
           generate_release_notes: true
+          make_latest: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         continue-on-error: true
@@ -152,6 +152,7 @@ jobs:
             release/latest.yml
           tag_name: ${{ github.ref }}
           generate_release_notes: true
+          make_latest: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         continue-on-error: true
