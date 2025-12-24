@@ -52,9 +52,7 @@
         }
       ],
       "artifactName": "${productName}-Setup-${version}.${ext}",
-      "forceCodeSigning": false,
-      "sign": null,
-      "signingHashAlgorithms": null
+      "forceCodeSigning": false
     },
     "files": [
       "dist/**/*",
