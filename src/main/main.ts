@@ -121,31 +121,43 @@ if (app.isPackaged) {
     console.log('✅ Update downloaded:', info.version);
     
     // Автоматически устанавливаем обновление через 5 секунд
-    // Пользователь может отменить, закрыв диалог
-    if (mainWindow) {
-      const response = dialog.showMessageBoxSync(mainWindow, {
+    // Пользователь может отменить, нажав "Отмена"
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      dialog.showMessageBox(mainWindow, {
         type: 'info',
         title: 'Обновление готово',
-        message: `Доступна новая версия ${info.version}. Приложение будет перезапущено через 5 секунд.`,
-        detail: 'Нажмите "Отмена" чтобы отложить обновление.',
+        message: `Доступна новая версия ${info.version}`,
+        detail: 'Приложение будет перезапущено через 5 секунд для установки обновления. Нажмите "Отмена" чтобы отложить.',
         buttons: ['Перезапустить сейчас', 'Отмена'],
         defaultId: 0,
         cancelId: 1,
-      });
-      
-      if (response === 0) {
-        // Перезапустить сразу
-        autoUpdater.quitAndInstall(false, true);
-      } else {
-        // Автоматически установить через 5 секунд
-        setTimeout(() => {
-          console.log('🔄 Auto-installing update after delay');
+      }).then((response) => {
+        if (response.response === 0) {
+          // Перезапустить сразу
           autoUpdater.quitAndInstall(false, true);
-        }, 5000);
-      }
+        } else {
+          // Автоматически установить через 5 секунд
+          setTimeout(() => {
+            console.log('🔄 Auto-installing update after 5 seconds');
+            if (mainWindow && !mainWindow.isDestroyed()) {
+              dialog.showMessageBox(mainWindow, {
+                type: 'info',
+                title: 'Установка обновления',
+                message: 'Приложение будет перезапущено сейчас.',
+                buttons: ['OK'],
+              }).then(() => {
+                autoUpdater.quitAndInstall(false, true);
+              });
+            } else {
+              autoUpdater.quitAndInstall(false, true);
+            }
+          }, 5000);
+        }
+      });
     } else {
-      // Если окно закрыто, установить при следующем запуске
+      // Если окно закрыто, установить через 5 секунд
       setTimeout(() => {
+        console.log('🔄 Auto-installing update (window closed)');
         autoUpdater.quitAndInstall(false, true);
       }, 5000);
     }
