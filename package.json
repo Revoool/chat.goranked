@@ -14,9 +14,10 @@
     "build:preload": "webpack --mode production --config webpack.preload.config.js",
     "build:renderer": "webpack --mode production --config webpack.config.js",
     "copy:assets": "mkdir -p dist/sound && cp -r src/renderer/sound/* dist/sound/ 2>/dev/null || xcopy /E /I /Y src\\renderer\\sound dist\\sound 2>nul || true",
-    "build:win": "npm run build && electron-builder --win",
+    "build:win": "npm run build && electron-builder --win --x64",
     "build:mac": "npm run build && electron-builder --mac",
     "build:linux": "npm run build && electron-builder --linux",
+    "organize:release": "mkdir -p release/mac release/windows && mv release/*.dmg release/mac/ 2>/dev/null || true && mv release/*.exe release/windows/ 2>/dev/null || true && mv release/*.AppImage release/linux/ 2>/dev/null || true",
     "start": "electron .",
     "lint": "eslint src --ext .ts,.tsx"
   },
@@ -25,6 +26,32 @@
     "productName": "GoRanked Chat Desk",
     "directories": {
       "output": "release"
+    },
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ],
+      "icon": "assets/icon.icns",
+      "category": "public.app-category.business",
+      "artifactName": "${productName}-${version}-${arch}.${ext}"
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "assets/icon.ico",
+      "artifactName": "${productName}-Setup-${version}.${ext}"
     },
     "files": [
       "dist/**/*",

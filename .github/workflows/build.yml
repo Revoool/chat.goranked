@@ -25,16 +25,23 @@ jobs:
         env:
           NODE_ENV: production
       
+      - name: Organize release files
+        run: |
+          mkdir -p release/mac release/windows
+          mv release/*.dmg release/mac/ 2>/dev/null || true
+          mv release/*.blockmap release/mac/ 2>/dev/null || true
+          mv release/mac* release/mac/ 2>/dev/null || true
+      
       - name: Upload macOS artifacts
         uses: actions/upload-artifact@v3
         with:
           name: macos-build
-          path: release/*.dmg
+          path: release/mac/*.dmg
       
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
-          files: release/*.dmg
+          files: release/mac/*.dmg
           tag_name: ${{ github.ref }}
           name: Release ${{ github.ref }}
           draft: false
@@ -62,16 +69,23 @@ jobs:
         env:
           NODE_ENV: production
       
+      - name: Organize release files
+        run: |
+          mkdir -p release/mac release/windows
+          mv release/*.exe release/windows/ 2>/dev/null || true
+          mv release/*.blockmap release/windows/ 2>/dev/null || true
+          mv release/win* release/windows/ 2>/dev/null || true
+      
       - name: Upload Windows artifacts
         uses: actions/upload-artifact@v3
         with:
           name: windows-build
-          path: release/*.exe
+          path: release/windows/*.exe
       
       - name: Upload to Release
         uses: softprops/action-gh-release@v1
         with:
-          files: release/*.exe
+          files: release/windows/*.exe
           tag_name: ${{ github.ref }}
           generate_release_notes: true
         env:
