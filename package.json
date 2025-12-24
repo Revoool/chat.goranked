@@ -1,0 +1,133 @@
+{
+  "name": "goranked-chat-desk",
+  "version": "1.0.0",
+  "description": "GoRanked Chat Desk - Desktop application for support operators",
+  "main": "dist/main.js",
+  "author": "GoRanked",
+  "license": "ISC",
+  "scripts": {
+    "dev": "npm run build:main && npm run build:preload && concurrently \"npm run dev:webpack\" \"npm run dev:electron\"",
+    "dev:webpack": "webpack serve --mode development --config webpack.config.js",
+    "dev:electron": "wait-on http://localhost:3000 && electron .",
+    "build": "npm run build:main && npm run build:preload && npm run build:renderer && npm run copy:assets",
+    "build:main": "webpack --mode production --config webpack.main.config.js",
+    "build:preload": "webpack --mode production --config webpack.preload.config.js",
+    "build:renderer": "webpack --mode production --config webpack.config.js",
+    "copy:assets": "node -e \"const fs=require('fs');const path=require('path');const src=path.join('src','renderer','sound');const dst=path.join('dist','sound');if(fs.existsSync(src)){if(!fs.existsSync(dst))fs.mkdirSync(dst,{recursive:true});fs.readdirSync(src).forEach(f=>{const srcPath=path.join(src,f);const dstPath=path.join(dst,f);if(fs.statSync(srcPath).isFile())fs.copyFileSync(srcPath,dstPath);});}\"",
+    "clean:release": "node -e \"const fs=require('fs');const path=require('path');const releaseDir=path.join('release','win-unpacked');if(fs.existsSync(releaseDir)){try{fs.rmSync(releaseDir,{recursive:true,force:true});console.log('Cleaned release directory');}catch(e){console.log('Could not clean release directory:',e.message);}}\"",
+    "build:win": "npm run clean:release && npm run build && set CSC_IDENTITY_AUTO_DISCOVERY=false && electron-builder --win --x64",
+    "build:win:publish": "npm run build:win && echo Build completed. Now create a GitHub Release and upload the files from release/ folder.",
+    "build:mac": "npm run build && electron-builder --mac",
+    "build:linux": "npm run build && electron-builder --linux",
+    "organize:release": "mkdir -p release/mac release/windows && mv release/*.dmg release/mac/ 2>/dev/null || true && mv release/*.exe release/windows/ 2>/dev/null || true && mv release/*.AppImage release/linux/ 2>/dev/null || true",
+    "start": "npm run build:main && npm run build:preload && npm run build:renderer && npm run copy:assets && electron .",
+    "lint": "eslint src --ext .ts,.tsx"
+  },
+  "build": {
+    "appId": "com.goranked.chatdesk",
+    "productName": "GoRanked Chat Desk",
+    "directories": {
+      "output": "release"
+    },
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ],
+      "category": "public.app-category.business",
+      "artifactName": "${productName}-${version}-${arch}.${ext}"
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "artifactName": "${productName}-Setup-${version}.${ext}",
+      "forceCodeSigning": false,
+      "sign": null,
+      "signingHashAlgorithms": null
+    },
+    "files": [
+      "dist/**/*",
+      "package.json",
+      "!dist/**/*.map"
+    ],
+    "extraResources": [
+      {
+        "from": "dist/sound",
+        "to": "sound",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ],
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "Revoool",
+        "repo": "chat.goranked"
+      }
+    ],
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "allowElevation": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "GoRanked Chat Desk",
+      "deleteAppDataOnUninstall": false,
+      "runAfterFinish": true,
+      "menuCategory": false,
+      "displayLanguageSelector": true,
+      "multiLanguageInstaller": true,
+      "language": "1049",
+      "installerLanguages": ["ru_RU", "en_US"]
+    }
+  },
+  "devDependencies": {
+    "@types/node": "^25.0.3",
+    "@types/react": "^19.2.7",
+    "@types/react-dom": "^19.2.3",
+    "@typescript-eslint/eslint-plugin": "^8.50.1",
+    "@typescript-eslint/parser": "^8.50.1",
+    "concurrently": "^9.2.1",
+    "css-loader": "^7.1.2",
+    "electron": "^39.2.7",
+    "electron-builder": "^26.0.12",
+    "electron-updater": "^6.6.2",
+    "eslint": "^9.39.2",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "html-webpack-plugin": "^5.6.5",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3",
+    "style-loader": "^4.0.0",
+    "ts-loader": "^9.5.4",
+    "typescript": "^5.9.3",
+    "wait-on": "^9.0.3",
+    "webpack": "^5.104.1",
+    "webpack-cli": "^6.0.1",
+    "webpack-dev-server": "^5.2.2"
+  },
+  "dependencies": {
+    "@tanstack/react-query": "^5.90.12",
+    "@types/react-router-dom": "^5.3.3",
+    "@types/react-window": "^1.8.8",
+    "@types/ws": "^8.18.1",
+    "axios": "^1.13.2",
+    "keytar": "^7.9.0",
+    "react-router-dom": "^7.11.0",
+    "react-window": "^2.2.3",
+    "ws": "^8.18.3",
+    "zustand": "^5.0.9"
+  }
+}

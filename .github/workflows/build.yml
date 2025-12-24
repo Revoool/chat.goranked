@@ -1,0 +1,147 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-mac:
+    runs-on: macos-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      
+      - name: Install dependencies
+        run: |
+          echo "Installing dependencies..."
+          npm ci
+          echo "Dependencies installed successfully"
+          echo "Verifying installation..."
+          npm list --depth=0 || true
+      
+      - name: Check project structure
+        run: |
+          echo "Checking project structure..."
+          ls -la
+          echo "Checking for dist directory..."
+          ls -la dist/ || echo "dist directory not found"
+          echo "Checking for assets..."
+          ls -la assets/ || echo "assets directory not found (will use default icons)"
+      
+      - name: Build for macOS
+        run: |
+          set -e
+          echo "Current directory: $(pwd)"
+          echo "Node version: $(node --version)"
+          echo "NPM version: $(npm --version)"
+          echo "Building macOS app (this will run all build steps)..."
+          npm run build:mac 2>&1
+        env:
+          NODE_ENV: production
+      
+      - name: Organize release files
+        run: |
+          mkdir -p release/mac release/windows
+          mv release/*.dmg release/mac/ 2>/dev/null || true
+          mv release/*.blockmap release/mac/ 2>/dev/null || true
+          mv release/mac* release/mac/ 2>/dev/null || true
+      
+      - name: Upload macOS artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-build
+          path: release/mac/*.dmg
+          if-no-files-found: warn
+      
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            release/mac/*.dmg
+            release/latest-mac.yml
+          tag_name: ${{ github.ref }}
+          name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build-windows:
+    runs-on: windows-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      
+      - name: Install dependencies
+        run: |
+          echo "Installing dependencies..."
+          npm ci
+          echo "Dependencies installed successfully"
+          echo "Verifying installation..."
+          npm list --depth=0 || true
+      
+      - name: Check project structure
+        shell: pwsh
+        run: |
+          Write-Host "Checking project structure..."
+          Get-ChildItem -Force
+          Write-Host "Checking for dist directory..."
+          if (Test-Path dist) { Get-ChildItem dist } else { Write-Host "dist directory not found" }
+          Write-Host "Checking for assets..."
+          if (Test-Path assets) { Get-ChildItem assets } else { Write-Host "assets directory not found (will use default icons)" }
+      
+      - name: Build for Windows
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          Write-Host "Current directory: $(Get-Location)"
+          Write-Host "Node version: $(node --version)"
+          Write-Host "NPM version: $(npm --version)"
+          Write-Host "Building Windows app (this will run all build steps)..."
+          npm run build:win 2>&1
+        env:
+          NODE_ENV: production
+      
+      - name: Organize release files
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path release/mac, release/windows | Out-Null
+          Move-Item -Path release/*.exe -Destination release/windows/ -ErrorAction SilentlyContinue
+          Move-Item -Path release/*.blockmap -Destination release/windows/ -ErrorAction SilentlyContinue
+          Move-Item -Path release/win* -Destination release/windows/ -ErrorAction SilentlyContinue
+          Write-Host "Release folder contents:"
+          Get-ChildItem -Path release/ -Recurse | Format-Table Name, Length
+          Write-Host "Windows folder contents:"
+          Get-ChildItem -Path release/windows/ -ErrorAction SilentlyContinue | Format-Table Name, Length
+      
+      - name: Upload Windows artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-build
+          path: release/windows/*.exe
+          if-no-files-found: warn
+      
+      - name: Upload to Release (Windows)
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            release/windows/*.exe
+            release/latest.yml
+          tag_name: ${{ github.ref }}
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
+

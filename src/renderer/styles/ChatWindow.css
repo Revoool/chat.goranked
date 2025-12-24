@@ -1,0 +1,119 @@
+.chat-window {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  background: var(--graphite-dark);
+  height: 100vh;
+}
+
+.chat-window-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--graphite-medium);
+  -webkit-app-region: drag; /* Allow window dragging from header */
+  user-select: none; /* Prevent text selection while dragging */
+}
+
+.chat-header-info h3 {
+  font-family: 'Gilroy', sans-serif;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.chat-header-source {
+  font-size: 12px;
+  color: var(--text-muted);
+  text-transform: capitalize;
+}
+
+.chat-header-actions {
+  display: flex;
+  gap: 8px;
+  -webkit-app-region: no-drag; /* Buttons should be clickable */
+}
+
+.chat-action-btn {
+  padding: 6px 12px;
+  background: var(--graphite-light);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  color: var(--text-secondary);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  -webkit-app-region: no-drag; /* Buttons should be clickable */
+}
+
+.chat-action-btn:hover {
+  background: var(--flame-orange);
+  color: white;
+  border-color: var(--flame-orange);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(255, 107, 0, 0.3);
+}
+
+.info-btn {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--graphite-light);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  -webkit-app-region: no-drag;
+  position: relative;
+}
+
+.info-btn:hover {
+  background: var(--flame-orange);
+  color: white;
+  border-color: var(--flame-orange);
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 4px 12px rgba(255, 107, 0, 0.4);
+}
+
+.info-btn.active {
+  background: var(--flame-orange);
+  color: white;
+  border-color: var(--flame-orange);
+  box-shadow: 0 0 0 3px rgba(255, 107, 0, 0.2);
+}
+
+.info-btn svg {
+  transition: transform 0.3s ease;
+}
+
+.info-btn:hover svg {
+  transform: rotate(180deg);
+}
+
+.info-btn.active svg {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.chat-window-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  color: var(--text-muted);
+}
+
