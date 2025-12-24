@@ -21,7 +21,12 @@ jobs:
         run: npm ci
       
       - name: Build for macOS
-        run: npm run build:mac
+        run: |
+          npm run build:main
+          npm run build:preload
+          npm run build:renderer
+          npm run copy:assets
+          npm run build:mac
         env:
           NODE_ENV: production
       
@@ -65,7 +70,12 @@ jobs:
         run: npm ci
       
       - name: Build for Windows
-        run: npm run build:win
+        run: |
+          npm run build:main
+          npm run build:preload
+          npm run build:renderer
+          npm run copy:assets
+          npm run build:win
         env:
           NODE_ENV: production
       
@@ -75,14 +85,17 @@ jobs:
           mv release/*.exe release/windows/ 2>/dev/null || true
           mv release/*.blockmap release/windows/ 2>/dev/null || true
           mv release/win* release/windows/ 2>/dev/null || true
+          ls -la release/
+          ls -la release/windows/ || echo "windows folder empty"
       
       - name: Upload Windows artifacts
         uses: actions/upload-artifact@v3
         with:
           name: windows-build
           path: release/windows/*.exe
+          if-no-files-found: warn
       
-      - name: Upload to Release
+      - name: Upload to Release (Windows)
         uses: softprops/action-gh-release@v1
         with:
           files: release/windows/*.exe
@@ -90,4 +103,5 @@ jobs:
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
 
