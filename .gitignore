@@ -1,6 +1,8 @@
 node_modules/
 dist/
 release/
+release.zip
+*.zip
 *.log
 .DS_Store
 .env

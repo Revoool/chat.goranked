@@ -46,16 +46,24 @@ const Settings: React.FC = () => {
     try {
       const result = await window.electronAPI.checkForUpdates();
       if (result.success) {
-        setUpdateStatus('Проверка обновлений запущена. Если доступна новая версия, вы получите уведомление.');
+        if (result.updateInfo && result.updateInfo.version) {
+          setUpdateStatus(`Доступна новая версия: ${result.updateInfo.version}. Загрузка начнется автоматически.`);
+        } else {
+          setUpdateStatus(result.message || 'Проверка обновлений запущена. Если доступна новая версия, вы получите уведомление.');
+        }
       } else {
-        setUpdateStatus(result.message || result.error || 'Ошибка при проверке обновлений');
+        const errorMsg = result.message || result.error || 'Ошибка при проверке обновлений';
+        setUpdateStatus(errorMsg);
+        console.error('Update check failed:', result);
       }
     } catch (error: any) {
-      setUpdateStatus('Ошибка: ' + (error.message || 'Неизвестная ошибка'));
+      const errorMsg = 'Ошибка: ' + (error.message || 'Неизвестная ошибка');
+      setUpdateStatus(errorMsg);
+      console.error('Update check error:', error);
     } finally {
       setIsCheckingUpdates(false);
-      // Clear status message after 5 seconds
-      setTimeout(() => setUpdateStatus(null), 5000);
+      // Clear status message after 10 seconds (longer for errors)
+      setTimeout(() => setUpdateStatus(null), 10000);
     }
   };
   

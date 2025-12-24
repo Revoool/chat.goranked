@@ -13,5 +13,17 @@ contextBridge.exposeInMainWorld('electronAPI', {
       ipcRenderer.removeAllListeners('update-available');
     };
   },
+  onUpdateNotAvailable: (callback: (info: any) => void) => {
+    ipcRenderer.on('update-not-available', (_event, info) => callback(info));
+    return () => {
+      ipcRenderer.removeAllListeners('update-not-available');
+    };
+  },
+  onUpdateError: (callback: (error: any) => void) => {
+    ipcRenderer.on('update-error', (_event, error) => callback(error));
+    return () => {
+      ipcRenderer.removeAllListeners('update-error');
+    };
+  },
 });
 

@@ -145,10 +145,20 @@ jobs:
           Move-Item -Path release/*.exe -Destination release/windows/ -ErrorAction SilentlyContinue
           Move-Item -Path release/*.blockmap -Destination release/windows/ -ErrorAction SilentlyContinue
           Move-Item -Path release/win* -Destination release/windows/ -ErrorAction SilentlyContinue
+          # Keep latest.yml in root for electron-updater
           Write-Host "Release folder contents:"
           Get-ChildItem -Path release/ -Recurse | Format-Table Name, Length
           Write-Host "Windows folder contents:"
           Get-ChildItem -Path release/windows/ -ErrorAction SilentlyContinue | Format-Table Name, Length
+          Write-Host "Checking for latest.yml:"
+          if (Test-Path release/latest.yml) {
+            Write-Host "✓ latest.yml found in release/"
+            Get-Content release/latest.yml
+          } else {
+            Write-Host "✗ latest.yml NOT found in release/"
+            Write-Host "Searching for yml files:"
+            Get-ChildItem -Path release/ -Filter "*.yml" -Recurse | Format-Table FullName
+          }
       
       - name: Upload Windows artifacts
         uses: actions/upload-artifact@v4

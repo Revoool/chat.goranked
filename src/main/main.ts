@@ -232,33 +232,55 @@ if (app.isPackaged) {
   // Use GitHub Releases for updates
   // Set UPDATE_URL environment variable to use custom server, otherwise uses GitHub
   const updateUrl = process.env.UPDATE_URL;
+  const githubOwner = process.env.GITHUB_OWNER || 'Revoool';
+  const githubRepo = process.env.GITHUB_REPO || 'chat.goranked';
+  
+  console.log('🔧 Configuring auto-updater...');
+  console.log('  - Owner:', githubOwner);
+  console.log('  - Repo:', githubRepo);
+  console.log('  - Current version:', app.getVersion());
   
   if (updateUrl) {
     // Custom update server
+    console.log('  - Using custom update URL:', updateUrl);
     autoUpdater.setFeedURL({
       provider: 'generic',
       url: updateUrl,
     });
   } else {
     // GitHub Releases (default)
+    console.log('  - Using GitHub Releases');
     autoUpdater.setFeedURL({
       provider: 'github',
-      owner: process.env.GITHUB_OWNER || 'Revoool',
-      repo: process.env.GITHUB_REPO || 'chat.goranked',
+      owner: githubOwner,
+      repo: githubRepo,
     });
   }
 
+  // Configure auto-updater options
+  autoUpdater.autoDownload = true;
+  autoUpdater.autoInstallOnAppQuit = true;
+  
   // Check for updates on startup
-  autoUpdater.checkForUpdatesAndNotify();
+  console.log('🔄 Checking for updates on startup...');
+  autoUpdater.checkForUpdatesAndNotify().catch((err) => {
+    console.error('❌ Error checking for updates on startup:', err);
+  });
   
   // Check for updates every 30 minutes (чаще проверяем обновления)
   setInterval(() => {
-    autoUpdater.checkForUpdatesAndNotify();
+    console.log('🔄 Periodic update check...');
+    autoUpdater.checkForUpdatesAndNotify().catch((err) => {
+      console.error('❌ Error in periodic update check:', err);
+    });
   }, 30 * 60 * 1000);
   
   // Также проверяем при активации окна (когда пользователь возвращается к приложению)
   app.on('activate', () => {
-    autoUpdater.checkForUpdatesAndNotify();
+    console.log('🔄 Checking for updates on app activate...');
+    autoUpdater.checkForUpdatesAndNotify().catch((err) => {
+      console.error('❌ Error checking for updates on activate:', err);
+    });
   });
 
   // Auto-updater events
@@ -317,6 +339,31 @@ if (app.isPackaged) {
 
   autoUpdater.on('error', (error) => {
     console.error('❌ Auto-updater error:', error);
+    console.error('Error details:', {
+      message: error.message,
+      stack: error.stack,
+      name: error.name,
+    });
+    if (mainWindow) {
+      mainWindow.webContents.send('update-error', {
+        message: error.message || 'Unknown error',
+        error: String(error),
+      });
+    }
+  });
+
+  autoUpdater.on('checking-for-update', () => {
+    console.log('🔍 Checking for update...');
+  });
+
+  autoUpdater.on('update-not-available', (info) => {
+    console.log('✅ No updates available. Current version:', app.getVersion());
+    if (mainWindow) {
+      mainWindow.webContents.send('update-not-available', {
+        version: app.getVersion(),
+        message: 'Установлена последняя версия',
+      });
+    }
   });
 }
 
@@ -396,23 +443,60 @@ ipcMain.handle('delete-token', async () => {
 // IPC handler for checking updates manually
 ipcMain.handle('check-for-updates', async () => {
   if (!app.isPackaged) {
-    return { success: false, message: 'Updates are only available in production builds' };
+    return { 
+      success: false, 
+      message: 'Updates are only available in production builds',
+      error: 'Development mode'
+    };
   }
   
   try {
     console.log('🔄 Manual update check requested');
+    console.log('  - Current version:', app.getVersion());
+    console.log('  - Feed URL:', autoUpdater.getFeedURL());
+    
     const result = await autoUpdater.checkForUpdates();
+    console.log('  - Check result:', result);
+    
+    if (result && result.updateInfo) {
+      console.log('  - Update info:', {
+        version: result.updateInfo.version,
+        releaseDate: result.updateInfo.releaseDate,
+        path: result.updateInfo.path,
+      });
+    }
+    
     return { 
       success: true, 
-      message: 'Проверка обновлений запущена',
-      updateInfo: result?.updateInfo || null
+      message: 'Проверка обновлений запущена. Если доступна новая версия, вы получите уведомление.',
+      updateInfo: result?.updateInfo || null,
+      currentVersion: app.getVersion(),
     };
   } catch (error: any) {
     console.error('❌ Error checking for updates:', error);
+    console.error('  - Error type:', error?.constructor?.name);
+    console.error('  - Error message:', error?.message);
+    console.error('  - Error stack:', error?.stack);
+    
+    // Provide more detailed error message
+    let errorMessage = 'Ошибка при проверке обновлений';
+    if (error?.message) {
+      if (error.message.includes('404') || error.message.includes('Not Found')) {
+        errorMessage = 'Релиз не найден. Убедитесь, что релиз создан на GitHub.';
+      } else if (error.message.includes('403') || error.message.includes('Forbidden')) {
+        errorMessage = 'Доступ запрещен. Проверьте настройки репозитория.';
+      } else if (error.message.includes('network') || error.message.includes('ENOTFOUND')) {
+        errorMessage = 'Ошибка сети. Проверьте подключение к интернету.';
+      } else {
+        errorMessage = `Ошибка: ${error.message}`;
+      }
+    }
+    
     return { 
       success: false, 
       error: error?.message || String(error),
-      message: 'Ошибка при проверке обновлений'
+      message: errorMessage,
+      currentVersion: app.getVersion(),
     };
   }
 });
