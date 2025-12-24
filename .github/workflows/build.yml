@@ -47,10 +47,21 @@ jobs:
       
       - name: Organize release files
         run: |
+          echo "Listing release directory contents:"
+          ls -la release/ || echo "Release directory not found"
+          echo "Finding DMG files:"
+          find release -name "*.dmg" -type f || echo "No DMG files found"
+          echo "Finding YML files:"
+          find release -name "*.yml" -type f || echo "No YML files found"
           mkdir -p release/mac release/windows
           mv release/*.dmg release/mac/ 2>/dev/null || true
           mv release/*.blockmap release/mac/ 2>/dev/null || true
           mv release/mac* release/mac/ 2>/dev/null || true
+          # Find and move latest-mac.yml or mac.yml files
+          find release -name "*mac*.yml" -type f -exec mv {} release/mac/ \; 2>/dev/null || true
+          find release -name "latest*.yml" -type f -exec mv {} release/mac/ \; 2>/dev/null || true
+          echo "Mac release folder contents:"
+          ls -la release/mac/ || echo "Mac folder is empty"
       
       - name: Upload macOS artifacts
         uses: actions/upload-artifact@v4
@@ -59,19 +70,17 @@ jobs:
           path: release/mac/*.dmg
           if-no-files-found: warn
       
-      - name: Create Release
+      - name: Upload to Release (macOS)
         uses: softprops/action-gh-release@v1
         with:
           files: |
             release/mac/*.dmg
-            release/latest-mac.yml
+            release/mac/*.yml
           tag_name: ${{ github.ref }}
-          name: Release ${{ github.ref }}
-          draft: false
-          prerelease: false
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
 
   build-windows:
     runs-on: windows-latest
