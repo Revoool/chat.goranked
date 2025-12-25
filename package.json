@@ -1,6 +1,6 @@
 {
   "name": "goranked-chat-desk",
-  "version": "1.0.31",
+  "version": "1.0.32",
   "description": "GoRanked Chat Desk - Desktop application for support operators",
   "main": "dist/main.js",
   "author": "GoRanked",
@@ -140,6 +140,7 @@
     "webpack-dev-server": "^5.2.2"
   },
   "dependencies": {
+    "@tabler/icons-react": "^3.36.0",
     "@tanstack/react-query": "^5.90.12",
     "@types/react-router-dom": "^5.3.3",
     "@types/react-window": "^1.8.8",

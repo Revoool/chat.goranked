@@ -1,0 +1,148 @@
+.icon-button-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.icon-button {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--graphite-light);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  -webkit-app-region: no-drag;
+  padding: 0;
+  outline: none;
+}
+
+.icon-button:hover {
+  background: var(--flame-orange);
+  color: white;
+  border-color: var(--flame-orange);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(255, 107, 0, 0.3);
+}
+
+.icon-button.active {
+  background: var(--flame-orange);
+  color: white;
+  border-color: var(--flame-orange);
+  box-shadow: 0 0 0 3px rgba(255, 107, 0, 0.2);
+}
+
+.icon-button.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.icon-button.disabled:hover {
+  background: var(--graphite-light);
+  color: var(--text-secondary);
+  border-color: var(--border-color);
+  transform: none;
+  box-shadow: none;
+}
+
+.icon-button svg {
+  width: 18px;
+  height: 18px;
+  stroke-width: 1.5;
+}
+
+.icon-button-tooltip {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(-8px);
+  background: var(--graphite-dark);
+  color: var(--text-primary);
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  z-index: 1000;
+  border: 1px solid var(--border-color);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  margin-bottom: 4px;
+}
+
+.icon-button-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: var(--graphite-dark);
+}
+
+.icon-button-wrapper:hover .icon-button-tooltip {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* Special styles for skipped button */
+.icon-button.skipped {
+  background: rgba(156, 39, 176, 0.2);
+  border-color: #9c27b0;
+  color: #9c27b0;
+}
+
+.icon-button.skipped:hover {
+  background: #9c27b0;
+  color: white;
+  border-color: #9c27b0;
+}
+
+/* Priority button styles */
+.icon-button.priority-btn {
+  position: relative;
+}
+
+.icon-button.priority-btn.priority-urgent {
+  background: rgba(244, 67, 54, 0.2);
+  border-color: #f44336;
+  color: #f44336;
+}
+
+.icon-button.priority-btn.priority-urgent:hover {
+  background: #f44336;
+  color: white;
+}
+
+.icon-button.priority-btn.priority-high {
+  background: rgba(255, 152, 0, 0.2);
+  border-color: #ff9800;
+  color: #ff9800;
+}
+
+.icon-button.priority-btn.priority-high:hover {
+  background: #ff9800;
+  color: white;
+}
+
+.icon-button.priority-btn.priority-low {
+  background: rgba(76, 175, 80, 0.2);
+  border-color: #4caf50;
+  color: #4caf50;
+}
+
+.icon-button.priority-btn.priority-low:hover {
+  background: #4caf50;
+  color: white;
+}
+
+.icon-button.priority-btn.priority-normal {
+  background: var(--graphite-light);
+  border-color: var(--border-color);
+  color: var(--text-secondary);
+}
+

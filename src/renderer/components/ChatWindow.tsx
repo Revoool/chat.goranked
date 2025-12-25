@@ -4,6 +4,18 @@ import { apiClient } from '../api/client';
 import { useChatStore } from '../store/chatStore';
 import { wsClient } from '../api/websocket';
 import { useAuthStore } from '../store/authStore';
+import { 
+  IconInfoCircle, 
+  IconUserPlus, 
+  IconCircleCheck, 
+  IconTags, 
+  IconShoppingCart,
+  IconX,
+  IconFlag,
+  IconFlag2,
+  IconFlag3,
+  IconFlagOff
+} from '@tabler/icons-react';
 import MessageList from './MessageList';
 import MessageInput from './MessageInput';
 import AssignModal from './AssignModal';
@@ -11,6 +23,7 @@ import StatusModal from './StatusModal';
 import TagsModal from './TagsModal';
 import PriorityModal from './PriorityModal';
 import ClientOrdersModal from './ClientOrdersModal';
+import IconButton from './IconButton';
 import '../styles/ChatWindow.css';
 
 interface ChatWindowProps {
@@ -207,52 +220,35 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId }) => {
           <span className="chat-header-source">{source}</span>
         </div>
         <div className="chat-header-actions">
-          <button 
-            className={`info-btn ${isClientCardOpen ? 'active' : ''}`}
+          <IconButton
+            icon={<IconInfoCircle />}
             onClick={toggleClientCard}
             title="Інформація про клієнта"
-          >
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="10" cy="10" r="9" stroke="currentColor" strokeWidth="1.5" fill="none"/>
-              <path d="M10 7V10M10 13H10.01" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-            </svg>
-          </button>
-          <button 
-            className="chat-action-btn"
+            active={isClientCardOpen}
+          />
+          <IconButton
+            icon={<IconUserPlus />}
             onClick={() => setShowAssignModal(true)}
-          >
-            Призначити
-          </button>
-          <button 
-            className={`chat-action-btn ${displayChat?.status === 'in_progress' ? 'active' : ''}`}
+            title="Призначити"
+          />
+          <IconButton
+            icon={<IconCircleCheck />}
             onClick={() => setShowStatusModal(true)}
-          >
-            Статус
-          </button>
-          <button 
-            className="chat-action-btn"
+            title="Статус"
+            active={displayChat?.status === 'in_progress'}
+          />
+          <IconButton
+            icon={<IconTags />}
             onClick={() => setShowTagsModal(true)}
-          >
-            Теги
-          </button>
-          <button 
-            className="chat-action-btn"
+            title="Теги"
+          />
+          <IconButton
+            icon={<IconShoppingCart />}
             onClick={() => setShowClientOrdersModal(true)}
             title="Замовлення клієнта"
-          >
-            <svg width="18" height="18" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path
-                d="M3 3H17L15 12H5L3 3ZM3 3L2 1M6 16H10M14 16H10M10 16V14"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-            Замовлення
-          </button>
-          <button 
-            className={`chat-action-btn ${displayChat?.metadata?.no_response_needed ? 'skipped' : ''}`}
+          />
+          <IconButton
+            icon={<IconX />}
             onClick={async () => {
               if (!displayChat) return;
               try {
@@ -268,30 +264,19 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId }) => {
               }
             }}
             title={displayChat?.metadata?.no_response_needed ? 'Повернути в список' : 'Скинути (не потребує відповіді)'}
-          >
-            <svg width="18" height="18" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path
-                d="M15 5L5 15M5 5L15 15"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-            {displayChat?.metadata?.no_response_needed ? 'Повернути' : 'Скинути'}
-          </button>
-          <button 
-            className={`chat-action-btn priority-btn priority-${displayChat?.priority || 'normal'}`}
+            className={displayChat?.metadata?.no_response_needed ? 'skipped' : ''}
+          />
+          <IconButton
+            icon={
+              displayChat?.priority === 'urgent' ? <IconFlag3 /> :
+              displayChat?.priority === 'high' ? <IconFlag2 /> :
+              displayChat?.priority === 'low' ? <IconFlagOff /> :
+              <IconFlag />
+            }
             onClick={() => setShowPriorityModal(true)}
             title={`Пріоритет: ${displayChat?.priority || 'normal'}`}
-          >
-            <span className="priority-icon">
-              {displayChat?.priority === 'urgent' ? '🔴' : 
-               displayChat?.priority === 'high' ? '⬆️' : 
-               displayChat?.priority === 'low' ? '⬇️' : '➡️'}
-            </span>
-            Пріоритет
-          </button>
+            className={`priority-btn priority-${displayChat?.priority || 'normal'}`}
+          />
         </div>
       </div>
 
