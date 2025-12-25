@@ -20,6 +20,7 @@ const Settings: React.FC = () => {
   const { user } = useAuthStore();
   const [appVersion, setAppVersion] = useState<string>("1.0.0");
   const [isCheckingUpdates, setIsCheckingUpdates] = useState(false);
+  const [downloadProgress, setDownloadProgress] = useState<number | null>(null);
   const [updateStatus, setUpdateStatus] = useState<string | null>(null);
 
   useEffect(() => {

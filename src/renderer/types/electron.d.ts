@@ -7,6 +7,7 @@ export interface ElectronAPI {
   onUpdateAvailable: (callback: (info: any) => void) => (() => void) | undefined;
   onUpdateNotAvailable: (callback: (info: any) => void) => (() => void) | undefined;
   onUpdateError: (callback: (error: any) => void) => (() => void) | undefined;
+  onUpdateDownloadProgress: (callback: (progress: any) => void) => (() => void) | undefined;
 }
 
 declare global {

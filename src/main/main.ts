@@ -277,6 +277,18 @@ if (app.isPackaged) {
   autoUpdater.autoDownload = true;
   autoUpdater.autoInstallOnAppQuit = true;
   
+  // Log download progress
+  autoUpdater.on('download-progress', (progressObj) => {
+    console.log('📥 Download progress:', {
+      percent: progressObj.percent,
+      transferred: progressObj.transferred,
+      total: progressObj.total,
+    });
+    if (mainWindow) {
+      mainWindow.webContents.send('update-download-progress', progressObj);
+    }
+  });
+  
   // Check for updates on startup
   console.log('🔄 Checking for updates on startup...');
   autoUpdater.checkForUpdatesAndNotify().catch((err) => {
@@ -494,7 +506,8 @@ ipcMain.handle('check-for-updates', async () => {
       console.log('  - Resources path:', process.resourcesPath);
     }
     
-    const result = await autoUpdater.checkForUpdates();
+    // Use checkForUpdatesAndNotify to automatically download if update is available
+    const result = await autoUpdater.checkForUpdatesAndNotify();
     console.log('  - Check result:', result);
     console.log('  - Check result type:', typeof result);
     
@@ -504,9 +517,10 @@ ipcMain.handle('check-for-updates', async () => {
         releaseDate: result.updateInfo.releaseDate,
         path: result.updateInfo.path,
       });
+      console.log('  - Download will start automatically (autoDownload is enabled)');
       return { 
         success: true, 
-        message: `Доступна новая версия: ${result.updateInfo.version}. Загрузка начнется автоматически.`,
+        message: `Доступна нова версія: ${result.updateInfo.version}. Завантаження почнеться автоматично.`,
         updateInfo: result.updateInfo,
         currentVersion: app.getVersion(),
       };
@@ -515,7 +529,7 @@ ipcMain.handle('check-for-updates', async () => {
     // If no update info but no error, update check is in progress
     return { 
       success: true, 
-      message: 'Проверка обновлений запущена. Если доступна новая версия, вы получите уведомление.',
+      message: 'Перевірка оновлень запущена. Якщо доступна нова версія, завантаження почнеться автоматично.',
       updateInfo: null,
       currentVersion: app.getVersion(),
     };

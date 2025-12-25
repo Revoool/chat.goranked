@@ -25,5 +25,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
       ipcRenderer.removeAllListeners('update-error');
     };
   },
+  onUpdateDownloadProgress: (callback: (progress: any) => void) => {
+    ipcRenderer.on('update-download-progress', (_event, progress) => callback(progress));
+    return () => {
+      ipcRenderer.removeAllListeners('update-download-progress');
+    };
+  },
 });
 
