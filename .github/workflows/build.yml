@@ -230,7 +230,7 @@ jobs:
           Write-Host "Node version: $(node --version)"
           Write-Host "NPM version: $(npm --version)"
           Write-Host "Building Windows app (this will run all build steps)..."
-          npm run build:win 2>&1
+          npm run build:win:installer 2>&1
         env:
           NODE_ENV: production
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
