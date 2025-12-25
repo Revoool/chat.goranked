@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { Message } from '../types';
-import { IconPin } from '@tabler/icons-react';
+import { IconPin } from '../icons';
 import MessageItem from './MessageItem';
 import '../styles/MessageList.css';
 

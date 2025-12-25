@@ -15,7 +15,7 @@ import {
   IconFlag2,
   IconFlag3,
   IconFlagOff
-} from '@tabler/icons-react';
+} from '../icons';
 import MessageList from './MessageList';
 import MessageInput from './MessageInput';
 import AssignModal from './AssignModal';
