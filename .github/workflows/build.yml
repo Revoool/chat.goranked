@@ -39,12 +39,15 @@ jobs:
       
       - name: Build for macOS
         run: |
-          set -e
           echo "Current directory: $(pwd)"
           echo "Node version: $(node --version)"
           echo "NPM version: $(npm --version)"
           echo "Building macOS app (this will run all build steps)..."
-          npm run build:mac 2>&1
+          npm run build:mac || {
+            echo "❌ Build failed, but continuing to check what was created..."
+            ls -la release/ || echo "Release directory not found"
+            exit 1
+          }
         env:
           NODE_ENV: production
       
