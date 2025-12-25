@@ -16,3 +16,29 @@
   font-size: 14px;
 }
 
+.pinned-messages-section {
+  margin-bottom: 16px;
+  padding: 12px;
+  background: var(--graphite-medium);
+  border-left: 3px solid var(--flame-orange);
+  border-radius: 8px;
+}
+
+.pinned-messages-header {
+  margin-bottom: 8px;
+}
+
+.pinned-messages-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.pinned-messages-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
