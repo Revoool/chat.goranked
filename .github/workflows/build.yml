@@ -115,7 +115,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       
-      - name: Delete existing release assets (macOS)
+      - name: Delete existing macOS release assets only
         run: |
           echo "Checking for existing release assets..."
           RELEASE_ID=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
@@ -124,19 +124,26 @@ jobs:
           
           if [ -n "$RELEASE_ID" ] && [ "$RELEASE_ID" != "None" ]; then
             echo "Found release ID: $RELEASE_ID"
-            echo "Deleting existing assets to avoid conflicts..."
+            echo "Deleting only macOS-related assets to avoid conflicts..."
             ASSETS=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
               "https://api.github.com/repos/${{ github.repository }}/releases/$RELEASE_ID/assets" | \
-              python3 -c "import sys, json; assets=json.load(sys.stdin); print(' '.join([str(a['id']) for a in assets]))" 2>/dev/null)
+              python3 -c "import sys, json; assets=json.load(sys.stdin); [print(f\"{a['id']}|{a['name']}\") for a in assets]" 2>/dev/null)
             
-            for asset_id in $ASSETS; do
-              if [ -n "$asset_id" ]; then
-                echo "Deleting asset ID: $asset_id"
-                curl -X DELETE -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-                  "https://api.github.com/repos/${{ github.repository }}/releases/assets/$asset_id" || true
+            for asset_info in $ASSETS; do
+              if [ -n "$asset_info" ]; then
+                asset_id=$(echo "$asset_info" | cut -d'|' -f1)
+                asset_name=$(echo "$asset_info" | cut -d'|' -f2)
+                # Delete only macOS-related files (dmg, mac yml, mac blockmap, mac zip)
+                if echo "$asset_name" | grep -qE "\.(dmg|blockmap)$|latest-mac|mac.*\.(yml|zip)$" || echo "$asset_name" | grep -qi "mac"; then
+                  echo "Deleting macOS asset: $asset_name (ID: $asset_id)"
+                  curl -X DELETE -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+                    "https://api.github.com/repos/${{ github.repository }}/releases/assets/$asset_id" || true
+                else
+                  echo "Keeping non-macOS asset: $asset_name"
+                fi
               fi
             done
-            echo "Existing assets deleted"
+            echo "macOS assets cleanup completed"
           else
             echo "No existing release found"
           fi
@@ -309,6 +316,36 @@ jobs:
           generate_release_notes: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Delete existing Windows release assets only
+        shell: pwsh
+        run: |
+          Write-Host "Checking for existing release assets..."
+          $headers = @{
+            Authorization = "token ${{ secrets.GITHUB_TOKEN }}"
+          }
+          try {
+            $release = Invoke-RestMethod -Uri "https://api.github.com/repos/${{ github.repository }}/releases/tags/${{ github.ref_name }}" -Headers $headers
+            if ($release.id) {
+              Write-Host "Found release ID: $($release.id)"
+              Write-Host "Deleting only Windows-related assets to avoid conflicts..."
+              $assets = Invoke-RestMethod -Uri "https://api.github.com/repos/${{ github.repository }}/releases/$($release.id)/assets" -Headers $headers
+              foreach ($asset in $assets) {
+                # Delete only Windows-related files (exe, win yml, win blockmap)
+                if ($asset.name -match "\.(exe|blockmap)$|latest\.yml$|win.*\.(yml|zip)$" -or $asset.name -match "Windows|Setup") {
+                  Write-Host "Deleting Windows asset: $($asset.name) (ID: $($asset.id))"
+                  Invoke-RestMethod -Uri "https://api.github.com/repos/${{ github.repository }}/releases/assets/$($asset.id)" -Method Delete -Headers $headers -ErrorAction SilentlyContinue
+                } else {
+                  Write-Host "Keeping non-Windows asset: $($asset.name)"
+                }
+              }
+              Write-Host "Windows assets cleanup completed"
+            }
+          } catch {
+            Write-Host "No existing release found or error: $($_.Exception.Message)"
+          }
+        continue-on-error: true
+        if: always()
       
       - name: Upload to Release (Windows)
         uses: softprops/action-gh-release@v1
