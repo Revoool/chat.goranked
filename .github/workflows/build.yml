@@ -50,21 +50,27 @@ jobs:
       
       - name: Organize release files
         run: |
-          echo "Listing release directory contents:"
-          ls -la release/ || echo "Release directory not found"
-          echo "Finding DMG files:"
+          echo "=== Listing ALL files in release directory ==="
+          find release -type f 2>/dev/null | sort || echo "Release directory not found"
+          echo ""
+          echo "=== Finding DMG files ==="
           find release -name "*.dmg" -type f || echo "No DMG files found"
-          echo "Finding YML files:"
+          echo ""
+          echo "=== Finding ALL YML files ==="
           find release -name "*.yml" -type f || echo "No YML files found"
+          echo ""
+          echo "=== Organizing files ==="
           mkdir -p release/mac
-          mv release/*.dmg release/mac/ 2>/dev/null || true
-          mv release/*.blockmap release/mac/ 2>/dev/null || true
-          mv release/mac* release/mac/ 2>/dev/null || true
-          # Keep latest-mac.yml files in root for electron-updater (don't move them)
-          echo "Mac release folder contents:"
+          # Move DMG files to mac folder
+          find release -maxdepth 1 -name "*.dmg" -type f -exec mv {} release/mac/ \; 2>/dev/null || true
+          find release -maxdepth 1 -name "*.blockmap" -type f -exec mv {} release/mac/ \; 2>/dev/null || true
+          # Keep ALL YML files in root for electron-updater (don't move them)
+          echo ""
+          echo "=== Mac release folder contents ==="
           ls -la release/mac/ || echo "Mac folder is empty"
-          echo "Root release folder YML files (for electron-updater):"
-          find release -maxdepth 1 -name "*mac*.yml" -type f || echo "No mac YML files in root"
+          echo ""
+          echo "=== Root release folder YML files (for electron-updater) ==="
+          find release -maxdepth 1 -name "*.yml" -type f || echo "No YML files in root"
       
       - name: Upload macOS artifacts
         uses: actions/upload-artifact@v4
@@ -78,7 +84,7 @@ jobs:
         with:
           files: |
             release/mac/*.dmg
-            release/*mac*.yml
+            release/*.yml
           tag_name: ${{ github.ref_name }}
           body: |
             ## macOS Build
