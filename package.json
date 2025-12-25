@@ -1,6 +1,6 @@
 {
   "name": "goranked-chat-desk",
-  "version": "1.0.24",
+  "version": "1.0.26",
   "description": "GoRanked Chat Desk - Desktop application for support operators",
   "main": "dist/main.js",
   "author": "GoRanked",
@@ -79,6 +79,13 @@
         "filter": [
           "**/*"
         ]
+      },
+      {
+        "from": "build/icon.png",
+        "to": "icon.png",
+        "filter": [
+          "**/*"
+        ]
       }
     ],
     "publish": [
@@ -101,7 +108,10 @@
       "displayLanguageSelector": true,
       "multiLanguageInstaller": true,
       "language": "1049",
-      "installerLanguages": ["ru_RU", "en_US"]
+      "installerLanguages": [
+        "ru_RU",
+        "en_US"
+      ]
     }
   },
   "devDependencies": {

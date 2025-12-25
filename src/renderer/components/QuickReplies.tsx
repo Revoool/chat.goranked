@@ -121,44 +121,50 @@ const QuickReplies: React.FC<QuickRepliesProps> = ({ onSelect, locale = 'ru' }) 
       </button>
 
       {isExpanded && (
-        <div className="quick-replies-dropdown">
-          <div className="quick-replies-header">
-            <span>Виберіть швидку відповідь</span>
-            {availableLocales.length > 1 && (
-              <div className="quick-replies-language-selector">
-                <label htmlFor="quick-replies-lang">Мова:</label>
-                <select
-                  id="quick-replies-lang"
-                  className="quick-replies-lang-select"
-                  value={selectedLocale}
-                  onChange={(e) => setSelectedLocale(e.target.value)}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  {availableLocales.map((lang) => (
-                    <option key={lang} value={lang}>
-                      {languageNames[lang] || lang.toUpperCase()}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
+        <>
+          <div 
+            className="quick-replies-overlay"
+            onClick={() => setIsExpanded(false)}
+          />
+          <div className="quick-replies-dropdown">
+            <div className="quick-replies-header">
+              <span>Виберіть швидку відповідь</span>
+              {availableLocales.length > 1 && (
+                <div className="quick-replies-language-selector">
+                  <label htmlFor="quick-replies-lang">Мова:</label>
+                  <select
+                    id="quick-replies-lang"
+                    className="quick-replies-lang-select"
+                    value={selectedLocale}
+                    onChange={(e) => setSelectedLocale(e.target.value)}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {availableLocales.map((lang) => (
+                      <option key={lang} value={lang}>
+                        {languageNames[lang] || lang.toUpperCase()}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </div>
+            <div className="quick-replies-list">
+              {activeReplies.map((reply) => {
+                const text = reply.translations?.[selectedLocale] || reply.text;
+                return (
+                  <button
+                    key={reply.id}
+                    className="quick-reply-item"
+                    onClick={() => handleSelect(reply)}
+                    title={text}
+                  >
+                    <span className="quick-reply-text">{text}</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
-          <div className="quick-replies-list">
-            {activeReplies.map((reply) => {
-              const text = reply.translations?.[selectedLocale] || reply.text;
-              return (
-                <button
-                  key={reply.id}
-                  className="quick-reply-item"
-                  onClick={() => handleSelect(reply)}
-                  title={text}
-                >
-                  <span className="quick-reply-text">{text}</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
+        </>
       )}
     </div>
   );

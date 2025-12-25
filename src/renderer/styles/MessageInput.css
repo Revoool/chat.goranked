@@ -65,6 +65,25 @@
   flex-shrink: 0;
 }
 
+.quick-replies-container {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 0;
+  z-index: 1000;
+}
+
+.quick-replies-container .quick-replies {
+  margin-bottom: 0;
+}
+
+.quick-replies-container .quick-replies-dropdown {
+  position: relative;
+  bottom: auto;
+  left: auto;
+  width: 380px;
+  max-width: calc(100vw - 32px);
+}
+
 .message-input-quickreplies-btn {
   padding: 10px;
   background: var(--graphite-light);

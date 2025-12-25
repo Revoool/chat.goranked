@@ -242,11 +242,29 @@ export class NotificationService {
     }
 
     if (Notification.permission === 'granted') {
-      new Notification(title, {
+      const notification = new Notification(title, {
         icon: '/assets/icon.png',
         badge: '/assets/icon.png',
+        silent: options?.silent ?? false,
+        requireInteraction: options?.requireInteraction ?? false,
+        tag: options?.tag,
         ...options,
       });
+
+      // Handle notification click - focus window (Telegram-like behavior)
+      notification.onclick = () => {
+        window.focus();
+        notification.close();
+      };
+
+      // Auto-close after 5 seconds if not requiring interaction
+      if (!options?.requireInteraction) {
+        setTimeout(() => {
+          notification.close();
+        }, 5000);
+      }
+
+      return notification;
     }
   }
 
@@ -259,11 +277,32 @@ export class NotificationService {
       this.playSound();
     }
 
-    // Show OS notification
-    this.showNotification(`Новое сообщение от ${chatName}`, {
-      body: message.substring(0, 100),
+    // Clean message text (remove HTML tags, trim)
+    const cleanMessage = message
+      .replace(/<[^>]*>/g, '') // Remove HTML tags
+      .replace(/&nbsp;/g, ' ')
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .trim();
+
+    // Truncate message for notification (Telegram style: first line + ellipsis if long)
+    const maxLength = 150;
+    const truncatedMessage = cleanMessage.length > maxLength 
+      ? cleanMessage.substring(0, maxLength).trim() + '...'
+      : cleanMessage;
+
+    // Format notification like Telegram: Chat name on top, message below
+    const notificationTitle = chatName;
+    const notificationBody = truncatedMessage;
+
+    // Show OS notification with Telegram-like styling
+    this.showNotification(notificationTitle, {
+      body: notificationBody,
       tag: 'new-message',
       requireInteraction: false,
+      silent: false,
     });
   }
 

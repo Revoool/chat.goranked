@@ -1,10 +1,20 @@
 .quick-replies {
   position: relative;
-  margin-bottom: 8px;
+  margin-bottom: 0;
 }
 
 .quick-replies.compact {
   margin-bottom: 0;
+}
+
+.quick-replies-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 999;
+  background: transparent;
 }
 
 .quick-replies-toggle {
@@ -51,32 +61,30 @@
 
 .quick-replies-dropdown {
   position: absolute;
-  bottom: 100%;
+  bottom: calc(100% + 8px);
   left: 0;
-  right: 0;
-  margin-bottom: 8px;
+  width: 400px;
   background: var(--graphite-dark);
   border: 1px solid var(--border-color);
   border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  max-height: 300px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 4px 8px rgba(0, 0, 0, 0.2);
+  max-height: 400px;
   overflow: hidden;
   display: flex;
   flex-direction: column;
   z-index: 1000;
-  animation: slideDown 0.2s ease-out;
+  animation: slideUp 0.2s ease-out;
 }
 
 .quick-replies.compact .quick-replies-dropdown {
-  right: auto;
-  width: 320px;
-  margin-bottom: 8px;
+  width: 380px;
+  max-width: calc(100vw - 32px);
 }
 
-@keyframes slideDown {
+@keyframes slideUp {
   from {
     opacity: 0;
-    transform: translateY(-10px);
+    transform: translateY(10px);
   }
   to {
     opacity: 1;
@@ -166,9 +174,12 @@
 
 .quick-reply-text {
   display: block;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+  word-wrap: break-word;
+  text-align: left;
+  line-height: 1.4;
 }
 
 /* Scrollbar styling */

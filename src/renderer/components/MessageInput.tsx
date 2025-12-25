@@ -190,7 +190,7 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSend, disabled, chatId })
             onChange={handleFileSelect}
           />
           {chatId && (
-            <div className="message-input-quickreplies-wrapper" style={{ position: 'relative' }}>
+            <div className="message-input-quickreplies-wrapper">
               <button
                 ref={quickRepliesButtonRef}
                 type="button"
@@ -213,9 +213,11 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSend, disabled, chatId })
                 </svg>
               </button>
               {showQuickReplies && (
-                <QuickReplies 
-                  onSelect={handleQuickReplySelect}
-                />
+                <div className="quick-replies-container">
+                  <QuickReplies 
+                    onSelect={handleQuickReplySelect}
+                  />
+                </div>
               )}
             </div>
           )}

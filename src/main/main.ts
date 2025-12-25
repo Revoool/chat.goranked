@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, nativeTheme, dialog, Menu, globalShortcut } from 'electron';
+import { app, BrowserWindow, ipcMain, nativeTheme, dialog, Menu, globalShortcut, Tray } from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as keytar from 'keytar';
@@ -9,6 +9,8 @@ const SERVICE_NAME = 'goranked-chat-desk';
 const ACCOUNT_NAME = 'auth-token';
 
 let mainWindow: BrowserWindow | null = null;
+let tray: Tray | null = null;
+let isQuiting = false;
 
 function createMenu() {
   const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
@@ -52,13 +54,114 @@ function createMenu() {
         { role: 'hideOthers', label: 'Hide Others' },
         { role: 'unhide', label: 'Show All' },
         { type: 'separator' },
-        { role: 'quit', label: 'Quit ' + app.getName() },
+        { 
+          role: 'quit', 
+          label: 'Quit ' + app.getName(),
+          click: () => {
+            isQuiting = true;
+            app.quit();
+          }
+        },
+      ],
+    });
+  } else {
+    // Для Windows и Linux добавляем меню File с опцией Quit
+    template.unshift({
+      label: 'File',
+      submenu: [
+        {
+          label: 'Exit',
+          accelerator: 'Ctrl+Q',
+          click: () => {
+            isQuiting = true;
+            app.quit();
+          },
+        },
       ],
     });
   }
 
   const menu = Menu.buildFromTemplate(template);
   Menu.setApplicationMenu(menu);
+}
+
+function createTray() {
+  let iconPath: string;
+  
+  if (app.isPackaged) {
+    // В собранном приложении иконка в extraResources
+    iconPath = path.join(process.resourcesPath, 'icon.png');
+  } else {
+    // В режиме разработки
+    iconPath = path.join(__dirname, '..', '..', 'build', 'icon.png');
+  }
+
+  // Если иконка не найдена, логируем предупреждение
+  if (!fs.existsSync(iconPath)) {
+    console.warn('Tray icon not found at:', iconPath, 'Trying alternative paths...');
+    // Пробуем альтернативные пути
+    const altPaths = [
+      path.join(process.resourcesPath, 'build', 'icon.png'),
+      path.join(app.getAppPath(), 'build', 'icon.png'),
+      path.join(__dirname, '..', 'build', 'icon.png'),
+      path.join(__dirname, '..', '..', 'build', 'icon.png'),
+    ];
+    const foundPath = altPaths.find(p => fs.existsSync(p));
+    if (foundPath) {
+      iconPath = foundPath;
+      console.log('Found tray icon at:', iconPath);
+    } else {
+      console.error('Could not find tray icon, using default');
+    }
+  }
+
+  tray = new Tray(iconPath);
+  
+  const contextMenu = Menu.buildFromTemplate([
+    {
+      label: 'Показать',
+      click: () => {
+        if (mainWindow) {
+          mainWindow.show();
+          mainWindow.focus();
+        } else {
+          createWindow();
+        }
+      },
+    },
+    {
+      label: 'Скрыть',
+      click: () => {
+        if (mainWindow) {
+          mainWindow.hide();
+        }
+      },
+    },
+    { type: 'separator' },
+    {
+      label: 'Выход',
+      click: () => {
+        isQuiting = true;
+        app.quit();
+      },
+    },
+  ]);
+  
+  tray.setToolTip('GoRanked Chat Desk');
+  tray.setContextMenu(contextMenu);
+  
+  tray.on('click', () => {
+    if (mainWindow) {
+      if (mainWindow.isVisible()) {
+        mainWindow.hide();
+      } else {
+        mainWindow.show();
+        mainWindow.focus();
+      }
+    } else {
+      createWindow();
+    }
+  });
 }
 
 function createWindow() {
@@ -207,6 +310,13 @@ function createWindow() {
   mainWindow.once('ready-to-show', () => {
     console.log('Window ready to show');
     mainWindow?.show();
+  });
+
+  mainWindow.on('close', (event) => {
+    if (!isQuiting) {
+      event.preventDefault();
+      mainWindow?.hide();
+    }
   });
 
   mainWindow.on('closed', () => {
@@ -380,11 +490,15 @@ process.on('unhandledRejection', (reason, promise) => {
 
 app.whenReady().then(() => {
   createMenu();
+  createTray();
   createWindow();
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
       createWindow();
+    } else if (mainWindow) {
+      mainWindow.show();
+      mainWindow.focus();
     }
   });
 });
@@ -394,9 +508,8 @@ app.on('will-quit', () => {
 });
 
 app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
-    app.quit();
-  }
+  // Не закрываем приложение при закрытии всех окон - сворачиваем в трей
+  // Приложение будет закрыто только через меню трея или через Quit в меню приложения
 });
 
 ipcMain.handle('store-token', async (_event, token: string) => {
