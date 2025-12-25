@@ -78,7 +78,7 @@ jobs:
         with:
           files: |
             release/mac/*.dmg
-          tag_name: ${{ github.ref }}
+          tag_name: ${{ github.ref_name }}
           body: |
             ## macOS Build
             - DMG installer for macOS (x64 and arm64)
@@ -173,7 +173,7 @@ jobs:
           files: |
             release/windows/*.exe
             release/latest.yml
-          tag_name: ${{ github.ref }}
+          tag_name: ${{ github.ref_name }}
           body: |
             ## Windows Build
             - NSIS installer for Windows (x64)
