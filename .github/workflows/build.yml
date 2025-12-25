@@ -44,8 +44,8 @@ jobs:
           echo "NPM version: $(npm --version)"
           echo "Checking electron-builder installation..."
           npx electron-builder --version || npm list electron-builder || echo "electron-builder not found, will install"
-          echo "Building macOS app with publish enabled..."
-          npm run build && npx electron-builder --mac --x64 --arm64 --publish always
+          echo "Building macOS app (without publish, files will be uploaded via workflow)..."
+          npm run build && npx electron-builder --mac --x64 --arm64 --publish never
         env:
           NODE_ENV: production
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -114,6 +114,34 @@ jobs:
           generate_release_notes: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Delete existing release assets (macOS)
+        run: |
+          echo "Checking for existing release assets..."
+          RELEASE_ID=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            "https://api.github.com/repos/${{ github.repository }}/releases/tags/${{ github.ref_name }}" | \
+            python3 -c "import sys, json; data=json.load(sys.stdin); print(data.get('id', ''))" 2>/dev/null)
+          
+          if [ -n "$RELEASE_ID" ] && [ "$RELEASE_ID" != "None" ]; then
+            echo "Found release ID: $RELEASE_ID"
+            echo "Deleting existing assets to avoid conflicts..."
+            ASSETS=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+              "https://api.github.com/repos/${{ github.repository }}/releases/$RELEASE_ID/assets" | \
+              python3 -c "import sys, json; assets=json.load(sys.stdin); print(' '.join([str(a['id']) for a in assets]))" 2>/dev/null)
+            
+            for asset_id in $ASSETS; do
+              if [ -n "$asset_id" ]; then
+                echo "Deleting asset ID: $asset_id"
+                curl -X DELETE -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+                  "https://api.github.com/repos/${{ github.repository }}/releases/assets/$asset_id" || true
+              fi
+            done
+            echo "Existing assets deleted"
+          else
+            echo "No existing release found"
+          fi
+        continue-on-error: true
+        if: always()
       
       - name: Upload to Release (macOS)
         uses: softprops/action-gh-release@v1
