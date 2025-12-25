@@ -29,6 +29,19 @@ const Settings: React.FC = () => {
       window.electronAPI.getAppVersion().then((result) => {
         setAppVersion(result.version);
       });
+      
+      // Listen for update download progress
+      const cleanup = window.electronAPI.onUpdateDownloadProgress?.((progress: any) => {
+        console.log('📥 Update download progress:', progress);
+        setDownloadProgress(progress.percent || 0);
+        if (progress.percent >= 100) {
+          setTimeout(() => setDownloadProgress(null), 2000);
+        }
+      });
+      
+      return () => {
+        if (cleanup) cleanup();
+      };
     } else {
       // Fallback to package.json version in dev mode
       setAppVersion(process.env.npm_package_version || "1.0.0");
@@ -361,8 +374,30 @@ const Settings: React.FC = () => {
                   onClick={handleCheckForUpdates}
                   disabled={isCheckingUpdates || !window.electronAPI}
                 >
-                  {isCheckingUpdates ? "Перевірка..." : "Перевірити оновлення"}
+                  {isCheckingUpdates 
+                    ? "Перевірка..." 
+                    : downloadProgress !== null 
+                      ? `Завантаження ${Math.round(downloadProgress)}%` 
+                      : "Перевірити оновлення"}
                 </button>
+                {downloadProgress !== null && downloadProgress < 100 && (
+                  <div style={{ marginTop: '12px', width: '100%' }}>
+                    <div style={{ 
+                      width: '100%', 
+                      height: '6px', 
+                      backgroundColor: 'var(--graphite-medium)', 
+                      borderRadius: '3px',
+                      overflow: 'hidden'
+                    }}>
+                      <div style={{ 
+                        width: `${downloadProgress}%`, 
+                        height: '100%', 
+                        backgroundColor: 'var(--flame-orange)',
+                        transition: 'width 0.3s ease'
+                      }} />
+                    </div>
+                  </div>
+                )}
                 {updateStatus && (
                   <p
                     className={`settings-update-status ${
