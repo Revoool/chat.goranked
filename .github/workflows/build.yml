@@ -110,11 +110,13 @@ jobs:
           files: |
             release/mac/*.dmg
             release/*.yml
+            release/*mac*.yml
+            release/latest*.yml
           tag_name: ${{ github.ref_name }}
           body: |
             ## macOS Build
             - DMG installer for macOS (x64 and arm64)
-            - Auto-update configuration (latest-mac.yml)
+            - Auto-update configuration files (latest-mac.yml, latest-mac-x64.yml, latest-mac-arm64.yml)
           draft: false
           prerelease: false
           fail_on_unmatched_files: false
