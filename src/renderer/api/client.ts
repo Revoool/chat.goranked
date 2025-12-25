@@ -214,8 +214,12 @@ class ApiClient {
     
     // Body is required - ensure it's always a string
     // If no text but file exists, send empty string (API requires body field)
-    const bodyValue = (body && body.trim()) ? body.trim() : '';
-    console.log('📤 Body value to send:', bodyValue, 'type:', typeof bodyValue);
+    // Always send body as string, even if empty (when file is present)
+    const bodyValue = body ? String(body).trim() : '';
+    console.log('📤 Body value to send:', bodyValue, 'type:', typeof bodyValue, 'length:', bodyValue.length);
+    
+    // Always append body - Laravel validation requires it to be a string
+    // When file is present, body can be empty string
     formData.append('body', bodyValue);
     
     if (file) {
