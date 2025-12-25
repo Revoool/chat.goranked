@@ -3,6 +3,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import * as keytar from 'keytar';
 import { autoUpdater } from 'electron-updater';
+import * as https from 'https';
 
 const SERVICE_NAME = 'goranked-chat-desk';
 const ACCOUNT_NAME = 'auth-token';
@@ -468,7 +469,7 @@ ipcMain.handle('delete-token', async () => {
   }
 });
 
-// IPC handler for checking updates manually
+// IPC handler for checking updates manually (without auto-download)
 ipcMain.handle('check-for-updates', async () => {
   if (!app.isPackaged) {
     return { 
@@ -481,75 +482,93 @@ ipcMain.handle('check-for-updates', async () => {
   try {
     console.log('🔄 Manual update check requested');
     console.log('  - Current version:', app.getVersion());
-    const feedURL = autoUpdater.getFeedURL();
-    console.log('  - Feed URL:', feedURL);
-    console.log('  - Feed URL type:', typeof feedURL);
-    if (feedURL && typeof feedURL === 'object') {
-      console.log('  - Feed URL details:', JSON.stringify(feedURL, null, 2));
-    }
     
-    // Check if app-update.yml exists
-    const appUpdatePath = path.join(process.resourcesPath, 'app-update.yml');
-    console.log('  - Checking for app-update.yml at:', appUpdatePath);
-    if (fs.existsSync(appUpdatePath)) {
-      console.log('  - ✅ app-update.yml found');
-      try {
-        const appUpdateContent = fs.readFileSync(appUpdatePath, 'utf-8');
-        console.log('  - app-update.yml content:', appUpdateContent);
-      } catch (err) {
-        console.log('  - ⚠️ Could not read app-update.yml:', err);
+    // Temporarily disable auto-download for manual check
+    const wasAutoDownload = autoUpdater.autoDownload;
+    autoUpdater.autoDownload = false;
+    
+    try {
+      const result = await autoUpdater.checkForUpdates();
+      console.log('  - Check result:', result);
+      
+      // Restore auto-download setting
+      autoUpdater.autoDownload = wasAutoDownload;
+      
+      if (result && result.updateInfo) {
+        console.log('  - Update available:', result.updateInfo.version);
+        
+        // Get changelog from GitHub
+        let changelog = '';
+        try {
+          const githubOwner = process.env.GITHUB_OWNER || 'Revoool';
+          const githubRepo = process.env.GITHUB_REPO || 'chat.goranked';
+          const version = result.updateInfo.version;
+          const tag = `v${version}`;
+          
+          const url = `https://api.github.com/repos/${githubOwner}/${githubRepo}/releases/tags/${tag}`;
+          const releaseData = await new Promise<any>((resolve, reject) => {
+            https.get(url, {
+              headers: {
+                'User-Agent': 'GoRanked-Chat-Desk',
+                'Accept': 'application/vnd.github.v3+json',
+              },
+            }, (res) => {
+              let data = '';
+              res.on('data', (chunk) => { data += chunk; });
+              res.on('end', () => {
+                if (res.statusCode === 200) {
+                  try {
+                    resolve(JSON.parse(data));
+                  } catch (e) {
+                    reject(e);
+                  }
+                } else {
+                  reject(new Error(`HTTP ${res.statusCode}`));
+                }
+              });
+            }).on('error', reject);
+          });
+          
+          changelog = releaseData.body || releaseData.name || '';
+        } catch (err) {
+          console.log('  - Could not fetch changelog:', err);
+        }
+        
+        return { 
+          success: true, 
+          message: `Доступна нова версія: ${result.updateInfo.version}`,
+          updateInfo: {
+            ...result.updateInfo,
+            changelog,
+          },
+          currentVersion: app.getVersion(),
+        };
       }
-    } else {
-      console.log('  - ❌ app-update.yml NOT found - this may be the problem!');
-      console.log('  - This file should be created by electron-builder during build');
-      console.log('  - Check if publish configuration is correct in package.json');
-      console.log('  - Resources path:', process.resourcesPath);
-    }
-    
-    // Use checkForUpdatesAndNotify to automatically download if update is available
-    const result = await autoUpdater.checkForUpdatesAndNotify();
-    console.log('  - Check result:', result);
-    console.log('  - Check result type:', typeof result);
-    
-    if (result && result.updateInfo) {
-      console.log('  - Update info:', {
-        version: result.updateInfo.version,
-        releaseDate: result.updateInfo.releaseDate,
-        path: result.updateInfo.path,
-      });
-      console.log('  - Download will start automatically (autoDownload is enabled)');
+      
       return { 
         success: true, 
-        message: `Доступна нова версія: ${result.updateInfo.version}. Завантаження почнеться автоматично.`,
-        updateInfo: result.updateInfo,
+        message: 'Ви використовуєте останню версію',
+        updateInfo: null,
         currentVersion: app.getVersion(),
       };
+    } catch (checkError: any) {
+      // Restore auto-download setting on error
+      autoUpdater.autoDownload = wasAutoDownload;
+      throw checkError;
     }
-    
-    // If no update info but no error, update check is in progress
-    return { 
-      success: true, 
-      message: 'Перевірка оновлень запущена. Якщо доступна нова версія, завантаження почнеться автоматично.',
-      updateInfo: null,
-      currentVersion: app.getVersion(),
-    };
   } catch (error: any) {
     console.error('❌ Error checking for updates:', error);
-    console.error('  - Error type:', error?.constructor?.name);
-    console.error('  - Error message:', error?.message);
-    console.error('  - Error stack:', error?.stack);
     
-    // Provide more detailed error messages
     let errorMessage = 'Помилка при перевірці оновлень';
     if (error?.message) {
       const errorStr = String(error.message).toLowerCase();
-      if (errorStr.includes('404') || errorStr.includes('not found') || errorStr.includes('релиз не найден')) {
-        errorMessage = 'Релиз не знайдено. Можливо, релиз ще створюється або не існує. Спробуйте пізніше.';
+      if (errorStr.includes('404') || errorStr.includes('not found')) {
+        errorMessage = 'Релиз не знайдено. Можливо, релиз ще створюється. Спробуйте пізніше.';
       } else if (errorStr.includes('403') || errorStr.includes('forbidden')) {
         errorMessage = 'Доступ заборонено. Перевірте налаштування репозиторію.';
-      } else if (errorStr.includes('network') || errorStr.includes('enotfound') || errorStr.includes('econnrefused')) {
+      } else if (errorStr.includes('network') || errorStr.includes('enotfound')) {
         errorMessage = 'Помилка мережі. Перевірте підключення до інтернету.';
-      } else if (errorStr.includes('timeout') || errorStr.includes('etimedout')) {
+      } else if (errorStr.includes('timeout')) {
         errorMessage = 'Перевищено час очікування. Перевірте підключення до інтернету.';
       } else {
         errorMessage = `Помилка: ${error.message}`;
@@ -561,6 +580,39 @@ ipcMain.handle('check-for-updates', async () => {
       error: error?.message || String(error),
       message: errorMessage,
       currentVersion: app.getVersion(),
+    };
+  }
+});
+
+// IPC handler for starting update download
+ipcMain.handle('download-update', async () => {
+  if (!app.isPackaged) {
+    return { success: false, error: 'Updates are only available in production builds' };
+  }
+  
+  try {
+    console.log('📥 Starting update download...');
+    autoUpdater.autoDownload = true;
+    const result = await autoUpdater.checkForUpdates();
+    
+    if (result && result.updateInfo) {
+      console.log('  - Download started for version:', result.updateInfo.version);
+      return { 
+        success: true, 
+        message: 'Завантаження оновлення розпочато',
+        updateInfo: result.updateInfo,
+      };
+    }
+    
+    return { 
+      success: false, 
+      error: 'Не вдалося розпочати завантаження',
+    };
+  } catch (error: any) {
+    console.error('❌ Error starting download:', error);
+    return { 
+      success: false, 
+      error: error?.message || String(error),
     };
   }
 });

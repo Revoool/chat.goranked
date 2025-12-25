@@ -16,12 +16,21 @@ interface SettingsState {
   };
 }
 
+interface UpdateInfo {
+  version: string;
+  releaseDate?: string;
+  changelog?: string;
+}
+
 const Settings: React.FC = () => {
   const { user } = useAuthStore();
   const [appVersion, setAppVersion] = useState<string>("1.0.0");
   const [isCheckingUpdates, setIsCheckingUpdates] = useState(false);
   const [downloadProgress, setDownloadProgress] = useState<number | null>(null);
   const [updateStatus, setUpdateStatus] = useState<string | null>(null);
+  const [showUpdateModal, setShowUpdateModal] = useState(false);
+  const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   useEffect(() => {
     // Get app version
@@ -58,18 +67,23 @@ const Settings: React.FC = () => {
 
     setIsCheckingUpdates(true);
     setUpdateStatus(null);
+    setShowUpdateModal(false);
+    setUpdateInfo(null);
 
     try {
       const result = await window.electronAPI.checkForUpdates();
       if (result.success) {
         if (result.updateInfo && result.updateInfo.version) {
-          setUpdateStatus(
-            `Доступна нова версія: ${result.updateInfo.version}. Завантаження почнеться автоматично.`
-          );
+          // Show update modal with changelog
+          setUpdateInfo({
+            version: result.updateInfo.version,
+            releaseDate: result.updateInfo.releaseDate,
+            changelog: result.updateInfo.changelog || '',
+          });
+          setShowUpdateModal(true);
         } else {
           setUpdateStatus(
-            result.message ||
-              "Перевірка оновлень запущена. Якщо доступна нова версія, ви отримаєте сповіщення."
+            result.message || "Ви використовуєте останню версію"
           );
         }
       } else {
@@ -84,9 +98,47 @@ const Settings: React.FC = () => {
       console.error("Update check error:", error);
     } finally {
       setIsCheckingUpdates(false);
-      // Clear status message after 10 seconds (longer for errors)
       setTimeout(() => setUpdateStatus(null), 10000);
     }
+  };
+
+  const handleDownloadUpdate = async () => {
+    if (!window.electronAPI || !updateInfo) return;
+
+    setIsDownloading(true);
+    setShowUpdateModal(false);
+    setUpdateStatus(`Завантаження версії ${updateInfo.version}...`);
+
+    try {
+      const result = await window.electronAPI.downloadUpdate();
+      if (result.success) {
+        setUpdateStatus(`Завантаження розпочато. Прогрес відображається нижче.`);
+      } else {
+        setUpdateStatus(result.error || "Помилка при завантаженні");
+        setIsDownloading(false);
+      }
+    } catch (error: any) {
+      setUpdateStatus("Помилка: " + (error.message || "Невідома помилка"));
+      setIsDownloading(false);
+    }
+  };
+
+  const parseChangelog = (changelog: string): string => {
+    if (!changelog) return 'Оновлення не містить опису змін.';
+    
+    // Remove HTML tags and clean up
+    let text = changelog
+      .replace(/<[^>]*>/g, '')
+      .replace(/&nbsp;/g, ' ')
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .trim();
+    
+    // If empty after cleaning, return default message
+    if (!text) return 'Оновлення не містить опису змін.';
+    
+    return text;
   };
 
   const [settings, setSettings] = useState<SettingsState>({
@@ -372,13 +424,15 @@ const Settings: React.FC = () => {
                 <button
                   className="settings-update-btn"
                   onClick={handleCheckForUpdates}
-                  disabled={isCheckingUpdates || !window.electronAPI}
+                  disabled={isCheckingUpdates || isDownloading || !window.electronAPI}
                 >
                   {isCheckingUpdates 
                     ? "Перевірка..." 
-                    : downloadProgress !== null 
+                    : isDownloading && downloadProgress !== null
                       ? `Завантаження ${Math.round(downloadProgress)}%` 
-                      : "Перевірити оновлення"}
+                      : isDownloading
+                        ? "Завантаження..."
+                        : "Перевірити оновлення"}
                 </button>
                 {downloadProgress !== null && downloadProgress < 100 && (
                   <div style={{ marginTop: '12px', width: '100%' }}>
@@ -413,6 +467,54 @@ const Settings: React.FC = () => {
                 </p>
               </div>
             </div>
+            
+            {/* Update Modal */}
+            {showUpdateModal && updateInfo && (
+              <div className="update-modal-overlay" onClick={() => setShowUpdateModal(false)}>
+                <div className="update-modal" onClick={(e) => e.stopPropagation()}>
+                  <div className="update-modal-header">
+                    <h3>Доступне оновлення</h3>
+                    <button 
+                      className="update-modal-close"
+                      onClick={() => setShowUpdateModal(false)}
+                    >
+                      ×
+                    </button>
+                  </div>
+                  <div className="update-modal-content">
+                    <div className="update-version-info">
+                      <p><strong>Поточна версія:</strong> {appVersion}</p>
+                      <p><strong>Нова версія:</strong> {updateInfo.version}</p>
+                      {updateInfo.releaseDate && (
+                        <p><strong>Дата релізу:</strong> {new Date(updateInfo.releaseDate).toLocaleDateString('uk-UA')}</p>
+                      )}
+                    </div>
+                    <div className="update-changelog">
+                      <h4>Що нового:</h4>
+                      <div className="update-changelog-content">
+                        {parseChangelog(updateInfo.changelog || '').split('\n').map((line, idx) => (
+                          <p key={idx}>{line || '\u00A0'}</p>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="update-modal-footer">
+                    <button
+                      className="update-modal-btn update-modal-btn-cancel"
+                      onClick={() => setShowUpdateModal(false)}
+                    >
+                      Скасувати
+                    </button>
+                    <button
+                      className="update-modal-btn update-modal-btn-confirm"
+                      onClick={handleDownloadUpdate}
+                    >
+                      Завантажити оновлення
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </section>
       </div>
