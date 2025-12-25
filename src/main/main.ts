@@ -250,12 +250,33 @@ if (app.isPackaged) {
   } else {
     // GitHub Releases (default)
     console.log('  - Using GitHub Releases');
-    autoUpdater.setFeedURL({
+    console.log('  - Repository is private:', true);
+    
+    // For private repositories, electron-updater needs token
+    // Token should be provided via GH_TOKEN environment variable during build
+    // or via electron-updater's token option
+    const feedURLConfig: any = {
       provider: 'github',
       owner: githubOwner,
       repo: githubRepo,
-      private: true, // Private repository
-    });
+      private: true,
+    };
+    
+    // Try to get token from environment (if available)
+    const ghToken = process.env.GH_TOKEN;
+    if (ghToken) {
+      console.log('  - GitHub token found in environment');
+      feedURLConfig.token = ghToken;
+    } else {
+      console.log('  - No GitHub token in environment (may fail for private repo)');
+    }
+    
+    console.log('  - Feed URL config:', JSON.stringify(feedURLConfig, null, 2));
+    autoUpdater.setFeedURL(feedURLConfig);
+    
+    // Log the actual feed URL after setting
+    const actualFeedURL = autoUpdater.getFeedURL();
+    console.log('  - Actual feed URL:', actualFeedURL);
   }
 
   // Configure auto-updater options
