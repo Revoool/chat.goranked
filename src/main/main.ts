@@ -252,23 +252,31 @@ if (app.isPackaged) {
     console.log('  - Using GitHub Releases');
     console.log('  - Repository is private:', true);
     
-    // For private repositories, electron-updater needs token
-    // Token should be provided via GH_TOKEN environment variable during build
-    // or via electron-updater's token option
+    // For private repositories with public releases:
+    // - Releases can be public even if repo is private
+    // - This is the recommended approach - no token needed
+    // - If releases are public, set private: false
+    // - If releases are private, you need GH_TOKEN on user's machine (not recommended)
+    
+    // Try public releases first (recommended for private repos)
+    // If this doesn't work, releases might be private and need token
     const feedURLConfig: any = {
       provider: 'github',
       owner: githubOwner,
       repo: githubRepo,
-      private: true,
+      private: false, // Try public releases first (even in private repo)
     };
     
-    // Try to get token from environment (if available)
+    // If releases are actually private, try to get token from environment
+    // Note: This requires users to set GH_TOKEN, which is not ideal
     const ghToken = process.env.GH_TOKEN;
     if (ghToken) {
-      console.log('  - GitHub token found in environment');
+      console.log('  - GitHub token found in environment (for private releases)');
       feedURLConfig.token = ghToken;
+      feedURLConfig.private = true;
     } else {
-      console.log('  - No GitHub token in environment (may fail for private repo)');
+      console.log('  - Using public releases (recommended for private repos)');
+      console.log('  - Make sure releases are public in GitHub settings');
     }
     
     console.log('  - Feed URL config:', JSON.stringify(feedURLConfig, null, 2));
