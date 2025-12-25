@@ -484,6 +484,30 @@ class ApiClient {
     }
   }
 
+  // Skip chat (mark as no response needed)
+  async skipChat(chatId: number): Promise<any> {
+    console.log('⏭️ Skipping chat:', chatId);
+    try {
+      const response = await this.client.post(`/api/manager-client-chats/${chatId}/skip`);
+      return response.data;
+    } catch (error: any) {
+      console.error('❌ Error skipping chat:', error);
+      throw error;
+    }
+  }
+
+  // Unskip chat (remove no response needed flag)
+  async unskipChat(chatId: number): Promise<any> {
+    console.log('↩️ Unskipping chat:', chatId);
+    try {
+      const response = await this.client.post(`/api/manager-client-chats/${chatId}/unskip`);
+      return response.data;
+    } catch (error: any) {
+      console.error('❌ Error unskipping chat:', error);
+      throw error;
+    }
+  }
+
   // SLA violations
   async getSlaViolations(): Promise<any> {
     console.log('⚠️ Requesting SLA violations');
@@ -550,6 +574,17 @@ class ApiClient {
       return response.data;
     } catch (error: any) {
       console.error('❌ Error fetching client info:', error);
+      throw error;
+    }
+  }
+
+  async getClientOrders(chatId: number): Promise<any> {
+    console.log('🛒 Requesting client orders for chat:', chatId);
+    try {
+      const response = await this.client.get(`/api/manager-client-chats/${chatId}/client-orders`);
+      return response.data;
+    } catch (error: any) {
+      console.error('❌ Error fetching client orders:', error);
       throw error;
     }
   }

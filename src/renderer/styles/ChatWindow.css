@@ -57,6 +57,24 @@
   box-shadow: 0 2px 8px rgba(255, 107, 0, 0.3);
 }
 
+.chat-action-btn.skipped {
+  background: rgba(156, 39, 176, 0.2);
+  border-color: #9c27b0;
+  color: #9c27b0;
+}
+
+.chat-action-btn.skipped:hover {
+  background: #9c27b0;
+  color: white;
+  border-color: #9c27b0;
+}
+
+.chat-action-btn svg {
+  display: inline-block;
+  vertical-align: middle;
+  margin-right: 6px;
+}
+
 .info-btn {
   width: 36px;
   height: 36px;

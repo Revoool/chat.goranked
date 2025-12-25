@@ -10,6 +10,7 @@ import AssignModal from './AssignModal';
 import StatusModal from './StatusModal';
 import TagsModal from './TagsModal';
 import PriorityModal from './PriorityModal';
+import ClientOrdersModal from './ClientOrdersModal';
 import '../styles/ChatWindow.css';
 
 interface ChatWindowProps {
@@ -22,6 +23,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId }) => {
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [showTagsModal, setShowTagsModal] = useState(false);
   const [showPriorityModal, setShowPriorityModal] = useState(false);
+  const [showClientOrdersModal, setShowClientOrdersModal] = useState(false);
   const { updateChat, chats, toggleClientCard, isClientCardOpen } = useChatStore();
   const queryClient = useQueryClient();
 
@@ -234,6 +236,51 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId }) => {
             Теги
           </button>
           <button 
+            className="chat-action-btn"
+            onClick={() => setShowClientOrdersModal(true)}
+            title="Замовлення клієнта"
+          >
+            <svg width="18" height="18" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path
+                d="M3 3H17L15 12H5L3 3ZM3 3L2 1M6 16H10M14 16H10M10 16V14"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+            Замовлення
+          </button>
+          <button 
+            className={`chat-action-btn ${displayChat?.metadata?.no_response_needed ? 'skipped' : ''}`}
+            onClick={async () => {
+              if (!displayChat) return;
+              try {
+                if (displayChat.metadata?.no_response_needed) {
+                  await apiClient.unskipChat(chatId);
+                } else {
+                  await apiClient.skipChat(chatId);
+                }
+                queryClient.invalidateQueries({ queryKey: ['chat', chatId] });
+                queryClient.invalidateQueries({ queryKey: ['chats'] });
+              } catch (error) {
+                console.error('Failed to skip/unskip chat:', error);
+              }
+            }}
+            title={displayChat?.metadata?.no_response_needed ? 'Повернути в список' : 'Скинути (не потребує відповіді)'}
+          >
+            <svg width="18" height="18" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path
+                d="M15 5L5 15M5 5L15 15"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+            {displayChat?.metadata?.no_response_needed ? 'Повернути' : 'Скинути'}
+          </button>
+          <button 
             className={`chat-action-btn priority-btn priority-${displayChat?.priority || 'normal'}`}
             onClick={() => setShowPriorityModal(true)}
             title={`Пріоритет: ${displayChat?.priority || 'normal'}`}
@@ -327,6 +374,14 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId }) => {
           chatId={chatId}
           currentPriority={displayChat.priority || 'normal'}
           onClose={() => setShowPriorityModal(false)}
+        />
+      )}
+
+      {showClientOrdersModal && (
+        <ClientOrdersModal
+          isOpen={showClientOrdersModal}
+          onClose={() => setShowClientOrdersModal(false)}
+          chatId={chatId}
         />
       )}
     </div>
