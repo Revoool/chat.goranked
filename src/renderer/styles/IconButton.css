@@ -56,9 +56,6 @@
 
 .icon-button-tooltip {
   position: absolute;
-  bottom: 100%;
-  left: 50%;
-  transform: translateX(-50%) translateY(-8px);
   background: var(--graphite-dark);
   color: var(--text-primary);
   padding: 6px 12px;
@@ -68,13 +65,22 @@
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.2s ease, transform 0.2s ease;
-  z-index: 1000;
+  z-index: 10000;
   border: 1px solid var(--border-color);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  margin-bottom: 4px;
+  max-width: 250px;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.icon-button-tooltip::after {
+/* Позиционирование сверху (по умолчанию) */
+.icon-button-tooltip-top {
+  bottom: 100%;
+  margin-bottom: 8px;
+  transform: translateY(-4px);
+}
+
+.icon-button-tooltip-top::after {
   content: '';
   position: absolute;
   top: 100%;
@@ -84,9 +90,98 @@
   border-top-color: var(--graphite-dark);
 }
 
+/* Позиционирование снизу */
+.icon-button-tooltip-bottom {
+  top: 100%;
+  margin-top: 8px;
+  transform: translateY(4px);
+}
+
+.icon-button-tooltip-bottom::after {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-bottom-color: var(--graphite-dark);
+}
+
+/* Выравнивание по центру */
+.icon-button-tooltip-center {
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.icon-button-tooltip-top.icon-button-tooltip-center {
+  transform: translateX(-50%) translateY(-4px);
+}
+
+.icon-button-tooltip-bottom.icon-button-tooltip-center {
+  transform: translateX(-50%) translateY(4px);
+}
+
+/* Выравнивание по левому краю */
+.icon-button-tooltip-left {
+  left: 0;
+  transform: translateX(0);
+}
+
+.icon-button-tooltip-top.icon-button-tooltip-left {
+  transform: translateY(-4px);
+}
+
+.icon-button-tooltip-bottom.icon-button-tooltip-left {
+  transform: translateY(4px);
+}
+
+.icon-button-tooltip-left::after {
+  left: 12px;
+  transform: translateX(0);
+}
+
+/* Выравнивание по правому краю */
+.icon-button-tooltip-right {
+  right: 0;
+  left: auto;
+  transform: translateX(0);
+}
+
+.icon-button-tooltip-top.icon-button-tooltip-right {
+  transform: translateY(-4px);
+}
+
+.icon-button-tooltip-bottom.icon-button-tooltip-right {
+  transform: translateY(4px);
+}
+
+.icon-button-tooltip-right::after {
+  left: auto;
+  right: 12px;
+  transform: translateX(0);
+}
+
 .icon-button-wrapper:hover .icon-button-tooltip {
   opacity: 1;
   transform: translateX(-50%) translateY(0);
+}
+
+.icon-button-wrapper:hover .icon-button-tooltip-top.icon-button-tooltip-center {
+  transform: translateX(-50%) translateY(0);
+}
+
+.icon-button-wrapper:hover .icon-button-tooltip-bottom.icon-button-tooltip-center {
+  transform: translateX(-50%) translateY(0);
+}
+
+.icon-button-wrapper:hover .icon-button-tooltip-top.icon-button-tooltip-left,
+.icon-button-wrapper:hover .icon-button-tooltip-bottom.icon-button-tooltip-left {
+  transform: translateY(0);
+}
+
+.icon-button-wrapper:hover .icon-button-tooltip-top.icon-button-tooltip-right,
+.icon-button-wrapper:hover .icon-button-tooltip-bottom.icon-button-tooltip-right {
+  transform: translateY(0);
 }
 
 /* Special styles for skipped button */

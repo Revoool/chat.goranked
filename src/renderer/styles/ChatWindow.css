@@ -4,6 +4,8 @@
   flex: 1;
   background: var(--graphite-dark);
   height: 100vh;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .chat-window-header {
