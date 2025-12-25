@@ -48,19 +48,15 @@ const QuickReplies: React.FC<QuickRepliesProps> = ({ onSelect, locale = 'ru' }) 
     return Array.from(locales).sort();
   }, [activeReplies]);
 
-  // Sync selectedLocale with prop locale and ensure it's available
+  // Initialize selectedLocale only once when availableLocales are loaded
   useEffect(() => {
-    if (availableLocales.length > 0) {
-      // If current selectedLocale is not available, use the first available or prop locale
-      if (!availableLocales.includes(selectedLocale)) {
-        const newLocale = availableLocales.includes(locale) ? locale : availableLocales[0];
-        setSelectedLocale(newLocale);
-      } else if (availableLocales.includes(locale) && locale !== selectedLocale) {
-        // Update to prop locale if it's available and different
-        setSelectedLocale(locale);
-      }
+    if (availableLocales.length > 0 && !availableLocales.includes(selectedLocale)) {
+      // Only set if current selectedLocale is not available
+      const newLocale = availableLocales.includes(locale) ? locale : availableLocales[0];
+      setSelectedLocale(newLocale);
     }
-  }, [locale, availableLocales, selectedLocale]);
+    // Don't sync with prop locale after user selection - let user's choice persist
+  }, [availableLocales]); // Only depend on availableLocales, not on locale or selectedLocale
 
   // Language names mapping
   const languageNames: Record<string, string> = {
