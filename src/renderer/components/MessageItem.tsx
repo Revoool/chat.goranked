@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Message } from '../types';
 import { apiClient } from '../api/client';
 import { useAuthStore } from '../store/authStore';
+import { useQueryClient } from '@tanstack/react-query';
 import '../styles/MessageItem.css';
 
 interface MessageItemProps {
@@ -11,6 +12,7 @@ interface MessageItemProps {
 
 const MessageItem: React.FC<MessageItemProps> = ({ message, onUpdate }) => {
   const { user: currentUser } = useAuthStore();
+  const queryClient = useQueryClient();
   const [showContextMenu, setShowContextMenu] = useState(false);
   const [isPinning, setIsPinning] = useState(false);
   const [isMarkingUnread, setIsMarkingUnread] = useState(false);
@@ -33,6 +35,13 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, onUpdate }) => {
   
   // Check if message was edited
   const isEdited = message.metadata?.edited === true;
+
+  // Sync editText when message.body changes (e.g., after update)
+  useEffect(() => {
+    if (!isEditing) {
+      setEditText(message.body || '');
+    }
+  }, [message.body, isEditing]);
 
   const formatTime = (dateString: string) => {
     const date = new Date(dateString);
@@ -125,7 +134,28 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, onUpdate }) => {
 
     setIsUpdating(true);
     try {
-      await apiClient.updateMessage(message.chat_id, message.id, editText.trim());
+      const response = await apiClient.updateMessage(message.chat_id, message.id, editText.trim());
+      const updatedMessage = response.data;
+      
+      console.log('✅ Message updated, response:', response);
+      console.log('✅ Updated message data:', updatedMessage);
+      
+      // Optimistically update the message in React Query cache
+      queryClient.setQueryData(['messages', message.chat_id], (oldData: any) => {
+        const currentMessages = oldData?.data || oldData || [];
+        if (!Array.isArray(currentMessages)) return oldData;
+        
+        const updatedMessages = currentMessages.map((msg: Message) => 
+          msg.id === updatedMessage.id ? updatedMessage : msg
+        );
+        
+        // Return in the same format as received
+        if (oldData?.data) {
+          return { ...oldData, data: updatedMessages };
+        }
+        return updatedMessages;
+      });
+      
       setIsEditing(false);
       if (onUpdate) {
         onUpdate();
