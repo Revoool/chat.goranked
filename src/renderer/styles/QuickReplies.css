@@ -82,6 +82,47 @@
   color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.quick-replies-language-selector {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  text-transform: none;
+  font-weight: 500;
+}
+
+.quick-replies-language-selector label {
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.quick-replies-lang-select {
+  padding: 4px 8px;
+  background: var(--graphite-medium);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-width: 100px;
+}
+
+.quick-replies-lang-select:hover {
+  background: var(--graphite-light);
+  border-color: var(--flame-orange);
+}
+
+.quick-replies-lang-select:focus {
+  outline: none;
+  border-color: var(--flame-orange);
+  box-shadow: 0 0 0 2px rgba(255, 87, 34, 0.2);
 }
 
 .quick-replies-list {

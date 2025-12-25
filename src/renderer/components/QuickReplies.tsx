@@ -19,6 +19,7 @@ interface QuickRepliesProps {
 
 const QuickReplies: React.FC<QuickRepliesProps> = ({ onSelect, locale = 'ru' }) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [selectedLocale, setSelectedLocale] = useState<string>(locale);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['quick-replies', locale],
@@ -33,9 +34,44 @@ const QuickReplies: React.FC<QuickRepliesProps> = ({ onSelect, locale = 'ru' }) 
     .filter((reply) => reply.active)
     .sort((a, b) => a.order - b.order);
 
+  // Get available languages from translations
+  const availableLocales = React.useMemo(() => {
+    const locales = new Set<string>();
+    // Add default locale (always available)
+    locales.add('ru');
+    // Add all locales from translations
+    activeReplies.forEach((reply) => {
+      if (reply.translations) {
+        Object.keys(reply.translations).forEach((lang) => locales.add(lang));
+      }
+    });
+    return Array.from(locales).sort();
+  }, [activeReplies]);
+
+  // Sync selectedLocale with prop locale and ensure it's available
+  useEffect(() => {
+    if (availableLocales.length > 0) {
+      // If current selectedLocale is not available, use the first available or prop locale
+      if (!availableLocales.includes(selectedLocale)) {
+        const newLocale = availableLocales.includes(locale) ? locale : availableLocales[0];
+        setSelectedLocale(newLocale);
+      } else if (availableLocales.includes(locale) && locale !== selectedLocale) {
+        // Update to prop locale if it's available and different
+        setSelectedLocale(locale);
+      }
+    }
+  }, [locale, availableLocales, selectedLocale]);
+
+  // Language names mapping
+  const languageNames: Record<string, string> = {
+    ru: 'Русский',
+    uk: 'Українська',
+    en: 'English',
+  };
+
   const handleSelect = (reply: QuickReply) => {
-    // Get text in current locale or default text
-    const text = reply.translations?.[locale] || reply.text;
+    // Get text in selected locale or default text
+    const text = reply.translations?.[selectedLocale] || reply.text;
     onSelect(text);
     setIsExpanded(false);
   };
@@ -92,10 +128,28 @@ const QuickReplies: React.FC<QuickRepliesProps> = ({ onSelect, locale = 'ru' }) 
         <div className="quick-replies-dropdown">
           <div className="quick-replies-header">
             <span>Выберите быстрый ответ</span>
+            {availableLocales.length > 1 && (
+              <div className="quick-replies-language-selector">
+                <label htmlFor="quick-replies-lang">Язык:</label>
+                <select
+                  id="quick-replies-lang"
+                  className="quick-replies-lang-select"
+                  value={selectedLocale}
+                  onChange={(e) => setSelectedLocale(e.target.value)}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {availableLocales.map((lang) => (
+                    <option key={lang} value={lang}>
+                      {languageNames[lang] || lang.toUpperCase()}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
           </div>
           <div className="quick-replies-list">
             {activeReplies.map((reply) => {
-              const text = reply.translations?.[locale] || reply.text;
+              const text = reply.translations?.[selectedLocale] || reply.text;
               return (
                 <button
                   key={reply.id}
