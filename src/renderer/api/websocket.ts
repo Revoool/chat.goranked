@@ -10,10 +10,15 @@ declare const REVERB_SCHEME: string;
 declare const REVERB_APP_KEY: string;
 declare const WS_URL: string;
 
-const REVERB_HOST_VAL = typeof REVERB_HOST !== 'undefined' ? REVERB_HOST : 'goranked.gg';
-const REVERB_PORT_VAL = typeof REVERB_PORT !== 'undefined' ? REVERB_PORT : '443';
-const REVERB_SCHEME_VAL = typeof REVERB_SCHEME !== 'undefined' ? REVERB_SCHEME : 'https';
-const REVERB_APP_KEY_VAL = typeof REVERB_APP_KEY !== 'undefined' ? REVERB_APP_KEY : 'osbq3zsjkpdjrtjkziqq';
+const REVERB_HOST_VAL = REVERB_HOST;
+const REVERB_PORT_VAL = REVERB_PORT || '443';
+const REVERB_SCHEME_VAL = REVERB_SCHEME || 'https';
+const REVERB_APP_KEY_VAL = REVERB_APP_KEY;
+
+if (!REVERB_APP_KEY_VAL) {
+  console.error('❌ REVERB_APP_KEY is not set! WebSocket connection will fail.');
+  throw new Error('REVERB_APP_KEY environment variable is required');
+}
 
 // Build WebSocket URL for Reverb (Pusher-compatible format)
 const WS_URL_VAL = typeof WS_URL !== 'undefined' 

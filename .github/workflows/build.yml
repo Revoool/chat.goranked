@@ -49,6 +49,11 @@ jobs:
         env:
           NODE_ENV: production
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REVERB_HOST: ${{ secrets.REVERB_HOST || 'goranked.gg' }}
+          REVERB_PORT: ${{ secrets.REVERB_PORT || '443' }}
+          REVERB_SCHEME: ${{ secrets.REVERB_SCHEME || 'https' }}
+          REVERB_APP_KEY: ${{ secrets.REVERB_APP_KEY }}
+          API_URL: ${{ secrets.API_URL || 'https://goranked.gg' }}
       
       - name: Organize release files
         run: |
@@ -242,6 +247,11 @@ jobs:
           NODE_ENV: production
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CSC_IDENTITY_AUTO_DISCOVERY: false
+          REVERB_HOST: ${{ secrets.REVERB_HOST || 'goranked.gg' }}
+          REVERB_PORT: ${{ secrets.REVERB_PORT || '443' }}
+          REVERB_SCHEME: ${{ secrets.REVERB_SCHEME || 'https' }}
+          REVERB_APP_KEY: ${{ secrets.REVERB_APP_KEY }}
+          API_URL: ${{ secrets.API_URL || 'https://goranked.gg' }}
       
       - name: Organize release files
         shell: pwsh

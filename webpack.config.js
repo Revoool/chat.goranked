@@ -48,12 +48,25 @@ module.exports = (env, argv) => {
       }),
       new webpack.DefinePlugin({
         'process.env.API_URL': JSON.stringify(process.env.API_URL || 'https://goranked.gg'),
-        'process.env.WS_URL': JSON.stringify(process.env.WS_URL || 'wss://goranked.gg/app/osbq3zsjkpdjrtjkziqq'),
         'REVERB_HOST': JSON.stringify(process.env.REVERB_HOST || 'goranked.gg'),
         'REVERB_PORT': JSON.stringify(process.env.REVERB_PORT || '443'),
         'REVERB_SCHEME': JSON.stringify(process.env.REVERB_SCHEME || 'https'),
-        'REVERB_APP_KEY': JSON.stringify(process.env.REVERB_APP_KEY || 'osbq3zsjkpdjrtjkziqq'),
-        'WS_URL': JSON.stringify(process.env.WS_URL || 'wss://goranked.gg/app/osbq3zsjkpdjrtjkziqq'),
+        'REVERB_APP_KEY': JSON.stringify(process.env.REVERB_APP_KEY || (() => {
+          if (isProduction) {
+            throw new Error('REVERB_APP_KEY environment variable is required for production builds');
+          }
+          // Only allow fallback in development mode
+          console.warn('⚠️  REVERB_APP_KEY not set, using empty string. Set it in .env file!');
+          return '';
+        })()),
+        'WS_URL': JSON.stringify(process.env.WS_URL || (() => {
+          const host = process.env.REVERB_HOST || 'goranked.gg';
+          const port = process.env.REVERB_PORT || '443';
+          const scheme = process.env.REVERB_SCHEME || 'https';
+          const appKey = process.env.REVERB_APP_KEY || '';
+          const wsScheme = scheme === 'https' ? 'wss' : 'ws';
+          return `${wsScheme}://${host}${port === '443' ? '' : ':' + port}/app/${appKey}`;
+        })()),
         'process.env.NODE_ENV': JSON.stringify(argv.mode || 'development'),
         'process.env.MOCK_MODE': JSON.stringify(process.env.MOCK_MODE || 'false'),
         'global': 'globalThis',
