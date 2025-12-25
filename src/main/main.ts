@@ -254,6 +254,7 @@ if (app.isPackaged) {
       provider: 'github',
       owner: githubOwner,
       repo: githubRepo,
+      private: false, // Public repository
     });
   }
 
@@ -453,10 +454,16 @@ ipcMain.handle('check-for-updates', async () => {
   try {
     console.log('🔄 Manual update check requested');
     console.log('  - Current version:', app.getVersion());
-    console.log('  - Feed URL:', autoUpdater.getFeedURL());
+    const feedURL = autoUpdater.getFeedURL();
+    console.log('  - Feed URL:', feedURL);
+    console.log('  - Feed URL type:', typeof feedURL);
+    if (feedURL && typeof feedURL === 'object') {
+      console.log('  - Feed URL details:', JSON.stringify(feedURL, null, 2));
+    }
     
     const result = await autoUpdater.checkForUpdates();
     console.log('  - Check result:', result);
+    console.log('  - Check result type:', typeof result);
     
     if (result && result.updateInfo) {
       console.log('  - Update info:', {
@@ -464,12 +471,19 @@ ipcMain.handle('check-for-updates', async () => {
         releaseDate: result.updateInfo.releaseDate,
         path: result.updateInfo.path,
       });
+      return { 
+        success: true, 
+        message: `Доступна новая версия: ${result.updateInfo.version}. Загрузка начнется автоматически.`,
+        updateInfo: result.updateInfo,
+        currentVersion: app.getVersion(),
+      };
     }
     
+    // If no update info but no error, update check is in progress
     return { 
       success: true, 
       message: 'Проверка обновлений запущена. Если доступна новая версия, вы получите уведомление.',
-      updateInfo: result?.updateInfo || null,
+      updateInfo: null,
       currentVersion: app.getVersion(),
     };
   } catch (error: any) {
@@ -481,12 +495,15 @@ ipcMain.handle('check-for-updates', async () => {
     // Provide more detailed error message
     let errorMessage = 'Ошибка при проверке обновлений';
     if (error?.message) {
-      if (error.message.includes('404') || error.message.includes('Not Found')) {
-        errorMessage = 'Релиз не найден. Убедитесь, что релиз создан на GitHub.';
-      } else if (error.message.includes('403') || error.message.includes('Forbidden')) {
+      const errorStr = String(error.message).toLowerCase();
+      if (errorStr.includes('404') || errorStr.includes('not found') || errorStr.includes('релиз не найден')) {
+        errorMessage = 'Релиз не найден. Возможно, релиз еще создается или не существует. Попробуйте позже.';
+      } else if (errorStr.includes('403') || errorStr.includes('forbidden')) {
         errorMessage = 'Доступ запрещен. Проверьте настройки репозитория.';
-      } else if (error.message.includes('network') || error.message.includes('ENOTFOUND')) {
+      } else if (errorStr.includes('network') || errorStr.includes('enotfound') || errorStr.includes('econnrefused')) {
         errorMessage = 'Ошибка сети. Проверьте подключение к интернету.';
+      } else if (errorStr.includes('timeout') || errorStr.includes('etimedout')) {
+        errorMessage = 'Превышено время ожидания. Проверьте подключение к интернету.';
       } else {
         errorMessage = `Ошибка: ${error.message}`;
       }
