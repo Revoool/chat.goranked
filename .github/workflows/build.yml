@@ -79,6 +79,31 @@ jobs:
           path: release/mac/*.dmg
           if-no-files-found: warn
       
+      - name: Check if release exists
+        id: check_release
+        run: |
+          RELEASE_EXISTS=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            "https://api.github.com/repos/${{ github.repository }}/releases/tags/${{ github.ref_name }}" | \
+            grep -q '"tag_name"' && echo "true" || echo "false")
+          echo "exists=$RELEASE_EXISTS" >> $GITHUB_OUTPUT
+          echo "Release exists: $RELEASE_EXISTS"
+      
+      - name: Create release if not exists (macOS)
+        if: steps.check_release.outputs.exists == 'false'
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: Release ${{ github.ref_name }}
+          body: |
+            ## macOS Build
+            - DMG installer for macOS (x64 and arm64)
+            - Auto-update configuration (latest-mac.yml)
+          draft: false
+          prerelease: false
+          generate_release_notes: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
       - name: Upload to Release (macOS)
         uses: softprops/action-gh-release@v1
         with:
@@ -86,7 +111,6 @@ jobs:
             release/mac/*.dmg
             release/*.yml
           tag_name: ${{ github.ref_name }}
-          name: Release ${{ github.ref_name }}
           body: |
             ## macOS Build
             - DMG installer for macOS (x64 and arm64)
@@ -179,6 +203,38 @@ jobs:
           path: release/windows/*.exe
           if-no-files-found: warn
       
+      - name: Check if release exists (Windows)
+        id: check_release_win
+        shell: pwsh
+        run: |
+          $headers = @{
+            Authorization = "token ${{ secrets.GITHUB_TOKEN }}"
+          }
+          $response = Invoke-RestMethod -Uri "https://api.github.com/repos/${{ github.repository }}/releases/tags/${{ github.ref_name }}" -Headers $headers -ErrorAction SilentlyContinue
+          if ($response.tag_name) {
+            Write-Host "Release exists: true"
+            echo "exists=true" >> $env:GITHUB_OUTPUT
+          } else {
+            Write-Host "Release exists: false"
+            echo "exists=false" >> $env:GITHUB_OUTPUT
+          }
+      
+      - name: Create release if not exists (Windows)
+        if: steps.check_release_win.outputs.exists == 'false'
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: Release ${{ github.ref_name }}
+          body: |
+            ## Windows Build
+            - NSIS installer for Windows (x64)
+            - Auto-update configuration (latest.yml)
+          draft: false
+          prerelease: false
+          generate_release_notes: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
       - name: Upload to Release (Windows)
         uses: softprops/action-gh-release@v1
         with:
@@ -186,7 +242,6 @@ jobs:
             release/windows/*.exe
             release/latest.yml
           tag_name: ${{ github.ref_name }}
-          name: Release ${{ github.ref_name }}
           body: |
             ## Windows Build
             - NSIS installer for Windows (x64)

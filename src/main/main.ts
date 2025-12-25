@@ -254,7 +254,7 @@ if (app.isPackaged) {
       provider: 'github',
       owner: githubOwner,
       repo: githubRepo,
-      private: false, // Public repository
+      private: true, // Private repository
     });
   }
 
