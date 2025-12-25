@@ -482,6 +482,24 @@ ipcMain.handle('check-for-updates', async () => {
       console.log('  - Feed URL details:', JSON.stringify(feedURL, null, 2));
     }
     
+    // Check if app-update.yml exists
+    const appUpdatePath = path.join(process.resourcesPath, 'app-update.yml');
+    console.log('  - Checking for app-update.yml at:', appUpdatePath);
+    if (fs.existsSync(appUpdatePath)) {
+      console.log('  - ✅ app-update.yml found');
+      try {
+        const appUpdateContent = fs.readFileSync(appUpdatePath, 'utf-8');
+        console.log('  - app-update.yml content:', appUpdateContent);
+      } catch (err) {
+        console.log('  - ⚠️ Could not read app-update.yml:', err);
+      }
+    } else {
+      console.log('  - ❌ app-update.yml NOT found - this may be the problem!');
+      console.log('  - This file should be created by electron-builder during build');
+      console.log('  - Check if publish configuration is correct in package.json');
+      console.log('  - Resources path:', process.resourcesPath);
+    }
+    
     const result = await autoUpdater.checkForUpdates();
     console.log('  - Check result:', result);
     console.log('  - Check result type:', typeof result);
