@@ -48,9 +48,48 @@
   position: relative;
 }
 
+.message-input-buttons-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
 .message-input-emoji-wrapper {
   position: relative;
   flex-shrink: 0;
+}
+
+.message-input-quickreplies-wrapper {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.message-input-quickreplies-btn {
+  padding: 10px;
+  background: var(--graphite-light);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.message-input-quickreplies-btn:hover {
+  background: var(--flame-orange);
+  border-color: var(--flame-orange);
+  color: white;
+}
+
+.message-input-quickreplies-btn svg {
+  width: 18px;
+  height: 18px;
 }
 
 .message-input-emoji-btn {
@@ -86,6 +125,11 @@
   cursor: pointer;
   transition: all 0.2s;
   flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .message-input-attach:hover {

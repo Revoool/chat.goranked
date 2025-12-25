@@ -14,11 +14,13 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSend, disabled, chatId })
   const [text, setText] = useState('');
   const [attachments, setAttachments] = useState<any[]>([]);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [showQuickReplies, setShowQuickReplies] = useState(false);
   const [sendMessageKey, setSendMessageKey] = useState<'enter' | 'ctrl-enter'>(
     (localStorage.getItem('settings.sendMessageKey') as 'enter' | 'ctrl-enter') || 'enter'
   );
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const emojiButtonRef = useRef<HTMLButtonElement>(null);
+  const quickRepliesButtonRef = useRef<HTMLButtonElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastTypingTimeRef = useRef<number>(0);
 
@@ -116,6 +118,7 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSend, disabled, chatId })
 
   const handleQuickReplySelect = (replyText: string) => {
     setText(replyText);
+    setShowQuickReplies(false);
     if (textareaRef.current) {
       textareaRef.current.focus();
       textareaRef.current.style.height = 'auto';
@@ -154,7 +157,6 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSend, disabled, chatId })
 
   return (
     <form className="message-input" onSubmit={handleSubmit}>
-      {chatId && <QuickReplies onSelect={handleQuickReplySelect} />}
       {attachments.length > 0 && (
         <div className="message-input-attachments">
           {attachments.map((att, idx) => (
@@ -171,36 +173,73 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSend, disabled, chatId })
         </div>
       )}
       <div className="message-input-container">
-        <button
-          type="button"
-          className="message-input-attach"
-          onClick={() => document.getElementById('file-input')?.click()}
-        >
-          📎
-        </button>
-        <input
-          id="file-input"
-          type="file"
-          multiple
-          style={{ display: 'none' }}
-          onChange={handleFileSelect}
-        />
-        <div className="message-input-emoji-wrapper" style={{ position: 'relative' }}>
+        <div className="message-input-buttons-group">
           <button
-            ref={emojiButtonRef}
             type="button"
-            className="message-input-emoji-btn"
-            onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-            title="Смайлики"
+            className="message-input-attach"
+            onClick={() => document.getElementById('file-input')?.click()}
+            title="Прикріпити файл"
           >
-            😊
+            📎
           </button>
-          {showEmojiPicker && (
-            <EmojiPicker
-              onSelect={handleEmojiSelect}
-              onClose={() => setShowEmojiPicker(false)}
-            />
+          <input
+            id="file-input"
+            type="file"
+            multiple
+            style={{ display: 'none' }}
+            onChange={handleFileSelect}
+          />
+          {chatId && (
+            <div className="message-input-quickreplies-wrapper" style={{ position: 'relative' }}>
+              <button
+                ref={quickRepliesButtonRef}
+                type="button"
+                className="message-input-quickreplies-btn"
+                onClick={() => {
+                  setShowQuickReplies(!showQuickReplies);
+                  setShowEmojiPicker(false);
+                }}
+                title="Швидкі відповіді"
+              >
+                <svg width="18" height="18" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path
+                    d="M10 2L3 7V18H8V12H12V18H17V7L10 2Z"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    fill="none"
+                  />
+                </svg>
+              </button>
+              {showQuickReplies && (
+                <QuickReplies 
+                  onSelect={handleQuickReplySelect}
+                  compact={true}
+                />
+              )}
+            </div>
           )}
+          <div className="message-input-emoji-wrapper" style={{ position: 'relative' }}>
+            <button
+              ref={emojiButtonRef}
+              type="button"
+              className="message-input-emoji-btn"
+              onClick={() => {
+                setShowEmojiPicker(!showEmojiPicker);
+                setShowQuickReplies(false);
+              }}
+              title="Смайлики"
+            >
+              😊
+            </button>
+            {showEmojiPicker && (
+              <EmojiPicker
+                onSelect={handleEmojiSelect}
+                onClose={() => setShowEmojiPicker(false)}
+              />
+            )}
+          </div>
         </div>
         <textarea
           ref={textareaRef}

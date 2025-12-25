@@ -3,6 +3,10 @@
   margin-bottom: 8px;
 }
 
+.quick-replies.compact {
+  margin-bottom: 0;
+}
+
 .quick-replies-toggle {
   display: flex;
   align-items: center;
@@ -61,6 +65,12 @@
   flex-direction: column;
   z-index: 1000;
   animation: slideDown 0.2s ease-out;
+}
+
+.quick-replies.compact .quick-replies-dropdown {
+  right: auto;
+  width: 320px;
+  margin-bottom: 8px;
 }
 
 @keyframes slideDown {
