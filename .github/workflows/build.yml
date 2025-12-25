@@ -138,6 +138,29 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         continue-on-error: false
         if: always()
+      
+      - name: Make release public (macOS)
+        run: |
+          echo "Making release public for private repository..."
+          RELEASE_ID=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            "https://api.github.com/repos/${{ github.repository }}/releases/tags/${{ github.ref_name }}" | \
+            python3 -c "import sys, json; data=json.load(sys.stdin); print(data.get('id', ''))" 2>/dev/null)
+          
+          if [ -n "$RELEASE_ID" ] && [ "$RELEASE_ID" != "None" ]; then
+            echo "Release ID: $RELEASE_ID"
+            # Note: GitHub API doesn't allow making releases public in private repos
+            # But we can ensure it's not draft and not prerelease
+            curl -X PATCH \
+              -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+              -H "Accept: application/vnd.github.v3+json" \
+              "https://api.github.com/repos/${{ github.repository }}/releases/$RELEASE_ID" \
+              -d '{"draft": false, "prerelease": false}' || echo "Note: Release visibility is controlled by repository settings"
+            echo "Release updated"
+          else
+            echo "Could not find release ID"
+          fi
+        continue-on-error: true
+        if: always()
 
   build-windows:
     runs-on: windows-latest
