@@ -6,6 +6,7 @@ release.zip
 *.log
 .DS_Store
 .env
+.env.example
 .env.local
 *.local
 
