@@ -56,15 +56,15 @@ jobs:
           find release -name "*.dmg" -type f || echo "No DMG files found"
           echo "Finding YML files:"
           find release -name "*.yml" -type f || echo "No YML files found"
-          mkdir -p release/mac release/windows
+          mkdir -p release/mac
           mv release/*.dmg release/mac/ 2>/dev/null || true
           mv release/*.blockmap release/mac/ 2>/dev/null || true
           mv release/mac* release/mac/ 2>/dev/null || true
-          # Find and move latest-mac.yml or mac.yml files
-          find release -name "*mac*.yml" -type f -exec mv {} release/mac/ \; 2>/dev/null || true
-          find release -name "latest*.yml" -type f -exec mv {} release/mac/ \; 2>/dev/null || true
+          # Keep latest-mac.yml files in root for electron-updater (don't move them)
           echo "Mac release folder contents:"
           ls -la release/mac/ || echo "Mac folder is empty"
+          echo "Root release folder YML files (for electron-updater):"
+          find release -maxdepth 1 -name "*mac*.yml" -type f || echo "No mac YML files in root"
       
       - name: Upload macOS artifacts
         uses: actions/upload-artifact@v4
@@ -78,13 +78,14 @@ jobs:
         with:
           files: |
             release/mac/*.dmg
+            release/*mac*.yml
           tag_name: ${{ github.ref_name }}
           body: |
             ## macOS Build
             - DMG installer for macOS (x64 and arm64)
+            - Auto-update configuration (latest-mac.yml)
           draft: false
           prerelease: false
-          make_latest: false
           fail_on_unmatched_files: false
           append_body: true
         env:
@@ -141,16 +142,19 @@ jobs:
       - name: Organize release files
         shell: pwsh
         run: |
-          New-Item -ItemType Directory -Force -Path release/mac, release/windows | Out-Null
+          New-Item -ItemType Directory -Force -Path release/windows | Out-Null
+          Write-Host "Release folder contents before organizing:"
+          Get-ChildItem -Path release/ | Format-Table Name, Length
+          # Move Windows files
           Move-Item -Path release/*.exe -Destination release/windows/ -ErrorAction SilentlyContinue
           Move-Item -Path release/*.blockmap -Destination release/windows/ -ErrorAction SilentlyContinue
           Move-Item -Path release/win* -Destination release/windows/ -ErrorAction SilentlyContinue
-          # Keep latest.yml in root for electron-updater
-          Write-Host "Release folder contents:"
-          Get-ChildItem -Path release/ -Recurse | Format-Table Name, Length
+          # Keep latest.yml in root for electron-updater (don't move it)
+          Write-Host "Release folder contents after organizing:"
+          Get-ChildItem -Path release/ | Format-Table Name, Length
           Write-Host "Windows folder contents:"
           Get-ChildItem -Path release/windows/ -ErrorAction SilentlyContinue | Format-Table Name, Length
-          Write-Host "Checking for latest.yml:"
+          Write-Host "Checking for latest.yml in root:"
           if (Test-Path release/latest.yml) {
             Write-Host "✓ latest.yml found in release/"
             Get-Content release/latest.yml
@@ -180,7 +184,6 @@ jobs:
             - Auto-update configuration (latest.yml)
           draft: false
           prerelease: false
-          make_latest: true
           fail_on_unmatched_files: false
           append_body: true
         env:
