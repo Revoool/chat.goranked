@@ -83,17 +83,35 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.message-attachment {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .message-attachment img {
-  max-width: 300px;
+  max-width: 100%;
+  max-width: min(300px, 100%);
+  height: auto;
   border-radius: 8px;
   cursor: pointer;
+  display: block;
 }
 
 .message-attachment a {
   color: inherit;
   text-decoration: underline;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .message-meta {
