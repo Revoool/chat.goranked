@@ -253,21 +253,11 @@ jobs:
           REVERB_APP_KEY: ${{ secrets.REVERB_APP_KEY }}
           API_URL: ${{ secrets.API_URL || 'https://goranked.gg' }}
       
-      - name: Organize release files
+      - name: Check release files for upload
         shell: pwsh
         run: |
-          New-Item -ItemType Directory -Force -Path release/windows | Out-Null
-          Write-Host "Release folder contents before organizing:"
+          Write-Host "Release folder contents before upload:"
           Get-ChildItem -Path release/ | Format-Table Name, Length
-          # Move Windows files
-          Move-Item -Path release/*.exe -Destination release/windows/ -ErrorAction SilentlyContinue
-          Move-Item -Path release/*.blockmap -Destination release/windows/ -ErrorAction SilentlyContinue
-          Move-Item -Path release/win* -Destination release/windows/ -ErrorAction SilentlyContinue
-          # Keep latest.yml in root for electron-updater (don't move it)
-          Write-Host "Release folder contents after organizing:"
-          Get-ChildItem -Path release/ | Format-Table Name, Length
-          Write-Host "Windows folder contents:"
-          Get-ChildItem -Path release/windows/ -ErrorAction SilentlyContinue | Format-Table Name, Length
           Write-Host "Checking for latest.yml in root:"
           if (Test-Path release/latest.yml) {
             Write-Host "✓ latest.yml found in release/"
@@ -277,12 +267,16 @@ jobs:
             Write-Host "Searching for yml files:"
             Get-ChildItem -Path release/ -Filter "*.yml" -Recurse | Format-Table FullName
           }
+          Write-Host "Checking for .exe files:"
+          Get-ChildItem -Path release/ -Filter "*.exe" | Format-Table Name, Length
+          Write-Host "Checking for .blockmap files:"
+          Get-ChildItem -Path release/ -Filter "*.blockmap" | Format-Table Name, Length
       
       - name: Upload Windows artifacts
         uses: actions/upload-artifact@v4
         with:
           name: windows-build
-          path: release/windows/*.exe
+          path: release/*.exe
           if-no-files-found: warn
       
       - name: Check if release exists (Windows)
@@ -361,7 +355,8 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            release/windows/*.exe
+            release/*.exe
+            release/*.blockmap
             release/latest.yml
           tag_name: ${{ github.ref_name }}
           body: |
