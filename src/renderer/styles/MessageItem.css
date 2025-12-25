@@ -224,3 +224,110 @@
   }
 }
 
+.message-edited-badge {
+  font-size: 10px;
+  color: var(--text-muted);
+  font-style: italic;
+  margin-left: 4px;
+}
+
+.message-edit-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.message-edit-textarea {
+  width: 100%;
+  min-height: 60px;
+  padding: 10px 12px;
+  background: var(--graphite-dark);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-size: 14px;
+  font-family: inherit;
+  resize: vertical;
+  outline: none;
+}
+
+.message-edit-textarea:focus {
+  border-color: var(--flame-orange);
+  box-shadow: 0 0 0 2px rgba(255, 87, 34, 0.2);
+}
+
+.message-edit-textarea:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.message-item-agent .message-edit-textarea {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.3);
+  color: white;
+}
+
+.message-item-agent .message-edit-textarea:focus {
+  border-color: white;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.2);
+}
+
+.message-edit-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.message-item-client .message-edit-actions {
+  justify-content: flex-start;
+}
+
+.message-edit-save,
+.message-edit-cancel {
+  padding: 6px 16px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+}
+
+.message-edit-save {
+  background: var(--flame-orange);
+  color: white;
+}
+
+.message-edit-save:hover:not(:disabled) {
+  background: #ff5722;
+  transform: translateY(-1px);
+}
+
+.message-edit-save:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.message-edit-cancel {
+  background: var(--graphite-medium);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+.message-edit-cancel:hover:not(:disabled) {
+  background: var(--graphite-light);
+  border-color: var(--border-color);
+}
+
+.message-item-agent .message-edit-cancel {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.message-item-agent .message-edit-cancel:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.2);
+}
+

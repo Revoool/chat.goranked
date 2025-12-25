@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Message } from '../types';
 import { apiClient } from '../api/client';
+import { useAuthStore } from '../store/authStore';
 import '../styles/MessageItem.css';
 
 interface MessageItemProps {
@@ -9,9 +10,14 @@ interface MessageItemProps {
 }
 
 const MessageItem: React.FC<MessageItemProps> = ({ message, onUpdate }) => {
+  const { user: currentUser } = useAuthStore();
   const [showContextMenu, setShowContextMenu] = useState(false);
   const [isPinning, setIsPinning] = useState(false);
   const [isMarkingUnread, setIsMarkingUnread] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editText, setEditText] = useState(message.body || '');
+  const [isUpdating, setIsUpdating] = useState(false);
+  const editTextareaRef = useRef<HTMLTextAreaElement>(null);
   const contextMenuRef = useRef<HTMLDivElement>(null);
   const messageRef = useRef<HTMLDivElement>(null);
 
@@ -21,6 +27,12 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, onUpdate }) => {
   
   // Determine if message is from client (from_manager === false)
   const isClient = !message.from_manager;
+  
+  // Check if message can be edited (only own manager messages)
+  const canEdit = !isClient && currentUser && message.user_id === currentUser.id && message.type === 'text';
+  
+  // Check if message was edited
+  const isEdited = message.metadata?.edited === true;
 
   const formatTime = (dateString: string) => {
     const date = new Date(dateString);
@@ -87,6 +99,55 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, onUpdate }) => {
     }
   };
 
+  const handleStartEdit = () => {
+    setEditText(message.body || '');
+    setIsEditing(true);
+    setShowContextMenu(false);
+    // Focus textarea after render
+    setTimeout(() => {
+      editTextareaRef.current?.focus();
+      editTextareaRef.current?.select();
+    }, 0);
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+    setEditText(message.body || '');
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editText.trim() || isUpdating) return;
+    
+    if (editText.trim() === message.body) {
+      setIsEditing(false);
+      return;
+    }
+
+    setIsUpdating(true);
+    try {
+      await apiClient.updateMessage(message.chat_id, message.id, editText.trim());
+      setIsEditing(false);
+      if (onUpdate) {
+        onUpdate();
+      }
+    } catch (error) {
+      console.error('Error updating message:', error);
+      alert('Помилка при редагуванні повідомлення');
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleEditKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && e.ctrlKey) {
+      e.preventDefault();
+      handleSaveEdit();
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      handleCancelEdit();
+    }
+  };
+
   return (
     <div 
       ref={messageRef}
@@ -118,25 +179,60 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, onUpdate }) => {
           </div>
         )}
         <div className="message-bubble">
-          <div className="message-text">{messageText}</div>
-          {message.files && message.files.length > 0 && (
-            <div className="message-attachments">
-              {message.files.map((file) => (
-                <div key={file.id} className="message-attachment">
-                  {file.mime_type.startsWith('image/') ? (
-                    <img src={file.file_path} alt={file.file_name} />
-                  ) : (
-                    <a href={file.file_path} target="_blank" rel="noopener noreferrer">
-                      📎 {file.file_name}
-                    </a>
-                  )}
-                </div>
-              ))}
+          {isEditing ? (
+            <div className="message-edit-container">
+              <textarea
+                ref={editTextareaRef}
+                className="message-edit-textarea"
+                value={editText}
+                onChange={(e) => setEditText(e.target.value)}
+                onKeyDown={handleEditKeyDown}
+                disabled={isUpdating}
+                rows={3}
+              />
+              <div className="message-edit-actions">
+                <button
+                  className="message-edit-save"
+                  onClick={handleSaveEdit}
+                  disabled={isUpdating || !editText.trim()}
+                >
+                  {isUpdating ? 'Збереження...' : 'Зберегти (Ctrl+Enter)'}
+                </button>
+                <button
+                  className="message-edit-cancel"
+                  onClick={handleCancelEdit}
+                  disabled={isUpdating}
+                >
+                  Скасувати (Esc)
+                </button>
+              </div>
             </div>
+          ) : (
+            <>
+              <div className="message-text">{messageText}</div>
+              {message.files && message.files.length > 0 && (
+                <div className="message-attachments">
+                  {message.files.map((file) => (
+                    <div key={file.id} className="message-attachment">
+                      {file.mime_type.startsWith('image/') ? (
+                        <img src={file.file_path} alt={file.file_name} />
+                      ) : (
+                        <a href={file.file_path} target="_blank" rel="noopener noreferrer">
+                          📎 {file.file_name}
+                        </a>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
           )}
         </div>
         <div className="message-meta">
           <span className="message-time">{formatTime(message.created_at)}</span>
+          {isEdited && (
+            <span className="message-edited-badge" title="Відредаговано">(ред.)</span>
+          )}
           {!isClient && message.seen && (
             <span className="message-read">✓✓</span>
           )}
@@ -147,6 +243,14 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, onUpdate }) => {
       </div>
       {showContextMenu && (
         <div ref={contextMenuRef} className="message-context-menu">
+          {canEdit && (
+            <button
+              className="context-menu-item"
+              onClick={handleStartEdit}
+            >
+              ✏️ Редагувати
+            </button>
+          )}
           <button
             className="context-menu-item"
             onClick={handlePinMessage}

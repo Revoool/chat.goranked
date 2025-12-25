@@ -256,6 +256,27 @@ class ApiClient {
     }
   }
 
+  async updateMessage(chatId: number, messageId: number, body: string): Promise<any> {
+    console.log('✏️ Updating message:', { chatId, messageId, body });
+    
+    if (!body?.trim()) {
+      throw new Error('Message body cannot be empty');
+    }
+    
+    try {
+      const response = await this.client.put(`/api/manager-client-chats/${chatId}/messages/${messageId}`, {
+        body: body.trim(),
+      });
+      console.log('✅ Message updated successfully:', response.data);
+      return response.data;
+    } catch (error: any) {
+      console.error('❌ Error updating message:', error);
+      console.error('❌ Error response:', error.response);
+      console.error('❌ Error data:', error.response?.data);
+      throw error;
+    }
+  }
+
   async assignChat(chatId: number, managerId: number): Promise<any> {
     console.log('👤 Assigning chat', chatId, 'to manager', managerId);
     const response = await this.client.post(`/api/manager-client-chats/${chatId}/assign`, {
