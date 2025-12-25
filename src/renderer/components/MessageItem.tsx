@@ -3,7 +3,7 @@ import { Message } from '../types';
 import { apiClient } from '../api/client';
 import { useAuthStore } from '../store/authStore';
 import { useQueryClient } from '@tanstack/react-query';
-import { IconPin, IconCircleDot, IconPencil, IconPaperclip } from '@tabler/icons-react';
+import { IconPin, IconCircleDot, IconPencil, IconPaperclip, IconCheck } from '../icons';
 import '../styles/MessageItem.css';
 
 interface MessageItemProps {

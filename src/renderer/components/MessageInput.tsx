@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import QuickReplies from './QuickReplies';
 import EmojiPicker from './EmojiPicker';
+import { IconMoodSmile } from '../icons';
 import { apiClient } from '../api/client';
 import '../styles/MessageInput.css';
 
