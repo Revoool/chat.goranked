@@ -89,11 +89,15 @@ jobs:
       - name: Check if release exists
         id: check_release
         run: |
-          RELEASE_EXISTS=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-            "https://api.github.com/repos/${{ github.repository }}/releases/tags/${{ github.ref_name }}" | \
-            grep -q '"tag_name"' && echo "true" || echo "false")
-          echo "exists=$RELEASE_EXISTS" >> $GITHUB_OUTPUT
-          echo "Release exists: $RELEASE_EXISTS"
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            "https://api.github.com/repos/${{ github.repository }}/releases/tags/${{ github.ref_name }}")
+          if [ "$HTTP_CODE" = "200" ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+            echo "Release exists: true"
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "Release exists: false (HTTP $HTTP_CODE)"
+          fi
       
       - name: Create release if not exists (macOS)
         if: steps.check_release.outputs.exists == 'false'
@@ -220,13 +224,23 @@ jobs:
           $headers = @{
             Authorization = "token ${{ secrets.GITHUB_TOKEN }}"
           }
-          $response = Invoke-RestMethod -Uri "https://api.github.com/repos/${{ github.repository }}/releases/tags/${{ github.ref_name }}" -Headers $headers -ErrorAction SilentlyContinue
-          if ($response.tag_name) {
-            Write-Host "Release exists: true"
-            echo "exists=true" >> $env:GITHUB_OUTPUT
-          } else {
-            Write-Host "Release exists: false"
-            echo "exists=false" >> $env:GITHUB_OUTPUT
+          try {
+            $response = Invoke-RestMethod -Uri "https://api.github.com/repos/${{ github.repository }}/releases/tags/${{ github.ref_name }}" -Headers $headers
+            if ($response.tag_name) {
+              Write-Host "Release exists: true"
+              echo "exists=true" >> $env:GITHUB_OUTPUT
+            } else {
+              Write-Host "Release exists: false"
+              echo "exists=false" >> $env:GITHUB_OUTPUT
+            }
+          } catch {
+            if ($_.Exception.Response.StatusCode -eq 404) {
+              Write-Host "Release does not exist (404), will create it"
+              echo "exists=false" >> $env:GITHUB_OUTPUT
+            } else {
+              Write-Host "Error checking release: $($_.Exception.Message)"
+              echo "exists=false" >> $env:GITHUB_OUTPUT
+            }
           }
       
       - name: Create release if not exists (Windows)
