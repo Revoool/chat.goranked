@@ -300,10 +300,10 @@ if (app.isPackaged) {
     if (mainWindow && !mainWindow.isDestroyed()) {
       dialog.showMessageBox(mainWindow, {
         type: 'info',
-        title: 'Обновление готово',
-        message: `Доступна новая версия ${info.version}`,
-        detail: 'Приложение будет перезапущено через 5 секунд для установки обновления. Нажмите "Отмена" чтобы отложить.',
-        buttons: ['Перезапустить сейчас', 'Отмена'],
+        title: 'Оновлення готове',
+        message: `Доступна нова версія ${info.version}`,
+        detail: 'Додаток буде перезапущено через 5 секунд для встановлення оновлення. Натисніть "Скасувати" щоб відкласти.',
+        buttons: ['Перезапустити зараз', 'Скасувати'],
         defaultId: 0,
         cancelId: 1,
       }).then((response) => {
@@ -317,8 +317,8 @@ if (app.isPackaged) {
             if (mainWindow && !mainWindow.isDestroyed()) {
               dialog.showMessageBox(mainWindow, {
                 type: 'info',
-                title: 'Установка обновления',
-                message: 'Приложение будет перезапущено сейчас.',
+                title: 'Встановлення оновлення',
+                message: 'Додаток буде перезапущено зараз.',
                 buttons: ['OK'],
               }).then(() => {
                 autoUpdater.quitAndInstall(false, true);
@@ -362,7 +362,7 @@ if (app.isPackaged) {
     if (mainWindow) {
       mainWindow.webContents.send('update-not-available', {
         version: app.getVersion(),
-        message: 'Установлена последняя версия',
+        message: 'Встановлена остання версія',
       });
     }
   });
@@ -493,19 +493,19 @@ ipcMain.handle('check-for-updates', async () => {
     console.error('  - Error stack:', error?.stack);
     
     // Provide more detailed error message
-    let errorMessage = 'Ошибка при проверке обновлений';
+    let errorMessage = 'Помилка при перевірці оновлень';
     if (error?.message) {
       const errorStr = String(error.message).toLowerCase();
       if (errorStr.includes('404') || errorStr.includes('not found') || errorStr.includes('релиз не найден')) {
-        errorMessage = 'Релиз не найден. Возможно, релиз еще создается или не существует. Попробуйте позже.';
+        errorMessage = 'Релиз не знайдено. Можливо, релиз ще створюється або не існує. Спробуйте пізніше.';
       } else if (errorStr.includes('403') || errorStr.includes('forbidden')) {
-        errorMessage = 'Доступ запрещен. Проверьте настройки репозитория.';
+        errorMessage = 'Доступ заборонено. Перевірте налаштування репозиторію.';
       } else if (errorStr.includes('network') || errorStr.includes('enotfound') || errorStr.includes('econnrefused')) {
-        errorMessage = 'Ошибка сети. Проверьте подключение к интернету.';
+        errorMessage = 'Помилка мережі. Перевірте підключення до інтернету.';
       } else if (errorStr.includes('timeout') || errorStr.includes('etimedout')) {
-        errorMessage = 'Превышено время ожидания. Проверьте подключение к интернету.';
+        errorMessage = 'Перевищено час очікування. Перевірте підключення до інтернету.';
       } else {
-        errorMessage = `Ошибка: ${error.message}`;
+        errorMessage = `Помилка: ${error.message}`;
       }
     }
     

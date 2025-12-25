@@ -79,7 +79,7 @@ const QuickReplies: React.FC<QuickRepliesProps> = ({ onSelect, locale = 'ru' }) 
   if (isLoading) {
     return (
       <div className="quick-replies">
-        <div className="quick-replies-loading">Загрузка быстрых ответов...</div>
+        <div className="quick-replies-loading">Завантаження швидких відповідей...</div>
       </div>
     );
   }
@@ -105,7 +105,7 @@ const QuickReplies: React.FC<QuickRepliesProps> = ({ onSelect, locale = 'ru' }) 
             fill="none"
           />
         </svg>
-        <span>Быстрые ответы</span>
+        <span>Швидкі відповіді</span>
         <svg
           className={`quick-replies-arrow ${isExpanded ? 'expanded' : ''}`}
           width="16"
@@ -127,10 +127,10 @@ const QuickReplies: React.FC<QuickRepliesProps> = ({ onSelect, locale = 'ru' }) 
       {isExpanded && (
         <div className="quick-replies-dropdown">
           <div className="quick-replies-header">
-            <span>Выберите быстрый ответ</span>
+            <span>Виберіть швидку відповідь</span>
             {availableLocales.length > 1 && (
               <div className="quick-replies-language-selector">
-                <label htmlFor="quick-replies-lang">Язык:</label>
+                <label htmlFor="quick-replies-lang">Мова:</label>
                 <select
                   id="quick-replies-lang"
                   className="quick-replies-lang-select"

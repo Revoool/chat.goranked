@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { useAuthStore } from '../store/authStore';
-import '../styles/Settings.css';
+import React, { useState, useEffect } from "react";
+import { useAuthStore } from "../store/authStore";
+import "../styles/Settings.css";
 
 interface SettingsState {
-  language: 'ru' | 'uk' | 'en';
-  sendMessageKey: 'enter' | 'ctrl-enter';
+  language: "ru" | "uk" | "en";
+  sendMessageKey: "enter" | "ctrl-enter";
   notifications: {
     enabled: boolean;
     sound: boolean;
@@ -12,16 +12,16 @@ interface SettingsState {
   };
   connection: {
     apiUrl: string;
-    environment: 'production' | 'staging' | 'dev';
+    environment: "production" | "staging" | "dev";
   };
 }
 
 const Settings: React.FC = () => {
   const { user } = useAuthStore();
-  const [appVersion, setAppVersion] = useState<string>('1.0.0');
+  const [appVersion, setAppVersion] = useState<string>("1.0.0");
   const [isCheckingUpdates, setIsCheckingUpdates] = useState(false);
   const [updateStatus, setUpdateStatus] = useState<string | null>(null);
-  
+
   useEffect(() => {
     // Get app version
     if (window.electronAPI) {
@@ -30,80 +30,118 @@ const Settings: React.FC = () => {
       });
     } else {
       // Fallback to package.json version in dev mode
-      setAppVersion(process.env.npm_package_version || '1.0.0');
+      setAppVersion(process.env.npm_package_version || "1.0.0");
     }
   }, []);
-  
+
   const handleCheckForUpdates = async () => {
     if (!window.electronAPI) {
-      setUpdateStatus('Проверка обновлений доступна только в установленной версии приложения');
+      setUpdateStatus(
+        "Перевірка оновлень доступна тільки в встановленій версії додатку"
+      );
       return;
     }
-    
+
     setIsCheckingUpdates(true);
     setUpdateStatus(null);
-    
+
     try {
       const result = await window.electronAPI.checkForUpdates();
       if (result.success) {
         if (result.updateInfo && result.updateInfo.version) {
-          setUpdateStatus(`Доступна новая версия: ${result.updateInfo.version}. Загрузка начнется автоматически.`);
+          setUpdateStatus(
+            `Доступна нова версія: ${result.updateInfo.version}. Завантаження почнеться автоматично.`
+          );
         } else {
-          setUpdateStatus(result.message || 'Проверка обновлений запущена. Если доступна новая версия, вы получите уведомление.');
+          setUpdateStatus(
+            result.message ||
+              "Перевірка оновлень запущена. Якщо доступна нова версія, ви отримаєте сповіщення."
+          );
         }
       } else {
-        const errorMsg = result.message || result.error || 'Ошибка при проверке обновлений';
+        const errorMsg =
+          result.message || result.error || "Помилка при перевірці оновлень";
         setUpdateStatus(errorMsg);
-        console.error('Update check failed:', result);
+        console.error("Update check failed:", result);
       }
     } catch (error: any) {
-      const errorMsg = 'Ошибка: ' + (error.message || 'Неизвестная ошибка');
+      const errorMsg = "Помилка: " + (error.message || "Невідома помилка");
       setUpdateStatus(errorMsg);
-      console.error('Update check error:', error);
+      console.error("Update check error:", error);
     } finally {
       setIsCheckingUpdates(false);
       // Clear status message after 10 seconds (longer for errors)
       setTimeout(() => setUpdateStatus(null), 10000);
     }
   };
-  
+
   const [settings, setSettings] = useState<SettingsState>({
-    language: (localStorage.getItem('settings.language') as 'ru' | 'uk' | 'en') || 'ru',
-    sendMessageKey: (localStorage.getItem('settings.sendMessageKey') as 'enter' | 'ctrl-enter') || 'enter',
+    language:
+      (localStorage.getItem("settings.language") as "ru" | "uk" | "en") || "ru",
+    sendMessageKey:
+      (localStorage.getItem("settings.sendMessageKey") as
+        | "enter"
+        | "ctrl-enter") || "enter",
     notifications: {
-      enabled: localStorage.getItem('settings.notifications.enabled') !== 'false',
-      sound: localStorage.getItem('settings.notifications.sound') !== 'false',
-      doNotDisturb: localStorage.getItem('settings.notifications.doNotDisturb') === 'true',
+      enabled:
+        localStorage.getItem("settings.notifications.enabled") !== "false",
+      sound: localStorage.getItem("settings.notifications.sound") !== "false",
+      doNotDisturb:
+        localStorage.getItem("settings.notifications.doNotDisturb") === "true",
     },
     connection: {
-      apiUrl: localStorage.getItem('settings.connection.apiUrl') || process.env.API_URL || 'https://goranked.gg',
-      environment: (localStorage.getItem('settings.connection.environment') as 'production' | 'staging' | 'dev') || 'production',
+      apiUrl:
+        localStorage.getItem("settings.connection.apiUrl") ||
+        process.env.API_URL ||
+        "https://goranked.gg",
+      environment:
+        (localStorage.getItem("settings.connection.environment") as
+          | "production"
+          | "staging"
+          | "dev") || "production",
     },
   });
 
   useEffect(() => {
     // Save settings to localStorage whenever they change
-    localStorage.setItem('settings.language', settings.language);
-    localStorage.setItem('settings.sendMessageKey', settings.sendMessageKey);
-    localStorage.setItem('settings.notifications.enabled', String(settings.notifications.enabled));
-    localStorage.setItem('settings.notifications.sound', String(settings.notifications.sound));
-    localStorage.setItem('settings.notifications.doNotDisturb', String(settings.notifications.doNotDisturb));
-    localStorage.setItem('settings.connection.apiUrl', settings.connection.apiUrl);
-    localStorage.setItem('settings.connection.environment', settings.connection.environment);
+    localStorage.setItem("settings.language", settings.language);
+    localStorage.setItem("settings.sendMessageKey", settings.sendMessageKey);
+    localStorage.setItem(
+      "settings.notifications.enabled",
+      String(settings.notifications.enabled)
+    );
+    localStorage.setItem(
+      "settings.notifications.sound",
+      String(settings.notifications.sound)
+    );
+    localStorage.setItem(
+      "settings.notifications.doNotDisturb",
+      String(settings.notifications.doNotDisturb)
+    );
+    localStorage.setItem(
+      "settings.connection.apiUrl",
+      settings.connection.apiUrl
+    );
+    localStorage.setItem(
+      "settings.connection.environment",
+      settings.connection.environment
+    );
   }, [settings]);
 
   const updateSettings = (updates: Partial<SettingsState>) => {
     setSettings((prev) => ({ ...prev, ...updates }));
   };
 
-  const updateNotifications = (updates: Partial<SettingsState['notifications']>) => {
+  const updateNotifications = (
+    updates: Partial<SettingsState["notifications"]>
+  ) => {
     setSettings((prev) => ({
       ...prev,
       notifications: { ...prev.notifications, ...updates },
     }));
   };
 
-  const updateConnection = (updates: Partial<SettingsState['connection']>) => {
+  const updateConnection = (updates: Partial<SettingsState["connection"]>) => {
     setSettings((prev) => ({
       ...prev,
       connection: { ...prev.connection, ...updates },
@@ -113,39 +151,45 @@ const Settings: React.FC = () => {
   return (
     <div className="settings-page">
       <div className="settings-header">
-        <h2>Настройки</h2>
-        <p className="settings-subtitle">Управление параметрами приложения</p>
+        <h2>Налаштування</h2>
+        <p className="settings-subtitle">Управління параметрами додатку</p>
       </div>
 
       <div className="settings-content">
         {/* Profile Section */}
         <section className="settings-section">
-          <h3 className="settings-section-title">Профиль</h3>
+          <h3 className="settings-section-title">Профіль</h3>
           <div className="settings-section-content">
             <div className="settings-field">
-              <label>Имя</label>
-              <div className="settings-value">{user?.name || 'Не указано'}</div>
+              <label>Ім'я</label>
+              <div className="settings-value">{user?.name || "Не вказано"}</div>
             </div>
             <div className="settings-field">
               <label>Email</label>
-              <div className="settings-value">{user?.email || 'Не указано'}</div>
+              <div className="settings-value">
+                {user?.email || "Не вказано"}
+              </div>
             </div>
             <div className="settings-field">
               <label>Роль</label>
-              <div className="settings-value">{user?.role || 'agent'}</div>
+              <div className="settings-value">{user?.role || "agent"}</div>
             </div>
           </div>
         </section>
 
         {/* Language Section */}
         <section className="settings-section">
-          <h3 className="settings-section-title">Язык интерфейса</h3>
+          <h3 className="settings-section-title">Мова інтерфейсу</h3>
           <div className="settings-section-content">
             <div className="settings-field">
-              <label>Выберите язык</label>
+              <label>Виберіть мову</label>
               <select
                 value={settings.language}
-                onChange={(e) => updateSettings({ language: e.target.value as 'ru' | 'uk' | 'en' })}
+                onChange={(e) =>
+                  updateSettings({
+                    language: e.target.value as "ru" | "uk" | "en",
+                  })
+                }
                 className="settings-select"
               >
                 <option value="ru">Русский</option>
@@ -158,18 +202,24 @@ const Settings: React.FC = () => {
 
         {/* Hotkeys Section */}
         <section className="settings-section">
-          <h3 className="settings-section-title">Горячие клавиши</h3>
+          <h3 className="settings-section-title">Гарячі клавіші</h3>
           <div className="settings-section-content">
             <div className="settings-field">
-              <label>Отправка сообщения</label>
+              <label>Відправка повідомлення</label>
               <div className="settings-radio-group">
                 <label className="settings-radio">
                   <input
                     type="radio"
                     name="sendMessageKey"
                     value="enter"
-                    checked={settings.sendMessageKey === 'enter'}
-                    onChange={(e) => updateSettings({ sendMessageKey: e.target.value as 'enter' | 'ctrl-enter' })}
+                    checked={settings.sendMessageKey === "enter"}
+                    onChange={(e) =>
+                      updateSettings({
+                        sendMessageKey: e.target.value as
+                          | "enter"
+                          | "ctrl-enter",
+                      })
+                    }
                   />
                   <span>Enter</span>
                 </label>
@@ -178,16 +228,22 @@ const Settings: React.FC = () => {
                     type="radio"
                     name="sendMessageKey"
                     value="ctrl-enter"
-                    checked={settings.sendMessageKey === 'ctrl-enter'}
-                    onChange={(e) => updateSettings({ sendMessageKey: e.target.value as 'enter' | 'ctrl-enter' })}
+                    checked={settings.sendMessageKey === "ctrl-enter"}
+                    onChange={(e) =>
+                      updateSettings({
+                        sendMessageKey: e.target.value as
+                          | "enter"
+                          | "ctrl-enter",
+                      })
+                    }
                   />
                   <span>Ctrl + Enter</span>
                 </label>
               </div>
               <p className="settings-hint">
-                {settings.sendMessageKey === 'enter'
-                  ? 'Нажмите Enter для отправки, Shift+Enter для новой строки'
-                  : 'Нажмите Ctrl+Enter для отправки, Enter для новой строки'}
+                {settings.sendMessageKey === "enter"
+                  ? "Натисніть Enter для відправки, Shift+Enter для нового рядка"
+                  : "Натисніть Ctrl+Enter для відправки, Enter для нового рядка"}
               </p>
             </div>
           </div>
@@ -195,17 +251,19 @@ const Settings: React.FC = () => {
 
         {/* Notifications Section */}
         <section className="settings-section">
-          <h3 className="settings-section-title">Уведомления</h3>
+          <h3 className="settings-section-title">Сповіщення</h3>
           <div className="settings-section-content">
             <div className="settings-field">
               <label className="settings-toggle-label">
                 <input
                   type="checkbox"
                   checked={settings.notifications.enabled}
-                  onChange={(e) => updateNotifications({ enabled: e.target.checked })}
+                  onChange={(e) =>
+                    updateNotifications({ enabled: e.target.checked })
+                  }
                   className="settings-toggle"
                 />
-                <span>Включить уведомления</span>
+                <span>Увімкнути сповіщення</span>
               </label>
             </div>
             <div className="settings-field">
@@ -213,11 +271,13 @@ const Settings: React.FC = () => {
                 <input
                   type="checkbox"
                   checked={settings.notifications.sound}
-                  onChange={(e) => updateNotifications({ sound: e.target.checked })}
+                  onChange={(e) =>
+                    updateNotifications({ sound: e.target.checked })
+                  }
                   disabled={!settings.notifications.enabled}
                   className="settings-toggle"
                 />
-                <span>Звук уведомлений</span>
+                <span>Звук сповіщень</span>
               </label>
             </div>
             <div className="settings-field">
@@ -225,14 +285,16 @@ const Settings: React.FC = () => {
                 <input
                   type="checkbox"
                   checked={settings.notifications.doNotDisturb}
-                  onChange={(e) => updateNotifications({ doNotDisturb: e.target.checked })}
+                  onChange={(e) =>
+                    updateNotifications({ doNotDisturb: e.target.checked })
+                  }
                   disabled={!settings.notifications.enabled}
                   className="settings-toggle"
                 />
-                <span>Не беспокоить (Do Not Disturb)</span>
+                <span>Не турбувати (Do Not Disturb)</span>
               </label>
               <p className="settings-hint">
-                В режиме "Не беспокоить" уведомления будут отключены
+                У режимі "Не турбувати" сповіщення будуть вимкнені
               </p>
             </div>
           </div>
@@ -240,13 +302,20 @@ const Settings: React.FC = () => {
 
         {/* Connection Section */}
         <section className="settings-section">
-          <h3 className="settings-section-title">Подключение</h3>
+          <h3 className="settings-section-title">Підключення</h3>
           <div className="settings-section-content">
             <div className="settings-field">
-              <label>Окружение</label>
+              <label>Оточення</label>
               <select
                 value={settings.connection.environment}
-                onChange={(e) => updateConnection({ environment: e.target.value as 'production' | 'staging' | 'dev' })}
+                onChange={(e) =>
+                  updateConnection({
+                    environment: e.target.value as
+                      | "production"
+                      | "staging"
+                      | "dev",
+                  })
+                }
                 className="settings-select"
               >
                 <option value="production">Production</option>
@@ -264,7 +333,8 @@ const Settings: React.FC = () => {
                 placeholder="https://goranked.gg"
               />
               <p className="settings-hint">
-                Базовый URL для API запросов. Изменения вступят в силу после перезапуска приложения.
+                Базовий URL для API запитів. Зміни набудуть чинності після
+                перезапуску додатку.
               </p>
             </div>
           </div>
@@ -272,34 +342,38 @@ const Settings: React.FC = () => {
 
         {/* Info Section */}
         <section className="settings-section">
-          <h3 className="settings-section-title">О приложении</h3>
+          <h3 className="settings-section-title">Про додаток</h3>
           <div className="settings-section-content">
             <div className="settings-field">
-              <label>Версия</label>
+              <label>Версія</label>
               <div className="settings-value">{appVersion}</div>
             </div>
             <div className="settings-field">
-              <label>Название</label>
+              <label>Назва</label>
               <div className="settings-value">GoRanked Chat Desk</div>
             </div>
             <div className="settings-field">
-              <label>Обновления</label>
+              <label>Оновлення</label>
               <div className="settings-update-section">
                 <button
                   className="settings-update-btn"
                   onClick={handleCheckForUpdates}
                   disabled={isCheckingUpdates || !window.electronAPI}
                 >
-                  {isCheckingUpdates ? 'Проверка...' : 'Проверить обновления'}
+                  {isCheckingUpdates ? "Перевірка..." : "Перевірити оновлення"}
                 </button>
                 {updateStatus && (
-                  <p className={`settings-update-status ${updateStatus.includes('Ошибка') ? 'error' : ''}`}>
+                  <p
+                    className={`settings-update-status ${
+                      updateStatus.includes("Помилка") || updateStatus.includes("Ошибка") ? "error" : ""
+                    }`}
+                  >
                     {updateStatus}
                   </p>
                 )}
                 <p className="settings-hint">
-                  Приложение автоматически проверяет обновления каждые 30 минут. 
-                  Вы также можете проверить вручную.
+                  Додаток автоматично перевіряє оновлення кожні 30 хвилин.
+                  Ви також можете перевірити вручну.
                 </p>
               </div>
             </div>
@@ -311,4 +385,3 @@ const Settings: React.FC = () => {
 };
 
 export default Settings;
-

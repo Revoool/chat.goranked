@@ -52,28 +52,28 @@ const Sidebar: React.FC<SidebarProps> = ({ user, onLogout }) => {
           onClick={() => handleMenuClick('inbox')}
         >
           <span>📥</span>
-          <span>Inbox</span>
+          <span>Вхідні</span>
         </button>
         <button 
           className={`nav-item ${activeMenu === 'assigned' ? 'active' : ''}`}
           onClick={() => handleMenuClick('assigned')}
         >
           <span>👤</span>
-          <span>Assigned</span>
+          <span>Призначені</span>
         </button>
         <button 
           className={`nav-item ${activeMenu === 'closed' ? 'active' : ''}`}
           onClick={() => handleMenuClick('closed')}
         >
           <span>✅</span>
-          <span>Closed</span>
+          <span>Закриті</span>
         </button>
         <button 
           className={`nav-item ${activeMenu === 'settings' ? 'active' : ''}`}
           onClick={() => handleMenuClick('settings')}
         >
           <span>⚙️</span>
-          <span>Settings</span>
+          <span>Налаштування</span>
         </button>
       </nav>
 
@@ -88,7 +88,7 @@ const Sidebar: React.FC<SidebarProps> = ({ user, onLogout }) => {
           </div>
         </div>
         <button className="logout-button" onClick={onLogout}>
-          Выйти
+          Вийти
         </button>
       </div>
     </div>

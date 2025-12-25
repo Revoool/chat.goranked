@@ -107,7 +107,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId }) => {
       console.error('❌ Error response:', error.response);
       console.error('❌ Error status:', error.response?.status);
       console.error('❌ Error data:', error.response?.data);
-      alert(`Ошибка отправки сообщения: ${error.response?.data?.message || error.message || 'Неизвестная ошибка'}`);
+      alert(`Помилка відправки повідомлення: ${error.response?.data?.message || error.message || 'Невідома помилка'}`);
     },
   });
 
@@ -180,14 +180,14 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId }) => {
   const displayChat = normalizedChat || chatFromStore;
   
   if (chatLoading || messagesLoading) {
-    return <div className="chat-window-loading">Загрузка...</div>;
+    return <div className="chat-window-loading">Завантаження...</div>;
   }
 
   if (chatError || messagesError) {
     console.error('❌ ChatWindow errors:', { chatError, messagesError });
     return (
       <div className="chat-window-loading" style={{ color: 'var(--error)' }}>
-        Ошибка загрузки. Проверьте консоль.
+        Помилка завантаження. Перевірте консоль.
       </div>
     );
   }
@@ -208,7 +208,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId }) => {
           <button 
             className={`info-btn ${isClientCardOpen ? 'active' : ''}`}
             onClick={toggleClientCard}
-            title="Информация о клиенте"
+            title="Інформація про клієнта"
           >
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
               <circle cx="10" cy="10" r="9" stroke="currentColor" strokeWidth="1.5" fill="none"/>
@@ -219,7 +219,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId }) => {
             className="chat-action-btn"
             onClick={() => setShowAssignModal(true)}
           >
-            Назначить
+            Призначити
           </button>
           <button 
             className={`chat-action-btn ${displayChat?.status === 'in_progress' ? 'active' : ''}`}
@@ -236,14 +236,14 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId }) => {
           <button 
             className={`chat-action-btn priority-btn priority-${displayChat?.priority || 'normal'}`}
             onClick={() => setShowPriorityModal(true)}
-            title={`Приоритет: ${displayChat?.priority || 'normal'}`}
+            title={`Пріоритет: ${displayChat?.priority || 'normal'}`}
           >
             <span className="priority-icon">
               {displayChat?.priority === 'urgent' ? '🔴' : 
                displayChat?.priority === 'high' ? '⬆️' : 
                displayChat?.priority === 'low' ? '⬇️' : '➡️'}
             </span>
-            Приоритет
+            Пріоритет
           </button>
         </div>
       </div>

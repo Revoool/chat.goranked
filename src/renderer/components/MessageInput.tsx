@@ -175,8 +175,8 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSend, disabled, chatId })
           }}
           onKeyDown={handleKeyDown}
           placeholder={sendMessageKey === 'enter'
-            ? 'Введите сообщение... (Enter для отправки, Shift+Enter для новой строки)'
-            : 'Введите сообщение... (Ctrl+Enter для отправки, Enter для новой строки)'}
+            ? 'Введіть повідомлення... (Enter для відправки, Shift+Enter для нового рядка)'
+            : 'Введіть повідомлення... (Ctrl+Enter для відправки, Enter для нового рядка)'}
           rows={1}
           disabled={disabled}
         />
@@ -185,7 +185,7 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSend, disabled, chatId })
           className="message-input-send"
           disabled={disabled || (!text.trim() && attachments.length === 0)}
         >
-          Отправить
+          Відправити
         </button>
       </div>
     </form>

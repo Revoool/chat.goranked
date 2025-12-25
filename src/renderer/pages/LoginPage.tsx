@@ -78,7 +78,7 @@ const LoginPage: React.FC = () => {
       const errorMessage = err.response?.data?.message 
         || err.response?.data?.error 
         || err.message 
-        || 'Ошибка входа. Проверьте email и пароль.';
+        || 'Помилка входу. Перевірте email та пароль.';
       setError(errorMessage);
       
       // Log full error for debugging
@@ -131,7 +131,7 @@ const LoginPage: React.FC = () => {
 
           {tmpToken && (
             <div className="form-group">
-              <label htmlFor="2fa">Код двухфакторной аутентификации</label>
+              <label htmlFor="2fa">Код двофакторної аутентифікації</label>
               <input
                 id="2fa"
                 type="text"
@@ -139,7 +139,7 @@ const LoginPage: React.FC = () => {
                 onChange={(e) => setTwoFactorCode(e.target.value)}
                 required
                 disabled={isLoading}
-                placeholder="Введите код из приложения"
+                placeholder="Введіть код з додатку"
                 autoFocus
               />
             </div>
@@ -150,7 +150,7 @@ const LoginPage: React.FC = () => {
             className="login-button"
             disabled={isLoading}
           >
-            {isLoading ? 'Вход...' : tmpToken ? 'Подтвердить' : 'Войти'}
+            {isLoading ? 'Вхід...' : tmpToken ? 'Підтвердити' : 'Увійти'}
           </button>
         </form>
       </div>

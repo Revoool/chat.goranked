@@ -78,7 +78,7 @@ const AssignModal: React.FC<AssignModalProps> = ({ chatId, currentManagerId, onC
     },
     onError: (error: any) => {
       console.error('❌ Error taking chat:', error);
-      alert(`Ошибка: ${error.response?.data?.message || error.message || 'Не удалось взять чат'}`);
+      alert(`Помилка: ${error.response?.data?.message || error.message || 'Не вдалося взяти чат'}`);
     },
   });
 
@@ -93,7 +93,7 @@ const AssignModal: React.FC<AssignModalProps> = ({ chatId, currentManagerId, onC
     },
     onError: (error: any) => {
       console.error('❌ Error assigning chat:', error);
-      alert(`Ошибка: ${error.response?.data?.message || error.message || 'Не удалось назначить чат'}`);
+      alert(`Помилка: ${error.response?.data?.message || error.message || 'Не вдалося призначити чат'}`);
     },
   });
 
@@ -117,7 +117,7 @@ const AssignModal: React.FC<AssignModalProps> = ({ chatId, currentManagerId, onC
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
-          <h3>Назначить чат</h3>
+          <h3>Призначити чат</h3>
           <button className="modal-close" onClick={onClose}>×</button>
         </div>
         <div className="modal-body">
@@ -126,29 +126,29 @@ const AssignModal: React.FC<AssignModalProps> = ({ chatId, currentManagerId, onC
               className={`assign-action-btn ${action === 'take' ? 'active' : ''}`}
               onClick={() => setAction('take')}
             >
-              Взять себе
+              Взяти собі
             </button>
             <button
               className={`assign-action-btn ${action === 'assign' ? 'active' : ''}`}
               onClick={() => setAction('assign')}
             >
-              Назначить другому
+              Призначити іншому
             </button>
           </div>
 
           {action === 'take' && (
             <div className="assign-content">
-              <p>Вы хотите взять этот чат себе?</p>
+              <p>Ви хочете взяти цей чат собі?</p>
               <div className="modal-actions">
                 <button
                   className="modal-btn primary"
                   onClick={handleTakeChat}
                   disabled={takeChatMutation.isPending}
                 >
-                  {takeChatMutation.isPending ? 'Обработка...' : 'Взять чат'}
+                  {takeChatMutation.isPending ? 'Обробка...' : 'Взяти чат'}
                 </button>
                 <button className="modal-btn secondary" onClick={onClose}>
-                  Отмена
+                  Скасувати
                 </button>
               </div>
             </div>
@@ -156,10 +156,10 @@ const AssignModal: React.FC<AssignModalProps> = ({ chatId, currentManagerId, onC
 
           {action === 'assign' && (
             <div className="assign-content">
-              <p>Назначить чат себе или другому менеджеру:</p>
+              <p>Призначити чат собі або іншому менеджеру:</p>
               
               {loadingManagers ? (
-                <div className="managers-loading">Загрузка менеджеров...</div>
+                <div className="managers-loading">Завантаження менеджерів...</div>
               ) : (
                 <div className="managers-list">
                   {/* Кнопка "Назначить себе" */}
@@ -181,12 +181,12 @@ const AssignModal: React.FC<AssignModalProps> = ({ chatId, currentManagerId, onC
                         <span className="manager-email">{user.email}</span>
                       </div>
                       {currentManagerId === user.id && (
-                        <span className="current-badge">Текущий</span>
+                        <span className="current-badge">Поточний</span>
                       )}
                     </button>
                   )}
 
-                  {/* Список других менеджеров */}
+                  {/* Список інших менеджерів */}
                   {managers
                     .filter((m) => m.id !== user?.id)
                     .map((manager) => (
@@ -220,7 +220,7 @@ const AssignModal: React.FC<AssignModalProps> = ({ chatId, currentManagerId, onC
                           <span className="manager-email">{manager.email}</span>
                         </div>
                         {currentManagerId === manager.id && (
-                          <span className="current-badge">Текущий</span>
+                          <span className="current-badge">Поточний</span>
                         )}
                       </button>
                     ))}
@@ -229,7 +229,7 @@ const AssignModal: React.FC<AssignModalProps> = ({ chatId, currentManagerId, onC
 
               <div className="modal-actions">
                 <button className="modal-btn secondary" onClick={onClose}>
-                  Отмена
+                  Скасувати
                 </button>
               </div>
             </div>

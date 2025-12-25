@@ -40,7 +40,7 @@ const ClientCard: React.FC<ClientCardProps> = ({ chatId }) => {
   if (!chatData) {
     return (
       <div className="client-card">
-        <div className="client-card-loading">Загрузка...</div>
+        <div className="client-card-loading">Завантаження...</div>
       </div>
     );
   }
@@ -52,11 +52,11 @@ const ClientCard: React.FC<ClientCardProps> = ({ chatId }) => {
   return (
     <div className="client-card">
       <div className="client-card-header">
-        <h3>Карточка клиента</h3>
+        <h3>Картка клієнта</h3>
         <button 
           className="close-btn"
           onClick={() => setClientCardOpen(false)}
-          title="Закрыть"
+          title="Закрити"
         >
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M12 4L4 12M4 4L12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
@@ -93,14 +93,14 @@ const ClientCard: React.FC<ClientCardProps> = ({ chatId }) => {
           {chatData.source && <p>📱 {chatData.source}</p>}
         </div>
 
-        {/* Дополнительная информация о клиенте */}
+        {/* Додаткова інформація про клієнта */}
         {clientInfo && (
           <div className="client-additional-info">
-            <h5>Дополнительная информация</h5>
+            <h5>Додаткова інформація</h5>
             <div className="info-grid">
               {clientInfo.country_name && (
                 <div className="info-item">
-                  <span className="info-label">Страна:</span>
+                  <span className="info-label">Країна:</span>
                   <span className="info-value">
                     {clientInfo.country_name} {clientInfo.country && `(${clientInfo.country})`}
                   </span>
@@ -108,7 +108,7 @@ const ClientCard: React.FC<ClientCardProps> = ({ chatId }) => {
               )}
               {clientInfo.city && (
                 <div className="info-item">
-                  <span className="info-label">Город:</span>
+                  <span className="info-label">Місто:</span>
                   <span className="info-value">{clientInfo.city}</span>
                 </div>
               )}
@@ -120,28 +120,28 @@ const ClientCard: React.FC<ClientCardProps> = ({ chatId }) => {
               )}
               {clientInfo.current_page && (
                 <div className="info-item">
-                  <span className="info-label">Текущая страница:</span>
+                  <span className="info-label">Поточна сторінка:</span>
                   <span className="info-value">{clientInfo.current_page}</span>
                 </div>
               )}
               {clientInfo.time_on_site && (
                 <div className="info-item">
-                  <span className="info-label">Время на сайте:</span>
+                  <span className="info-label">Час на сайті:</span>
                   <span className="info-value">{clientInfo.time_on_site}</span>
                 </div>
               )}
               {clientInfo.total_visits !== undefined && (
                 <div className="info-item">
-                  <span className="info-label">Посещений:</span>
+                  <span className="info-label">Відвідувань:</span>
                   <span className="info-value">{clientInfo.total_visits}</span>
                 </div>
               )}
             </div>
 
-            {/* История посещений */}
+            {/* Історія відвідувань */}
             {clientInfo.page_visits && clientInfo.page_visits.length > 0 && (
               <div className="page-visits">
-                <h6>Посещенные страницы:</h6>
+                <h6>Відвідані сторінки:</h6>
                 <div className="visits-list">
                   {clientInfo.page_visits.slice(0, 5).map((visit: any, index: number) => (
                     <div key={index} className="visit-item">
@@ -171,10 +171,10 @@ const ClientCard: React.FC<ClientCardProps> = ({ chatId }) => {
         )}
 
         <div className="client-notes">
-          <h5>Заметки</h5>
+          <h5>Нотатки</h5>
           <textarea
             className="notes-textarea"
-            placeholder="Внутренние заметки о клиенте..."
+            placeholder="Внутрішні нотатки про клієнта..."
             rows={4}
           />
         </div>
