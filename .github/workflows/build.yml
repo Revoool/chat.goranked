@@ -42,14 +42,11 @@ jobs:
           echo "Current directory: $(pwd)"
           echo "Node version: $(node --version)"
           echo "NPM version: $(npm --version)"
-          echo "Building macOS app (this will run all build steps)..."
-          npm run build:mac || {
-            echo "❌ Build failed, but continuing to check what was created..."
-            ls -la release/ || echo "Release directory not found"
-            exit 1
-          }
+          echo "Building macOS app with publish enabled..."
+          npm run build && electron-builder --mac --x64 --arm64 --publish always
         env:
           NODE_ENV: production
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       
       - name: Organize release files
         run: |
@@ -59,21 +56,26 @@ jobs:
           echo "=== Finding DMG files ==="
           find release -name "*.dmg" -type f || echo "No DMG files found"
           echo ""
+          echo "=== Finding ZIP files ==="
+          find release -name "*.zip" -type f || echo "No ZIP files found"
+          echo ""
           echo "=== Finding ALL YML files ==="
           find release -name "*.yml" -type f || echo "No YML files found"
           echo ""
+          echo "=== Finding blockmap files ==="
+          find release -name "*.blockmap" -type f || echo "No blockmap files found"
+          echo ""
           echo "=== Organizing files ==="
           mkdir -p release/mac
-          # Move DMG files to mac folder
+          # Move DMG files to mac folder (for manual download)
           find release -maxdepth 1 -name "*.dmg" -type f -exec mv {} release/mac/ \; 2>/dev/null || true
-          find release -maxdepth 1 -name "*.blockmap" -type f -exec mv {} release/mac/ \; 2>/dev/null || true
-          # Keep ALL YML files in root for electron-updater (don't move them)
+          # Keep ZIP, YML and blockmap files in root for electron-updater (don't move them)
           echo ""
-          echo "=== Mac release folder contents ==="
+          echo "=== Mac release folder contents (DMG for manual install) ==="
           ls -la release/mac/ || echo "Mac folder is empty"
           echo ""
-          echo "=== Root release folder YML files (for electron-updater) ==="
-          find release -maxdepth 1 -name "*.yml" -type f || echo "No YML files in root"
+          echo "=== Root release folder (ZIP, YML, blockmap for auto-update) ==="
+          find release -maxdepth 1 -type f \( -name "*.zip" -o -name "*.yml" -o -name "*.blockmap" \) || echo "No auto-update files in root"
       
       - name: Upload macOS artifacts
         uses: actions/upload-artifact@v4
@@ -112,14 +114,15 @@ jobs:
         with:
           files: |
             release/mac/*.dmg
+            release/*.zip
             release/*.yml
-            release/*mac*.yml
-            release/latest*.yml
+            release/*.blockmap
           tag_name: ${{ github.ref_name }}
           body: |
             ## macOS Build
-            - DMG installer for macOS (x64 and arm64)
-            - Auto-update configuration files (latest-mac.yml, latest-mac-x64.yml, latest-mac-arm64.yml)
+            - DMG installer for macOS (x64 and arm64) - для ручной установки
+            - ZIP архивы для автообновления (x64 и arm64)
+            - Файлы конфигурации автообновления (latest-mac.yml, latest-mac-x64.yml, latest-mac-arm64.yml)
           draft: false
           prerelease: false
           fail_on_unmatched_files: false
