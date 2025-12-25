@@ -12,7 +12,6 @@ interface SettingsState {
   };
   connection: {
     apiUrl: string;
-    environment: "production" | "staging" | "dev";
   };
 }
 
@@ -218,11 +217,6 @@ const Settings: React.FC = () => {
         localStorage.getItem("settings.connection.apiUrl") ||
         process.env.API_URL ||
         "https://goranked.gg",
-      environment:
-        (localStorage.getItem("settings.connection.environment") as
-          | "production"
-          | "staging"
-          | "dev") || "production",
     },
   });
 
@@ -245,10 +239,6 @@ const Settings: React.FC = () => {
     localStorage.setItem(
       "settings.connection.apiUrl",
       settings.connection.apiUrl
-    );
-    localStorage.setItem(
-      "settings.connection.environment",
-      settings.connection.environment
     );
   }, [settings]);
 
@@ -428,25 +418,6 @@ const Settings: React.FC = () => {
         <section className="settings-section">
           <h3 className="settings-section-title">Підключення</h3>
           <div className="settings-section-content">
-            <div className="settings-field">
-              <label>Оточення</label>
-              <select
-                value={settings.connection.environment}
-                onChange={(e) =>
-                  updateConnection({
-                    environment: e.target.value as
-                      | "production"
-                      | "staging"
-                      | "dev",
-                  })
-                }
-                className="settings-select"
-              >
-                <option value="production">Production</option>
-                <option value="staging">Staging</option>
-                <option value="dev">Development</option>
-              </select>
-            </div>
             <div className="settings-field">
               <label>API URL</label>
               <input
