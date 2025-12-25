@@ -2,32 +2,66 @@
 export class NotificationService {
   private permissionGranted = false;
   private sound: HTMLAudioElement | null = null;
-  private soundPath: string;
+  private soundPath: string = '';
+  private soundPathResolved: boolean = false;
 
   constructor() {
-    // Determine sound path based on environment
-    // In dev: webpack dev server serves from src/renderer/sound/
-    // In production (packaged): files are in app.asar.unpacked/sound/ or resources/sound/
-    // In production (unpacked): files are in dist/sound/
-    const isDev = process.env.NODE_ENV === 'development' || !window.location.protocol.includes('file');
-    const isPackaged = window.location.protocol === 'file:';
-    
-    if (isDev) {
+    // Load sound file asynchronously after getting path from main process
+    this.initializeSound();
+  }
+
+  private async initializeSound() {
+    try {
+      // Try to get sound path from Electron main process
+      if (window.electronAPI && window.electronAPI.getSoundPath) {
+        const result = await window.electronAPI.getSoundPath();
+        if (result.success && result.path) {
+          this.soundPath = result.path;
+          this.soundPathResolved = true;
+          console.log('🔊 Sound path resolved from main process:', this.soundPath);
+          this.loadSound();
+          return;
+        } else {
+          console.warn('⚠️ Failed to get sound path from main process:', result.error);
+        }
+      }
+      
+      // Fallback: Determine sound path based on environment
+      // In dev: webpack dev server serves from src/renderer/sound/
+      // In production (packaged): files are in app.asar.unpacked/sound/ or resources/sound/
+      // In production (unpacked): files are in dist/sound/
+      const isDev = process.env.NODE_ENV === 'development' || !window.location.protocol.includes('file');
+      const isPackaged = window.location.protocol === 'file:';
+      
+      if (isDev) {
+        this.soundPath = '/sound/best-notification-1-286672.mp3';
+      } else if (isPackaged) {
+        // In packaged app, sound files are in extraResources
+        // Path depends on platform: resources/sound/ (macOS) or resources/sound/ (Windows)
+        this.soundPath = './sound/best-notification-1-286672.mp3';
+      } else {
+        // In unpacked production build
+        this.soundPath = './sound/best-notification-1-286672.mp3';
+      }
+      
+      this.soundPathResolved = true;
+      console.log('🔊 Using fallback sound path:', this.soundPath);
+      this.loadSound();
+    } catch (error) {
+      console.error('❌ Error initializing sound:', error);
+      this.soundPathResolved = true;
+      // Still try to load with fallback path
       this.soundPath = '/sound/best-notification-1-286672.mp3';
-    } else if (isPackaged) {
-      // In packaged app, sound files are in extraResources
-      // Path depends on platform: resources/sound/ (macOS) or resources/sound/ (Windows)
-      this.soundPath = './sound/best-notification-1-286672.mp3';
-    } else {
-      // In unpacked production build
-      this.soundPath = './sound/best-notification-1-286672.mp3';
+      this.loadSound();
     }
-    
-    // Load sound file
-    this.loadSound();
   }
 
   private loadSound() {
+    if (!this.soundPath) {
+      console.warn('⚠️ Sound path not set yet');
+      return;
+    }
+
     try {
       this.sound = new Audio(this.soundPath);
       this.sound.preload = 'auto';
@@ -38,31 +72,52 @@ export class NotificationService {
       this.sound.addEventListener('error', (e) => {
         console.error('❌ Sound file failed to load:', e);
         console.error('❌ Tried path:', this.soundPath);
-        // Try alternative paths
-        const alternatives = [
-          '/sound/best-notification-1-286672.mp3',
-          './sound/best-notification-1-286672.mp3',
-          '../sound/best-notification-1-286672.mp3',
-        ];
+        console.error('❌ Error details:', {
+          code: (this.sound as any)?.error?.code,
+          message: (this.sound as any)?.error?.message,
+        });
         
-        for (const altPath of alternatives) {
-          if (altPath !== this.soundPath) {
-            console.log('🔄 Trying alternative path:', altPath);
-            try {
-              this.sound = new Audio(altPath);
-              this.sound.volume = 0.7;
-              this.soundPath = altPath;
-              break;
-            } catch (err) {
-              console.warn('⚠️ Alternative path failed:', altPath);
+        // Only try alternatives if we haven't already gotten path from main process
+        if (!window.electronAPI || !window.electronAPI.getSoundPath) {
+          // Try alternative paths
+          const alternatives = [
+            '/sound/best-notification-1-286672.mp3',
+            './sound/best-notification-1-286672.mp3',
+            '../sound/best-notification-1-286672.mp3',
+          ];
+          
+          for (const altPath of alternatives) {
+            if (altPath !== this.soundPath) {
+              console.log('🔄 Trying alternative path:', altPath);
+              try {
+                const altSound = new Audio(altPath);
+                altSound.volume = 0.7;
+                altSound.addEventListener('error', () => {
+                  console.warn('⚠️ Alternative path also failed:', altPath);
+                });
+                altSound.addEventListener('canplaythrough', () => {
+                  console.log('✅ Alternative path worked:', altPath);
+                  this.sound = altSound;
+                  this.soundPath = altPath;
+                });
+                break;
+              } catch (err) {
+                console.warn('⚠️ Alternative path failed:', altPath);
+              }
             }
           }
+        } else {
+          console.warn('⚠️ Sound file not found. Notifications will work without sound.');
         }
       });
       
       // Log successful load
       this.sound.addEventListener('canplaythrough', () => {
         console.log('✅ Sound file ready to play');
+      });
+      
+      this.sound.addEventListener('loadeddata', () => {
+        console.log('✅ Sound file data loaded');
       });
     } catch (error) {
       console.error('Failed to initialize notification sound:', error);

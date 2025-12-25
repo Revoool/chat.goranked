@@ -9,6 +9,8 @@ export interface ElectronAPI {
   onUpdateNotAvailable: (callback: (info: any) => void) => (() => void) | undefined;
   onUpdateError: (callback: (error: any) => void) => (() => void) | undefined;
   onUpdateDownloadProgress: (callback: (progress: any) => void) => (() => void) | undefined;
+  onUpdateDownloaded: (callback: (info: any) => void) => (() => void) | undefined;
+  getSoundPath: () => Promise<{ success: boolean; path?: string; error?: string }>;
 }
 
 declare global {

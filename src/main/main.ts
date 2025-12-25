@@ -2,7 +2,7 @@ import { app, BrowserWindow, ipcMain, nativeTheme, dialog, Menu, globalShortcut 
 import * as path from 'path';
 import * as fs from 'fs';
 import * as keytar from 'keytar';
-import { autoUpdater } from 'electron-updater';
+import { autoUpdater, UpdateInfo, ProgressInfo } from 'electron-updater';
 import * as https from 'https';
 
 const SERVICE_NAME = 'goranked-chat-desk';
@@ -79,7 +79,6 @@ function createWindow() {
     show: false,
   });
 
-  // Load the app
   const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
   console.log('NODE_ENV:', process.env.NODE_ENV);
   console.log('isPackaged:', app.isPackaged);
@@ -88,16 +87,13 @@ function createWindow() {
   let indexPath = path.join(__dirname, 'index.html');
 
   if (isDev) {
-    // Try to load from dev server first
     console.log('Attempting to load from http://localhost:3000');
     mainWindow.loadURL('http://localhost:3000').catch((err) => {
       console.error('Error loading from dev server:', err);
       console.log('Falling back to local file:', indexPath);
-      // Fallback to local file if dev server is not available
       if (mainWindow && !mainWindow.isDestroyed()) {
         mainWindow.loadFile(indexPath).catch((err2: any) => {
           console.error('Failed to load index.html:', err2);
-          // Try loading with URL protocol
           if (mainWindow && !mainWindow.isDestroyed()) {
             const fileUrl = `file://${indexPath.replace(/\\/g, '/')}`;
             mainWindow.loadURL(fileUrl).catch((err3: any) => {
@@ -107,23 +103,18 @@ function createWindow() {
         });
       }
     });
-    // Open DevTools after a short delay to ensure page is loaded
     setTimeout(() => {
       mainWindow?.webContents.openDevTools();
     }, 1000);
   } else {
-    // In production, files are packaged in app.asar
-    // index.html is in the same directory as main.js (both in dist/)
     console.log('Production mode - loading from:', indexPath);
     console.log('__dirname:', __dirname);
     console.log('app.getAppPath():', app.getAppPath());
     
-    // Check if file exists
     if (fs.existsSync(indexPath)) {
       console.log('✓ index.html exists at:', indexPath);
     } else {
       console.error('✗ index.html NOT found at:', indexPath);
-      // Try alternative paths
       const altPaths = [
         path.join(app.getAppPath(), 'index.html'),
         path.join(app.getAppPath(), 'dist', 'index.html'),
@@ -142,13 +133,11 @@ function createWindow() {
       mainWindow.loadFile(indexPath).catch((err: any) => {
         console.error('Failed to load index.html:', err);
         console.error('Error details:', JSON.stringify(err, null, 2));
-        // Try loading with URL protocol
         if (mainWindow && !mainWindow.isDestroyed()) {
           const fileUrl = `file://${indexPath.replace(/\\/g, '/')}`;
           console.log('Trying to load with file:// URL:', fileUrl);
           mainWindow.loadURL(fileUrl).catch((err2: any) => {
             console.error('Failed to load with URL:', err2);
-            // Show error to user
             dialog.showErrorBox(
               'Критическая ошибка',
               `Не удалось загрузить приложение.\n\nПроверьте консоль для подробностей.\n\nНажмите F12 или Ctrl+Shift+I для открытия DevTools.`
@@ -165,7 +154,6 @@ function createWindow() {
     console.error('Index path:', indexPath);
     console.error('__dirname:', __dirname);
     
-    // Show error dialog in production
     if (app.isPackaged && mainWindow && !mainWindow.isDestroyed()) {
       dialog.showErrorBox(
         'Ошибка загрузки',
@@ -183,7 +171,6 @@ function createWindow() {
 
   mainWindow.webContents.on('render-process-gone', (event, details) => {
     console.error('Renderer process gone:', details);
-    // Recreate window if crashed
     if (details.reason === 'crashed') {
       setTimeout(() => {
         if (BrowserWindow.getAllWindows().length === 0) {
@@ -205,7 +192,6 @@ function createWindow() {
     console.log(`[Renderer ${level}]:`, message, `(${sourceId}:${line})`);
   });
 
-  // Register global shortcuts for DevTools
   globalShortcut.register('F12', () => {
     if (mainWindow) {
       mainWindow.webContents.toggleDevTools();
@@ -228,10 +214,7 @@ function createWindow() {
   });
 }
 
-// Configure auto-updater
 if (app.isPackaged) {
-  // Use GitHub Releases for updates
-  // Set UPDATE_URL environment variable to use custom server, otherwise uses GitHub
   const updateUrl = process.env.UPDATE_URL;
   const githubOwner = process.env.GITHUB_OWNER || 'Revoool';
   const githubRepo = process.env.GITHUB_REPO || 'chat.goranked';
@@ -242,26 +225,20 @@ if (app.isPackaged) {
   console.log('  - Current version:', app.getVersion());
   
   if (updateUrl) {
-    // Custom update server
     console.log('  - Using custom update URL:', updateUrl);
     autoUpdater.setFeedURL({
       provider: 'generic',
       url: updateUrl,
     });
   } else {
-    // GitHub Releases (default)
     console.log('  - Using GitHub Releases');
     console.log('  - Repository is public');
     
-    // For public repositories:
-    // - Releases are automatically public
-    // - No token needed
-    // - electron-updater works out of the box
     const feedURLConfig: any = {
       provider: 'github',
       owner: githubOwner,
       repo: githubRepo,
-      private: false, // Public repository - releases are public
+      private: false,
     };
     
     console.log('  - Using public repository (releases are public)');
@@ -269,17 +246,14 @@ if (app.isPackaged) {
     console.log('  - Feed URL config:', JSON.stringify(feedURLConfig, null, 2));
     autoUpdater.setFeedURL(feedURLConfig);
     
-    // Log the actual feed URL after setting
     const actualFeedURL = autoUpdater.getFeedURL();
     console.log('  - Actual feed URL:', actualFeedURL);
   }
 
-  // Configure auto-updater options
   autoUpdater.autoDownload = true;
   autoUpdater.autoInstallOnAppQuit = true;
   
-  // Log download progress
-  autoUpdater.on('download-progress', (progressObj) => {
+  autoUpdater.on('download-progress', (progressObj: ProgressInfo) => {
     console.log('📥 Download progress:', {
       percent: progressObj.percent,
       transferred: progressObj.transferred,
@@ -290,13 +264,11 @@ if (app.isPackaged) {
     }
   });
   
-  // Check for updates on startup
   console.log('🔄 Checking for updates on startup...');
   autoUpdater.checkForUpdatesAndNotify().catch((err) => {
     console.error('❌ Error checking for updates on startup:', err);
   });
   
-  // Check for updates every 30 minutes (чаще проверяем обновления)
   setInterval(() => {
     console.log('🔄 Periodic update check...');
     autoUpdater.checkForUpdatesAndNotify().catch((err) => {
@@ -304,7 +276,6 @@ if (app.isPackaged) {
     });
   }, 30 * 60 * 1000);
   
-  // Также проверяем при активации окна (когда пользователь возвращается к приложению)
   app.on('activate', () => {
     console.log('🔄 Checking for updates on app activate...');
     autoUpdater.checkForUpdatesAndNotify().catch((err) => {
@@ -312,61 +283,64 @@ if (app.isPackaged) {
     });
   });
 
-  // Auto-updater events
-  autoUpdater.on('update-available', (info) => {
+  autoUpdater.on('update-available', (info: UpdateInfo) => {
     console.log('🔄 Update available:', info.version);
     if (mainWindow) {
       mainWindow.webContents.send('update-available', info);
     }
   });
 
-  autoUpdater.on('update-downloaded', (info) => {
+  autoUpdater.on('update-downloaded', (info: UpdateInfo) => {
     console.log('✅ Update downloaded:', info.version);
+    console.log('✅ Update info:', JSON.stringify(info, null, 2));
     
-    // Автоматически устанавливаем обновление через 5 секунд
-    // Пользователь может отменить, нажав "Отмена"
+    // Send update-downloaded event to renderer
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('update-downloaded', {
+        version: info.version,
+        releaseDate: info.releaseDate,
+        releaseNotes: info.releaseNotes,
+        path: info.path,
+      });
+    }
+    
+    // Show dialog with option to install now or later
     if (mainWindow && !mainWindow.isDestroyed()) {
       dialog.showMessageBox(mainWindow, {
         type: 'info',
-        title: 'Оновлення готове',
-        message: `Доступна нова версія ${info.version}`,
-        detail: 'Додаток буде перезапущено через 5 секунд для встановлення оновлення. Натисніть "Скасувати" щоб відкласти.',
-        buttons: ['Перезапустити зараз', 'Скасувати'],
+        title: 'Оновлення завантажено',
+        message: `Оновлення версії ${info.version} готове до встановлення`,
+        detail: 'Додаток буде перезапущено для встановлення оновлення. Ви можете встановити зараз або пізніше.',
+        buttons: ['Встановити зараз', 'Пізніше'],
         defaultId: 0,
         cancelId: 1,
       }).then((response) => {
         if (response.response === 0) {
-          // Перезапустить сразу
+          // Install immediately
+          console.log('🔄 Installing update immediately');
           autoUpdater.quitAndInstall(false, true);
         } else {
-          // Автоматически установить через 5 секунд
-          setTimeout(() => {
-            console.log('🔄 Auto-installing update after 5 seconds');
-            if (mainWindow && !mainWindow.isDestroyed()) {
-              dialog.showMessageBox(mainWindow, {
-                type: 'info',
-                title: 'Встановлення оновлення',
-                message: 'Додаток буде перезапущено зараз.',
-                buttons: ['OK'],
-              }).then(() => {
-                autoUpdater.quitAndInstall(false, true);
-              });
-            } else {
-              autoUpdater.quitAndInstall(false, true);
-            }
-          }, 5000);
+          // User chose to install later - will install on next app quit
+          console.log('⏸️ User chose to install later. Update will be installed on next app quit.');
+          if (mainWindow && !mainWindow.isDestroyed()) {
+            mainWindow.webContents.send('update-downloaded-deferred', {
+              version: info.version,
+              message: 'Оновлення буде встановлено при наступному закритті додатку',
+            });
+          }
         }
+      }).catch((error) => {
+        console.error('❌ Error showing update dialog:', error);
+        // Fallback: install on next quit
+        console.log('🔄 Will install update on next app quit');
       });
     } else {
-      // Если окно закрыто, установить через 5 секунд
-      setTimeout(() => {
-        console.log('🔄 Auto-installing update (window closed)');
-        autoUpdater.quitAndInstall(false, true);
-      }, 5000);
+      // Window is closed - install on next quit
+      console.log('🔄 Window closed, update will be installed on next app quit');
     }
   });
 
-  autoUpdater.on('error', (error) => {
+  autoUpdater.on('error', (error: Error) => {
     console.error('❌ Auto-updater error:', error);
     console.error('Error details:', {
       message: error.message,
@@ -385,7 +359,7 @@ if (app.isPackaged) {
     console.log('🔍 Checking for update...');
   });
 
-  autoUpdater.on('update-not-available', (info) => {
+  autoUpdater.on('update-not-available', (info: UpdateInfo) => {
     console.log('✅ No updates available. Current version:', app.getVersion());
     if (mainWindow) {
       mainWindow.webContents.send('update-not-available', {
@@ -396,15 +370,12 @@ if (app.isPackaged) {
   });
 }
 
-// Handle uncaught exceptions
 process.on('uncaughtException', (error) => {
   console.error('Uncaught Exception:', error);
-  // Don't exit, keep app running
 });
 
 process.on('unhandledRejection', (reason, promise) => {
   console.error('Unhandled Rejection at:', promise, 'reason:', reason);
-  // Don't exit, keep app running
 });
 
 app.whenReady().then(() => {
@@ -419,7 +390,6 @@ app.whenReady().then(() => {
 });
 
 app.on('will-quit', () => {
-  // Unregister all shortcuts
   globalShortcut.unregisterAll();
 });
 
@@ -429,7 +399,6 @@ app.on('window-all-closed', () => {
   }
 });
 
-// IPC handlers for secure token storage
 ipcMain.handle('store-token', async (_event, token: string) => {
   try {
     if (!token || token.trim() === '') {
@@ -439,11 +408,9 @@ ipcMain.handle('store-token', async (_event, token: string) => {
     return { success: true };
   } catch (error: any) {
     console.error('Error storing token:', error);
-    // Keytar may fail on some systems, return error but don't crash
     return { 
       success: false, 
       error: error?.message || String(error),
-      // Allow fallback to localStorage
       allowFallback: true
     };
   }
@@ -469,7 +436,6 @@ ipcMain.handle('delete-token', async () => {
   }
 });
 
-// IPC handler for checking updates manually (without auto-download)
 ipcMain.handle('check-for-updates', async () => {
   if (!app.isPackaged) {
     return { 
@@ -483,7 +449,6 @@ ipcMain.handle('check-for-updates', async () => {
     console.log('🔄 Manual update check requested');
     console.log('  - Current version:', app.getVersion());
     
-    // Temporarily disable auto-download for manual check
     const wasAutoDownload = autoUpdater.autoDownload;
     autoUpdater.autoDownload = false;
     
@@ -491,13 +456,11 @@ ipcMain.handle('check-for-updates', async () => {
       const result = await autoUpdater.checkForUpdates();
       console.log('  - Check result:', result);
       
-      // Restore auto-download setting
       autoUpdater.autoDownload = wasAutoDownload;
       
       if (result && result.updateInfo) {
         console.log('  - Update available:', result.updateInfo.version);
         
-        // Get changelog from GitHub
         let changelog = '';
         try {
           const githubOwner = process.env.GITHUB_OWNER || 'Revoool';
@@ -552,7 +515,6 @@ ipcMain.handle('check-for-updates', async () => {
         currentVersion: app.getVersion(),
       };
     } catch (checkError: any) {
-      // Restore auto-download setting on error
       autoUpdater.autoDownload = wasAutoDownload;
       throw checkError;
     }
@@ -584,7 +546,6 @@ ipcMain.handle('check-for-updates', async () => {
   }
 });
 
-// IPC handler for starting update download
 ipcMain.handle('download-update', async () => {
   if (!app.isPackaged) {
     return { success: false, error: 'Updates are only available in production builds' };
@@ -617,8 +578,48 @@ ipcMain.handle('download-update', async () => {
   }
 });
 
-// IPC handler for getting app version
 ipcMain.handle('get-app-version', async () => {
   return { version: app.getVersion() };
+});
+
+ipcMain.handle('get-sound-path', async () => {
+  try {
+    const soundFileName = 'best-notification-1-286672.mp3';
+    
+    if (app.isPackaged) { 
+      const soundPath = path.join(process.resourcesPath, 'sound', soundFileName);
+      
+      if (fs.existsSync(soundPath)) {
+        const fileUrl = `file://${soundPath.replace(/\\/g, '/')}`;
+        return { success: true, path: fileUrl };
+      } else {
+        console.warn('Sound file not found at:', soundPath);
+        const altPaths = [
+          path.join(app.getAppPath(), 'sound', soundFileName),
+          path.join(__dirname, '..', 'sound', soundFileName),
+          path.join(process.resourcesPath, '..', 'sound', soundFileName),
+        ];
+        
+        for (const altPath of altPaths) {
+          if (fs.existsSync(altPath)) {
+            const fileUrl = `file://${altPath.replace(/\\/g, '/')}`;
+            return { success: true, path: fileUrl };
+          }
+        }
+        
+        return { success: false, error: 'Sound file not found' };
+      }
+    } else {
+      const soundPath = path.join(__dirname, '..', 'dist', 'sound', soundFileName);
+      if (fs.existsSync(soundPath)) {
+        const fileUrl = `file://${soundPath.replace(/\\/g, '/')}`;
+        return { success: true, path: fileUrl };
+      }
+      return { success: true, path: '/sound/best-notification-1-286672.mp3' };
+    }
+  } catch (error: any) {
+    console.error('Error getting sound path:', error);
+    return { success: false, error: error?.message || String(error) };
+  }
 });
 

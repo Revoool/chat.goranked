@@ -72,21 +72,69 @@ const App: React.FC = () => {
 
   // Listen for update events from main process
   useEffect(() => {
-    if (window.electronAPI && window.electronAPI.onUpdateAvailable) {
-      const handleUpdateAvailable = (info: any) => {
+    if (!window.electronAPI) return;
+
+    const cleanupFunctions: (() => void)[] = [];
+
+    // Listen for update-available event
+    if (window.electronAPI.onUpdateAvailable) {
+      const cleanup = window.electronAPI.onUpdateAvailable((info: any) => {
         console.log('🔄 Update available notification:', info);
-        // The main process already shows a dialog, but we can show additional UI feedback if needed
-      };
-
-      // Listen for update-available event from main process via preload
-      const cleanup = window.electronAPI.onUpdateAvailable(handleUpdateAvailable);
-
-      return () => {
-        if (cleanup) {
-          cleanup();
-        }
-      };
+        // Store update info for Settings component
+        localStorage.setItem('update.available', JSON.stringify(info));
+        // Trigger custom event for Settings component
+        window.dispatchEvent(new CustomEvent('update-available', { detail: info }));
+      });
+      if (cleanup) cleanupFunctions.push(cleanup);
     }
+
+    // Listen for update-downloaded event
+    if (window.electronAPI.onUpdateDownloadProgress) {
+      const cleanup = window.electronAPI.onUpdateDownloadProgress((progress: any) => {
+        console.log('📥 Update download progress:', progress);
+        // Store progress for Settings component
+        localStorage.setItem('update.progress', JSON.stringify(progress));
+        // Trigger custom event for Settings component
+        window.dispatchEvent(new CustomEvent('update-download-progress', { detail: progress }));
+      });
+      if (cleanup) cleanupFunctions.push(cleanup);
+    }
+
+    // Listen for update-downloaded event
+    if (window.electronAPI.onUpdateDownloaded) {
+      const cleanup = window.electronAPI.onUpdateDownloaded((info: any) => {
+        console.log('✅ Update downloaded:', info);
+        localStorage.setItem('update.downloaded', JSON.stringify(info));
+        window.dispatchEvent(new CustomEvent('update-downloaded', { detail: info }));
+      });
+      if (cleanup) cleanupFunctions.push(cleanup);
+    }
+
+    // Listen for update-not-available event
+    if (window.electronAPI.onUpdateNotAvailable) {
+      const cleanup = window.electronAPI.onUpdateNotAvailable((info: any) => {
+        console.log('✅ No updates available:', info);
+        localStorage.removeItem('update.available');
+        localStorage.removeItem('update.progress');
+        window.dispatchEvent(new CustomEvent('update-not-available', { detail: info }));
+      });
+      if (cleanup) cleanupFunctions.push(cleanup);
+    }
+
+    // Listen for update errors
+    if (window.electronAPI.onUpdateError) {
+      const cleanup = window.electronAPI.onUpdateError((error: any) => {
+        console.error('❌ Update error:', error);
+        localStorage.removeItem('update.available');
+        localStorage.removeItem('update.progress');
+        window.dispatchEvent(new CustomEvent('update-error', { detail: error }));
+      });
+      if (cleanup) cleanupFunctions.push(cleanup);
+    }
+
+    return () => {
+      cleanupFunctions.forEach(cleanup => cleanup());
+    };
   }, []);
 
   if (isLoading) {

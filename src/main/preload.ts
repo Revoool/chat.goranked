@@ -32,5 +32,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
       ipcRenderer.removeAllListeners('update-download-progress');
     };
   },
+  onUpdateDownloaded: (callback: (info: any) => void) => {
+    ipcRenderer.on('update-downloaded', (_event, info) => callback(info));
+    return () => {
+      ipcRenderer.removeAllListeners('update-downloaded');
+    };
+  },
+  getSoundPath: () => ipcRenderer.invoke('get-sound-path'),
 });
 

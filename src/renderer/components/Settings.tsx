@@ -39,17 +39,75 @@ const Settings: React.FC = () => {
         setAppVersion(result.version);
       });
       
-      // Listen for update download progress
-      const cleanup = window.electronAPI.onUpdateDownloadProgress?.((progress: any) => {
-        console.log('📥 Update download progress:', progress);
+      // Listen for update download progress from IPC
+      const cleanupIPC = window.electronAPI.onUpdateDownloadProgress?.((progress: any) => {
+        console.log('📥 Update download progress (IPC):', progress);
         setDownloadProgress(progress.percent || 0);
+        setIsDownloading(progress.percent < 100);
         if (progress.percent >= 100) {
-          setTimeout(() => setDownloadProgress(null), 2000);
+          setIsDownloading(false);
+          setUpdateStatus('Оновлення завантажено! Додаток буде перезапущено для встановлення.');
+          setTimeout(() => setDownloadProgress(null), 5000);
         }
       });
+
+      // Listen for update events from window events (from App.tsx)
+      const handleUpdateAvailable = (event: CustomEvent) => {
+        console.log('📥 Update available (event):', event.detail);
+        const info = event.detail;
+        setUpdateInfo({
+          version: info.version || info.tag?.replace('v', '') || '',
+          releaseDate: info.releaseDate,
+          changelog: info.releaseNotes || info.changelog || '',
+        });
+        setShowUpdateModal(true);
+      };
+
+      const handleUpdateProgress = (event: CustomEvent) => {
+        const progress = event.detail;
+        console.log('📥 Update progress (event):', progress);
+        setDownloadProgress(progress.percent || 0);
+        setIsDownloading(progress.percent < 100);
+        if (progress.percent >= 100) {
+          setIsDownloading(false);
+          setUpdateStatus('Оновлення завантажено! Додаток буде перезапущено для встановлення.');
+        }
+      };
+
+      const handleUpdateNotAvailable = () => {
+        setUpdateStatus('Ви використовуєте останню версію');
+        setTimeout(() => setUpdateStatus(null), 5000);
+      };
+
+      const handleUpdateError = (event: CustomEvent) => {
+        const error = event.detail;
+        setUpdateStatus(`Помилка: ${error.message || 'Невідома помилка'}`);
+        setIsDownloading(false);
+        setTimeout(() => setUpdateStatus(null), 10000);
+      };
+
+      const handleUpdateDownloaded = (event: CustomEvent) => {
+        const info = event.detail;
+        console.log('✅ Update downloaded (Settings):', info);
+        setIsDownloading(false);
+        setDownloadProgress(100);
+        setUpdateStatus(`Оновлення ${info.version} завантажено! Додаток буде перезапущено для встановлення.`);
+        setTimeout(() => setDownloadProgress(null), 5000);
+      };
+
+      window.addEventListener('update-available', handleUpdateAvailable as EventListener);
+      window.addEventListener('update-download-progress', handleUpdateProgress as EventListener);
+      window.addEventListener('update-not-available', handleUpdateNotAvailable);
+      window.addEventListener('update-error', handleUpdateError as EventListener);
+      window.addEventListener('update-downloaded', handleUpdateDownloaded as EventListener);
       
       return () => {
-        if (cleanup) cleanup();
+        if (cleanupIPC) cleanupIPC();
+        window.removeEventListener('update-available', handleUpdateAvailable as EventListener);
+        window.removeEventListener('update-download-progress', handleUpdateProgress as EventListener);
+        window.removeEventListener('update-not-available', handleUpdateNotAvailable);
+        window.removeEventListener('update-error', handleUpdateError as EventListener);
+        window.removeEventListener('update-downloaded', handleUpdateDownloaded as EventListener);
       };
     } else {
       // Fallback to package.json version in dev mode
