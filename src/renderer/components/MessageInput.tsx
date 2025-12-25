@@ -232,7 +232,7 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSend, disabled, chatId })
               }}
               title="Смайлики"
             >
-              😊
+              <IconMoodSmile size={20} />
             </button>
             {showEmojiPicker && (
               <EmojiPicker

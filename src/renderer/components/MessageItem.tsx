@@ -3,6 +3,7 @@ import { Message } from '../types';
 import { apiClient } from '../api/client';
 import { useAuthStore } from '../store/authStore';
 import { useQueryClient } from '@tanstack/react-query';
+import { IconPin, IconCircleDot, IconPencil, IconPaperclip } from '@tabler/icons-react';
 import '../styles/MessageItem.css';
 
 interface MessageItemProps {
@@ -190,7 +191,7 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, onUpdate }) => {
       <div className="message-content">
         {message.pinned && (
           <div className="message-pinned-badge" title="Закріплено">
-            📌
+            <IconPin size={14} />
           </div>
         )}
         {!isClient && (
@@ -248,7 +249,8 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, onUpdate }) => {
                         <img src={file.file_path} alt={file.file_name} />
                       ) : (
                         <a href={file.file_path} target="_blank" rel="noopener noreferrer">
-                          📎 {file.file_name}
+                          <IconPaperclip size={16} style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: '4px' }} />
+                          {file.file_name}
                         </a>
                       )}
                     </div>
@@ -264,10 +266,15 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, onUpdate }) => {
             <span className="message-edited-badge" title="Відредаговано">(ред.)</span>
           )}
           {!isClient && message.seen && (
-            <span className="message-read">✓✓</span>
+            <span className="message-read" title="Прочитано">
+              <IconCheck size={14} />
+              <IconCheck size={14} style={{ marginLeft: '-4px' }} />
+            </span>
           )}
           {message.unread && (
-            <span className="message-unread-badge" title="Непрочитане">🔴</span>
+            <span className="message-unread-badge" title="Непрочитане">
+              <IconCircleDot size={12} />
+            </span>
           )}
         </div>
       </div>
@@ -278,7 +285,8 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, onUpdate }) => {
               className="context-menu-item"
               onClick={handleStartEdit}
             >
-              ✏️ Редагувати
+              <IconPencil size={16} style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: '6px' }} />
+              Редагувати
             </button>
           )}
           <button
@@ -286,14 +294,16 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, onUpdate }) => {
             onClick={handlePinMessage}
             disabled={isPinning}
           >
-            {message.pinned ? '📌 Відкріпити' : '📌 Закріпити'}
+            <IconPin size={16} style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: '6px' }} />
+            {message.pinned ? 'Відкріпити' : 'Закріпити'}
           </button>
           <button
             className="context-menu-item"
             onClick={handleMarkAsUnread}
             disabled={isMarkingUnread}
           >
-            🔴 Позначити як непрочитане
+            <IconCircleDot size={16} style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: '6px' }} />
+            Позначити як непрочитане
           </button>
         </div>
       )}

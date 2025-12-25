@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { Message } from '../types';
+import { IconPin } from '@tabler/icons-react';
 import MessageItem from './MessageItem';
 import '../styles/MessageList.css';
 
@@ -76,7 +77,10 @@ const MessageList: React.FC<MessageListProps> = ({ messages, onUpdate }) => {
       {pinnedMessages.length > 0 && (
         <div className="pinned-messages-section">
           <div className="pinned-messages-header">
-            <span className="pinned-messages-title">📌 Закріплені повідомлення</span>
+            <span className="pinned-messages-title">
+              <IconPin size={16} style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: '6px' }} />
+              Закріплені повідомлення
+            </span>
           </div>
           <div className="pinned-messages-list">
             {pinnedMessages.map((message) => (

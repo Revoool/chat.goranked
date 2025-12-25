@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '../api/client';
 import { useChatStore } from '../store/chatStore';
+import { IconPhone, IconMail, IconDeviceMobile } from '@tabler/icons-react';
 import '../styles/ClientCard.css';
 
 interface ClientCardProps {
@@ -88,9 +89,24 @@ const ClientCard: React.FC<ClientCardProps> = ({ chatId }) => {
         <div className="client-info">
           <h4>{clientName}</h4>
           {chatData.client_username && <p>@{chatData.client_username}</p>}
-          {chatData.client_phone && <p>📞 {chatData.client_phone}</p>}
-          {client?.email && <p>✉️ {client.email}</p>}
-          {chatData.source && <p>📱 {chatData.source}</p>}
+          {chatData.client_phone && (
+            <p>
+              <IconPhone size={16} style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: '6px' }} />
+              {chatData.client_phone}
+            </p>
+          )}
+          {client?.email && (
+            <p>
+              <IconMail size={16} style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: '6px' }} />
+              {client.email}
+            </p>
+          )}
+          {chatData.source && (
+            <p>
+              <IconDeviceMobile size={16} style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: '6px' }} />
+              {chatData.source}
+            </p>
+          )}
         </div>
 
         {/* Додаткова інформація про клієнта */}

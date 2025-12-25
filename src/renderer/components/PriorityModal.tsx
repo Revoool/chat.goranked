@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../api/client';
 import { useChatStore } from '../store/chatStore';
+import { IconArrowDown, IconArrowRight, IconArrowUp, IconAlertCircle } from '@tabler/icons-react';
 import '../styles/Modal.css';
 
 interface PriorityModalProps {
@@ -18,13 +19,13 @@ const PriorityModal: React.FC<PriorityModalProps> = ({ chatId, currentPriority, 
   const priorityOptions: Array<{
     value: 'low' | 'normal' | 'high' | 'urgent';
     label: string;
-    icon: string;
+    icon: React.ReactNode;
     color: string;
   }> = [
-    { value: 'low', label: 'Низкий', icon: '⬇️', color: '#4a90e2' },
-    { value: 'normal', label: 'Обычный', icon: '➡️', color: '#7b7b7b' },
-    { value: 'high', label: 'Высокий', icon: '⬆️', color: '#f5a623' },
-    { value: 'urgent', label: 'Срочный', icon: '🔴', color: '#d0021b' },
+    { value: 'low', label: 'Низкий', icon: <IconArrowDown size={20} />, color: '#4a90e2' },
+    { value: 'normal', label: 'Обычный', icon: <IconArrowRight size={20} />, color: '#7b7b7b' },
+    { value: 'high', label: 'Высокий', icon: <IconArrowUp size={20} />, color: '#f5a623' },
+    { value: 'urgent', label: 'Срочный', icon: <IconAlertCircle size={20} />, color: '#d0021b' },
   ];
 
   const updatePriorityMutation = useMutation({
