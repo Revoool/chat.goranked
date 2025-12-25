@@ -495,20 +495,6 @@ ipcMain.handle('check-for-updates', async () => {
     // Provide more detailed error messages
     let errorMessage = 'Помилка при перевірці оновлень';
     if (error?.message) {
-      if (error.message.includes('404') || error.message.includes('Not Found')) {
-        errorMessage = 'Релиз не знайдено. Можливо, версія ще не опублікована.';
-      } else if (error.message.includes('network') || error.message.includes('ECONNREFUSED')) {
-        errorMessage = 'Помилка мережі. Перевірте підключення до інтернету.';
-      } else if (error.message.includes('timeout')) {
-        errorMessage = 'Таймаут підключення. Спробуйте пізніше.';
-      } else {
-        errorMessage = `Помилка: ${error.message}`;
-      }
-    }
-    
-    // Provide more detailed error message
-    let errorMessage = 'Помилка при перевірці оновлень';
-    if (error?.message) {
       const errorStr = String(error.message).toLowerCase();
       if (errorStr.includes('404') || errorStr.includes('not found') || errorStr.includes('релиз не найден')) {
         errorMessage = 'Релиз не знайдено. Можливо, релиз ще створюється або не існує. Спробуйте пізніше.';
