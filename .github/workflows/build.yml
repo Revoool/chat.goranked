@@ -86,6 +86,7 @@ jobs:
             release/mac/*.dmg
             release/*.yml
           tag_name: ${{ github.ref_name }}
+          name: Release ${{ github.ref_name }}
           body: |
             ## macOS Build
             - DMG installer for macOS (x64 and arm64)
@@ -94,9 +95,10 @@ jobs:
           prerelease: false
           fail_on_unmatched_files: false
           append_body: true
+          generate_release_notes: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        continue-on-error: true
+        continue-on-error: false
         if: always()
 
   build-windows:
@@ -184,6 +186,7 @@ jobs:
             release/windows/*.exe
             release/latest.yml
           tag_name: ${{ github.ref_name }}
+          name: Release ${{ github.ref_name }}
           body: |
             ## Windows Build
             - NSIS installer for Windows (x64)
@@ -192,8 +195,9 @@ jobs:
           prerelease: false
           fail_on_unmatched_files: false
           append_body: true
+          generate_release_notes: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        continue-on-error: true
+        continue-on-error: false
         if: always()
 
