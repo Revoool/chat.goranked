@@ -42,8 +42,10 @@ jobs:
           echo "Current directory: $(pwd)"
           echo "Node version: $(node --version)"
           echo "NPM version: $(npm --version)"
+          echo "Checking electron-builder installation..."
+          npx electron-builder --version || npm list electron-builder || echo "electron-builder not found, will install"
           echo "Building macOS app with publish enabled..."
-          npm run build && electron-builder --mac --x64 --arm64 --publish always
+          npm run build && npx electron-builder --mac --x64 --arm64 --publish always
         env:
           NODE_ENV: production
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
