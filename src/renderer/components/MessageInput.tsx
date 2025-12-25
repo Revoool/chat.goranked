@@ -215,7 +215,6 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSend, disabled, chatId })
               {showQuickReplies && (
                 <QuickReplies 
                   onSelect={handleQuickReplySelect}
-                  compact={true}
                 />
               )}
             </div>
