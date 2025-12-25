@@ -9,3 +9,4 @@ release.zip
 .env.local
 *.local
 
+build/icon.png
