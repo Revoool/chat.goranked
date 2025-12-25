@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import QuickReplies from './QuickReplies';
+import EmojiPicker from './EmojiPicker';
 import { apiClient } from '../api/client';
 import '../styles/MessageInput.css';
 
@@ -12,10 +13,12 @@ interface MessageInputProps {
 const MessageInput: React.FC<MessageInputProps> = ({ onSend, disabled, chatId }) => {
   const [text, setText] = useState('');
   const [attachments, setAttachments] = useState<any[]>([]);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [sendMessageKey, setSendMessageKey] = useState<'enter' | 'ctrl-enter'>(
     (localStorage.getItem('settings.sendMessageKey') as 'enter' | 'ctrl-enter') || 'enter'
   );
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const emojiButtonRef = useRef<HTMLButtonElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastTypingTimeRef = useRef<number>(0);
 
@@ -120,6 +123,24 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSend, disabled, chatId })
     }
   };
 
+  const handleEmojiSelect = (emoji: string) => {
+    const cursorPosition = textareaRef.current?.selectionStart || text.length;
+    const newText = text.slice(0, cursorPosition) + emoji + text.slice(cursorPosition);
+    setText(newText);
+    if (textareaRef.current) {
+      textareaRef.current.focus();
+      // Устанавливаем курсор после вставленного эмодзи
+      setTimeout(() => {
+        if (textareaRef.current) {
+          const newPosition = cursorPosition + emoji.length;
+          textareaRef.current.setSelectionRange(newPosition, newPosition);
+          textareaRef.current.style.height = 'auto';
+          textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+        }
+      }, 0);
+    }
+  };
+
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files) {
@@ -164,6 +185,23 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSend, disabled, chatId })
           style={{ display: 'none' }}
           onChange={handleFileSelect}
         />
+        <div className="message-input-emoji-wrapper" style={{ position: 'relative' }}>
+          <button
+            ref={emojiButtonRef}
+            type="button"
+            className="message-input-emoji-btn"
+            onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+            title="Смайлики"
+          >
+            😊
+          </button>
+          {showEmojiPicker && (
+            <EmojiPicker
+              onSelect={handleEmojiSelect}
+              onClose={() => setShowEmojiPicker(false)}
+            />
+          )}
+        </div>
         <textarea
           ref={textareaRef}
           className="message-input-textarea"

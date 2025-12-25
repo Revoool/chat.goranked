@@ -45,6 +45,35 @@
   display: flex;
   align-items: flex-end;
   gap: 8px;
+  position: relative;
+}
+
+.message-input-emoji-wrapper {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.message-input-emoji-btn {
+  padding: 10px;
+  background: var(--graphite-light);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  color: var(--text-secondary);
+  font-size: 18px;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.message-input-emoji-btn:hover {
+  background: var(--flame-orange);
+  border-color: var(--flame-orange);
+  transform: scale(1.1);
 }
 
 .message-input-attach {
