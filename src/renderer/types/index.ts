@@ -27,6 +27,8 @@ export interface Message {
   seen: boolean;
   delivered: boolean;
   created_at: string;
+  pinned?: boolean;
+  unread?: boolean;
   metadata?: any;
   user?: {
     id: number;

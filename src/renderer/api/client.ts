@@ -370,6 +370,39 @@ class ApiClient {
     }
   }
 
+  async pinMessage(chatId: number, messageId: number): Promise<any> {
+    console.log('📌 Pinning message:', chatId, messageId);
+    try {
+      const response = await this.client.post(`/api/manager-client-chats/${chatId}/messages/${messageId}/pin`);
+      return response.data;
+    } catch (error: any) {
+      console.error('❌ Error pinning message:', error);
+      throw error;
+    }
+  }
+
+  async unpinMessage(chatId: number, messageId: number): Promise<any> {
+    console.log('📌 Unpinning message:', chatId, messageId);
+    try {
+      const response = await this.client.delete(`/api/manager-client-chats/${chatId}/messages/${messageId}/pin`);
+      return response.data;
+    } catch (error: any) {
+      console.error('❌ Error unpinning message:', error);
+      throw error;
+    }
+  }
+
+  async markMessageAsUnread(chatId: number, messageId: number): Promise<any> {
+    console.log('🔴 Marking message as unread:', chatId, messageId);
+    try {
+      const response = await this.client.post(`/api/manager-client-chats/${chatId}/messages/${messageId}/unread`);
+      return response.data;
+    } catch (error: any) {
+      console.error('❌ Error marking message as unread:', error);
+      throw error;
+    }
+  }
+
   async sendTyping(chatId: number, isTyping: boolean): Promise<any> {
     console.log('⌨️ Sending typing status:', chatId, isTyping);
     const response = await this.client.post(`/api/manager-client-chats/${chatId}/typing`, {

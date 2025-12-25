@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '../api/client';
 import '../styles/QuickReplies.css';
@@ -15,28 +15,11 @@ interface QuickReply {
 interface QuickRepliesProps {
   onSelect: (text: string) => void;
   locale?: string;
-  compact?: boolean;
 }
 
-const QuickReplies: React.FC<QuickRepliesProps> = ({ onSelect, locale = 'ru', compact = false }) => {
-  const [isExpanded, setIsExpanded] = useState(compact);
+const QuickReplies: React.FC<QuickRepliesProps> = ({ onSelect, locale = 'ru' }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
   const [selectedLocale, setSelectedLocale] = useState<string>(locale);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
-  // Close dropdown when clicking outside (compact mode)
-  useEffect(() => {
-    if (compact && isExpanded) {
-      const handleClickOutside = (event: MouseEvent) => {
-        if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-          setIsExpanded(false);
-        }
-      };
-      document.addEventListener('mousedown', handleClickOutside);
-      return () => {
-        document.removeEventListener('mousedown', handleClickOutside);
-      };
-    }
-  }, [compact, isExpanded]);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['quick-replies', locale],
@@ -86,15 +69,10 @@ const QuickReplies: React.FC<QuickRepliesProps> = ({ onSelect, locale = 'ru', co
     // Get text in selected locale or default text
     const text = reply.translations?.[selectedLocale] || reply.text;
     onSelect(text);
-    if (compact) {
-      setIsExpanded(false);
-    }
+    setIsExpanded(false);
   };
 
   if (isLoading) {
-    if (compact) {
-      return null;
-    }
     return (
       <div className="quick-replies">
         <div className="quick-replies-loading">Завантаження швидких відповідей...</div>
@@ -106,55 +84,6 @@ const QuickReplies: React.FC<QuickRepliesProps> = ({ onSelect, locale = 'ru', co
     return null; // Don't show if no replies or error
   }
 
-  // Compact mode - only dropdown
-  if (compact) {
-    return (
-      <div className={`quick-replies ${compact ? 'compact' : ''}`}>
-        {isExpanded && (
-          <div className="quick-replies-dropdown" ref={dropdownRef}>
-            <div className="quick-replies-header">
-              <span>Виберіть швидку відповідь</span>
-              {availableLocales.length > 1 && (
-                <div className="quick-replies-language-selector">
-                  <label htmlFor="quick-replies-lang">Мова:</label>
-                  <select
-                    id="quick-replies-lang"
-                    className="quick-replies-lang-select"
-                    value={selectedLocale}
-                    onChange={(e) => setSelectedLocale(e.target.value)}
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    {availableLocales.map((lang) => (
-                      <option key={lang} value={lang}>
-                        {languageNames[lang] || lang.toUpperCase()}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
-            </div>
-            <div className="quick-replies-list">
-              {activeReplies.map((reply) => {
-                const text = reply.translations?.[selectedLocale] || reply.text;
-                return (
-                  <button
-                    key={reply.id}
-                    className="quick-reply-item"
-                    onClick={() => handleSelect(reply)}
-                    title={text}
-                  >
-                    <span className="quick-reply-text">{text}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        )}
-      </div>
-    );
-  }
-
-  // Full mode - with toggle button
   return (
     <div className="quick-replies">
       <button

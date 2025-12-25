@@ -5,9 +5,10 @@ import '../styles/MessageList.css';
 
 interface MessageListProps {
   messages: Message[];
+  onUpdate?: () => void;
 }
 
-const MessageList: React.FC<MessageListProps> = ({ messages }) => {
+const MessageList: React.FC<MessageListProps> = ({ messages, onUpdate }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   console.log('💬 MessageList rendered with messages:', messages.length);
@@ -25,10 +26,26 @@ const MessageList: React.FC<MessageListProps> = ({ messages }) => {
     );
   }
 
+  // Separate pinned and regular messages
+  const pinnedMessages = messages.filter(msg => msg.pinned);
+  const regularMessages = messages.filter(msg => !msg.pinned);
+
   return (
     <div className="message-list">
-      {messages.map((message) => (
-        <MessageItem key={message.id} message={message} />
+      {pinnedMessages.length > 0 && (
+        <div className="pinned-messages-section">
+          <div className="pinned-messages-header">
+            <span className="pinned-messages-title">📌 Закріплені повідомлення</span>
+          </div>
+          <div className="pinned-messages-list">
+            {pinnedMessages.map((message) => (
+              <MessageItem key={message.id} message={message} onUpdate={onUpdate} />
+            ))}
+          </div>
+        </div>
+      )}
+      {regularMessages.map((message) => (
+        <MessageItem key={message.id} message={message} onUpdate={onUpdate} />
       ))}
       <div ref={messagesEndRef} />
     </div>

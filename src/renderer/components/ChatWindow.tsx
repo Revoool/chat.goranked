@@ -290,7 +290,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId }) => {
         </div>
       )}
 
-      <MessageList messages={messagesData?.data || messagesData || []} />
+      <MessageList messages={messagesData?.data || messagesData || []} onUpdate={() => refetch()} />
 
       <MessageInput
         onSend={handleSendMessage}
