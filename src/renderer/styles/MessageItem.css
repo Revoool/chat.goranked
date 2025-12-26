@@ -344,6 +344,10 @@
   font-family: inherit;
   resize: vertical;
   outline: none;
+  user-select: text;
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
 }
 
 .message-edit-textarea:focus {
