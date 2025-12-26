@@ -33,7 +33,6 @@ interface ChatWindowProps {
 }
 
 const ChatWindow: React.FC<ChatWindowProps> = ({ chatId }) => {
-  const [isTyping, setIsTyping] = useState(false);
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [showTagsModal, setShowTagsModal] = useState(false);
@@ -332,7 +331,11 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId }) => {
         </div>
       )}
 
-      <MessageList messages={messagesData?.data || messagesData || []} onUpdate={() => refetch()} />
+      <MessageList 
+        messages={messagesData?.data || messagesData || []} 
+        chatId={chatId}
+        onUpdate={() => refetch()} 
+      />
 
       <MessageInput
         onSend={handleSendMessage}

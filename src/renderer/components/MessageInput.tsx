@@ -50,6 +50,14 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSend, disabled, chatId })
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (text.trim() || attachments.length > 0) {
+      // Stop typing indicator when sending message
+      if (chatId && typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+        typingTimeoutRef.current = null;
+        apiClient.sendTyping(chatId, false).catch(err => {
+          console.warn('Failed to stop typing indicator:', err);
+        });
+      }
       onSend(text.trim(), attachments);
       setText('');
       setAttachments([]);

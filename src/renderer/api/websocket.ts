@@ -2,6 +2,18 @@ import { useChatStore } from '../store/chatStore';
 import { useAuthStore } from '../store/authStore';
 import { notificationService } from '../utils/notifications';
 
+// Get store instance outside of component
+let chatStore: ReturnType<typeof useChatStore.getState> | null = null;
+
+// Subscribe to store changes to keep reference updated
+if (typeof window !== 'undefined') {
+  useChatStore.subscribe((state) => {
+    chatStore = state;
+  });
+  // Initialize
+  chatStore = useChatStore.getState();
+}
+
 // Reverb WebSocket configuration
 // Values are injected by webpack DefinePlugin
 declare const REVERB_HOST: string;
@@ -309,6 +321,8 @@ class WebSocketClient {
     
     const chatId = data.chat_id;
     const isTyping = data.is_typing;
+    const userId = data.user_id;
+    const userName = data.user_name || null;
     
     // Security: Validate chatId and is_typing
     if (!chatId || !Number.isInteger(chatId) || chatId <= 0) {
@@ -318,7 +332,27 @@ class WebSocketClient {
       return;
     }
     
-    // TODO: Update UI with typing indicator
+    // Get current user to filter out own typing indicator
+    const authStore = useAuthStore.getState();
+    const currentUserId = authStore.user?.id;
+    
+    // Don't show typing indicator for current user (they see their own typing in the input)
+    if (userId === currentUserId) {
+      return;
+    }
+    
+    // Update typing indicator in store
+    if (chatStore) {
+      if (isTyping) {
+        chatStore.setTypingIndicator(chatId, {
+          isTyping: true,
+          userId: userId || null,
+          userName: userName || 'Користувач',
+        });
+      } else {
+        chatStore.setTypingIndicator(chatId, null);
+      }
+    }
   }
 
   disconnect() {

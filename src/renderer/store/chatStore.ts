@@ -3,12 +3,19 @@ import { Chat, ChatFilters } from '../types';
 
 type MenuItem = 'inbox' | 'assigned' | 'closed' | 'settings';
 
+interface TypingInfo {
+  isTyping: boolean;
+  userId: number | null;
+  userName: string | null;
+}
+
 interface ChatState {
   selectedChatId: number | null;
   filters: ChatFilters;
   chats: Chat[];
   activeMenu: MenuItem;
   isClientCardOpen: boolean;
+  typingIndicators: Record<number, TypingInfo>; // chatId -> typing info
   setSelectedChat: (chatId: number | null) => void;
   setFilters: (filters: Partial<ChatFilters>) => void;
   setChats: (chats: Chat[]) => void;
@@ -17,6 +24,7 @@ interface ChatState {
   setActiveMenu: (menu: MenuItem) => void;
   toggleClientCard: () => void;
   setClientCardOpen: (isOpen: boolean) => void;
+  setTypingIndicator: (chatId: number, typingInfo: TypingInfo | null) => void;
 }
 
 export const useChatStore = create<ChatState>((set) => ({
@@ -25,6 +33,7 @@ export const useChatStore = create<ChatState>((set) => ({
   chats: [],
   activeMenu: 'inbox',
   isClientCardOpen: false,
+  typingIndicators: {},
   setSelectedChat: (chatId) => set({ selectedChatId: chatId, isClientCardOpen: false }), // Close card when switching chats
   setFilters: (filters) => set((state) => ({ filters: { ...state.filters, ...filters } })),
   setChats: (chats) => {
@@ -47,5 +56,18 @@ export const useChatStore = create<ChatState>((set) => ({
   setActiveMenu: (menu) => set({ activeMenu: menu }),
   toggleClientCard: () => set((state) => ({ isClientCardOpen: !state.isClientCardOpen })),
   setClientCardOpen: (isOpen) => set({ isClientCardOpen: isOpen }),
+  setTypingIndicator: (chatId, typingInfo) =>
+    set((state) => {
+      if (!typingInfo) {
+        const { [chatId]: _, ...rest } = state.typingIndicators;
+        return { typingIndicators: rest };
+      }
+      return {
+        typingIndicators: {
+          ...state.typingIndicators,
+          [chatId]: typingInfo,
+        },
+      };
+    }),
 }));
 

@@ -2,31 +2,26 @@ import React, { useEffect, useRef } from 'react';
 import { Message } from '../types';
 import { IconPin } from '../icons';
 import MessageItem from './MessageItem';
+import TypingIndicator from './TypingIndicator';
+import { useChatStore } from '../store/chatStore';
 import '../styles/MessageList.css';
 
 interface MessageListProps {
   messages: Message[];
+  chatId: number;
   onUpdate?: () => void;
 }
 
-const MessageList: React.FC<MessageListProps> = ({ messages, onUpdate }) => {
+const MessageList: React.FC<MessageListProps> = ({ messages, chatId, onUpdate }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messageListRef = useRef<HTMLDivElement>(null);
   const isInitialLoad = useRef(true);
   const prevMessagesLength = useRef(0);
+  const typingIndicators = useChatStore((state) => state.typingIndicators);
+  const typingInfo = typingIndicators[chatId];
 
-  // Scroll to bottom when messages change
+  // Scroll to bottom when messages change or typing indicator appears
   useEffect(() => {
-    if (!messages || messages.length === 0) return;
-
-    // Only scroll if new messages were added (not on initial render or when messages decrease)
-    const hasNewMessages = messages.length > prevMessagesLength.current;
-    prevMessagesLength.current = messages.length;
-
-    if (!hasNewMessages && !isInitialLoad.current) {
-      return; // Don't scroll if messages were removed or filtered
-    }
-
     const scrollToBottom = () => {
       const container = messageListRef.current;
       const endMarker = messagesEndRef.current;
@@ -40,15 +35,31 @@ const MessageList: React.FC<MessageListProps> = ({ messages, onUpdate }) => {
       });
     };
 
+    if (!messages || messages.length === 0) {
+      // Scroll even if no messages but typing indicator is shown
+      if (typingInfo?.isTyping) {
+        setTimeout(scrollToBottom, 100);
+      }
+      return;
+    }
+
+    // Only scroll if new messages were added (not on initial render or when messages decrease)
+    const hasNewMessages = messages.length > prevMessagesLength.current;
+    prevMessagesLength.current = messages.length;
+
+    if (!hasNewMessages && !isInitialLoad.current && !typingInfo?.isTyping) {
+      return; // Don't scroll if messages were removed or filtered
+    }
+
     // For initial load, wait a bit longer to ensure all content is rendered
     if (isInitialLoad.current && messages.length > 0) {
       isInitialLoad.current = false;
       setTimeout(scrollToBottom, 100);
-    } else if (hasNewMessages) {
-      // For new messages, scroll immediately
+    } else if (hasNewMessages || typingInfo?.isTyping) {
+      // For new messages or typing indicator, scroll immediately
       scrollToBottom();
     }
-  }, [messages]);
+  }, [messages, typingInfo]);
 
   if (!messages || messages.length === 0) {
     return (
@@ -94,6 +105,9 @@ const MessageList: React.FC<MessageListProps> = ({ messages, onUpdate }) => {
       {regularMessages.map((message) => (
         <MessageItem key={message.id} message={message} onUpdate={onUpdate} />
       ))}
+      {typingInfo?.isTyping && (
+        <TypingIndicator userName={typingInfo.userName} />
+      )}
       <div ref={messagesEndRef} style={{ height: '1px' }} />
     </div>
   );
