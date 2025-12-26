@@ -48,8 +48,6 @@ jobs:
             npm run build:win:installer
           elif [ "${{ matrix.platform }}" = "mac" ]; then
             npm run build:mac
-          else
-            npm run build:linux
           fi
 
       - name: Upload artifacts
