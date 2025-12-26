@@ -317,7 +317,7 @@ class WebSocketClient {
       this.queryClient.setQueryData(['chat', chatId], chat);
       
       // Update chats list cache
-      this.queryClient.setQueryData(['chats'], (oldChats: any[]) => {
+      this.queryClient.setQueryData(['chats'], (oldChats: any[] | undefined) => {
         if (!Array.isArray(oldChats)) return oldChats;
         return oldChats.map((c) => {
           if (c.id === chatId) {
