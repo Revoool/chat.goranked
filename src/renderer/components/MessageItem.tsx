@@ -253,11 +253,11 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, onUpdate }) => {
                     return (
                       <div key={file.id} className="message-attachment">
                         {file.mime_type.startsWith('image/') ? (
-                          <img src={fileUrl} alt={file.file_name} />
+                          <img src={fileUrl} alt={file.file_name || 'Attachment'} crossOrigin="anonymous" />
                         ) : (
-                          <a href={fileUrl} target="_blank" rel="noopener noreferrer" download={file.file_name}>
+                          <a href={fileUrl} target="_blank" rel="noopener noreferrer" download={file.file_name || 'file'}>
                             <IconPaperclip size={16} style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: '4px' }} />
-                            {file.file_name}
+                            {file.file_name || 'File'}
                           </a>
                         )}
                       </div>

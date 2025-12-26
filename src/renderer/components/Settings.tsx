@@ -522,7 +522,7 @@ const Settings: React.FC = () => {
                       <h4>Що нового:</h4>
                       <div className="update-changelog-content">
                         {parseChangelog(updateInfo.changelog || '').split('\n').map((line, idx) => (
-                          <p key={idx}>{line || '\u00A0'}</p>
+                          <p key={idx}>{line.trim() || '\u00A0'}</p>
                         ))}
                       </div>
                     </div>
