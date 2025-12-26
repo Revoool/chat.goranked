@@ -10,6 +10,7 @@
   justify-content: center;
   z-index: 1000;
   backdrop-filter: blur(4px);
+  animation: fadeIn 0.2s ease-out;
 }
 
 .modal-content {
@@ -21,17 +22,18 @@
   max-height: 90vh;
   overflow-y: auto;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-  animation: modalSlideIn 0.3s ease-out;
+  animation: modalSlideIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transform-origin: center;
 }
 
 @keyframes modalSlideIn {
   from {
     opacity: 0;
-    transform: translateY(-20px);
+    transform: translateY(-30px) scale(0.95);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
   }
 }
 
@@ -71,6 +73,7 @@
 .modal-close:hover {
   background: var(--graphite-light);
   color: var(--text-primary);
+  transform: rotate(90deg);
 }
 
 .modal-body {
@@ -450,12 +453,21 @@
   transition: all 0.2s ease;
   text-align: left;
   width: 100%;
+  animation: slideInRight 0.3s ease-out;
+  animation-fill-mode: both;
 }
+
+.manager-item:nth-child(1) { animation-delay: 0.05s; }
+.manager-item:nth-child(2) { animation-delay: 0.1s; }
+.manager-item:nth-child(3) { animation-delay: 0.15s; }
+.manager-item:nth-child(4) { animation-delay: 0.2s; }
+.manager-item:nth-child(n+5) { animation-delay: 0.25s; }
 
 .manager-item:hover {
   background: var(--graphite-light);
   border-color: var(--flame-orange);
   transform: translateX(4px);
+  box-shadow: 0 4px 12px rgba(255, 107, 0, 0.2);
 }
 
 .manager-item.current {
