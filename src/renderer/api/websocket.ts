@@ -213,7 +213,11 @@ class WebSocketClient {
   }
 
   unsubscribeFromChat(chatId: number) {
-    // Unsubscribe from specific chat channel
+    // Security: Validate chatId
+    if (!chatId || !Number.isInteger(chatId) || chatId <= 0) {
+      return;
+    }
+    
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
       const unsubscribeMessage = JSON.stringify({
         event: 'pusher:unsubscribe',
@@ -222,7 +226,6 @@ class WebSocketClient {
         },
       });
       this.ws.send(unsubscribeMessage);
-      console.log(`✅ Unsubscribed from manager-client-chats.${chatId} channel`);
     }
   }
 
@@ -311,10 +314,22 @@ class WebSocketClient {
   }
 
   private handleTyping(data: any) {
-    // Data format: { chat_id, is_typing, user: {...} }
-    const { chat_id, is_typing } = data;
-    // Handle typing indicator
-    console.log(`⌨️ Chat ${chat_id} typing: ${is_typing}`);
+    // Security: Validate incoming data
+    if (!data || typeof data !== 'object') {
+      return;
+    }
+    
+    const chatId = data.chat_id;
+    const isTyping = data.is_typing;
+    
+    // Security: Validate chatId and is_typing
+    if (!chatId || !Number.isInteger(chatId) || chatId <= 0) {
+      return;
+    }
+    if (typeof isTyping !== 'boolean') {
+      return;
+    }
+    
     // TODO: Update UI with typing indicator
   }
 
