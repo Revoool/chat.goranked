@@ -94,20 +94,31 @@ class ApiClient {
   }
 
   async verify2FA(tmpToken: string, code?: string, recoveryCode?: string, rememberDevice?: boolean): Promise<any> {
-    console.log('Verifying 2FA with tmp_token');
-    const requestBody: any = { tmp_token: tmpToken };
+    // Security: Validate inputs
+    if (!tmpToken || typeof tmpToken !== 'string' || tmpToken.trim().length === 0) {
+      throw new Error('Invalid temporary token');
+    }
+    if (!code && !recoveryCode) {
+      throw new Error('Either 2FA code or recovery code is required');
+    }
+    if (code && (typeof code !== 'string' || code.length !== 6)) {
+      throw new Error('Invalid 2FA code format');
+    }
+    if (recoveryCode && (typeof recoveryCode !== 'string' || recoveryCode.length < 8)) {
+      throw new Error('Invalid recovery code format');
+    }
+    
+    const requestBody: any = { tmp_token: tmpToken.trim() };
     if (code) {
-      requestBody.code = code;
+      requestBody.code = code.trim();
     }
     if (recoveryCode) {
-      requestBody.recovery_code = recoveryCode;
+      requestBody.recovery_code = recoveryCode.trim();
     }
-    if (rememberDevice !== undefined) {
+    if (rememberDevice !== undefined && typeof rememberDevice === 'boolean') {
       requestBody.remember_device = rememberDevice;
     }
     const response = await this.client.post('/api/auth/2fa/verify', requestBody);
-    console.log('2FA verification successful:', response.data);
-    // API returns { accessToken, userData, userAbilityRules, userAbilityPages, userAbilityFields }
     return response.data;
   }
 

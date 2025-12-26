@@ -263,8 +263,6 @@ class WebSocketClient {
     console.log('📨 Chat found:', !!chat, 'from_manager:', message?.from_manager, 'selectedChatId:', selectedChatId);
     
     if (chat) {
-      // Only increment unread_count for messages from clients (not from manager)
-      // And only if this chat is not currently selected (user is not viewing it)
       const isChatSelected = selectedChatId === chatId;
       const shouldIncrementUnread = !message.from_manager && !isChatSelected;
       
@@ -272,46 +270,34 @@ class WebSocketClient {
         last_message_at: message.created_at,
         unread_count: shouldIncrementUnread 
           ? (chat.unread_count || 0) + 1 
-          : (message.from_manager ? chat.unread_count : 0), // Reset to 0 if message from manager or chat is selected
-        last_message: message, // Add last_message for preview
+          : (message.from_manager ? chat.unread_count : 0),
+        last_message: message,
       });
 
-      // Play sound and show notification for messages from clients (not from manager)
-      // Always play sound regardless of which chat is selected or if app is focused
       if (!message.from_manager) {
         const clientName = chat.clientUser?.name || chat.client_name || 'Unknown';
-        const messageText = message.body || '';
+        const messageText = String(message.body || '').substring(0, 200); // Limit length
         
-        console.log('🔔 New message from client:', {
-          chatId,
-          clientName,
-          messageText: messageText.substring(0, 50),
-          from_manager: message.from_manager,
-          isChatSelected,
-        });
-        
-        // Always play sound for new client messages (if enabled in settings)
-        // Show notification only if chat is not currently selected
         notificationService.notifyNewMessage(
           clientName,
           messageText,
-          true // playSoundNow = true
+          true
         );
-      } else {
-        console.log('📤 Message from manager, skipping sound');
       }
-    } else {
-      console.warn('⚠️ Chat not found in store for chatId:', chatId, 'Available chats:', chats.map(c => c.id));
     }
   }
 
   private handleChatUpdate(data: any) {
-    // Data format: { chat: { id, client_user_id, source, status, assigned_manager_id, ... } }
+    // Security: Validate incoming data
+    if (!data || typeof data !== 'object') {
+      return;
+    }
+    
     const chat = data.chat || data;
     const chatId = chat?.id || chat?.chat_id;
     
-    if (!chatId) {
-      console.warn('⚠️ Received chat update without id:', data);
+    // Security: Validate chatId
+    if (!chatId || !Number.isInteger(chatId) || chatId <= 0) {
       return;
     }
     
