@@ -47,7 +47,8 @@ const ClientCard: React.FC<ClientCardProps> = ({ chatId }) => {
   }
 
   const client = chatData.clientUser;
-  const clientName = client?.name || chatData.client_name || 'Unknown';
+  const clientNickname = chatData.metadata?.client_nickname;
+  const clientName = clientNickname || client?.name || chatData.client_name || 'Unknown';
   const clientAvatar = chatData.client_avatar || client?.avatar;
 
   return (
