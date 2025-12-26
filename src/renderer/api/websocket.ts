@@ -39,6 +39,7 @@ const WS_URL_VAL = typeof WS_URL !== 'undefined'
 
 type QueryClient = {
   invalidateQueries: (options: { queryKey: any[] }) => void;
+  setQueryData: <TData = unknown>(queryKey: any[], updater: TData | ((oldData: TData | undefined) => TData | undefined)) => void;
 };
 
 class WebSocketClient {
