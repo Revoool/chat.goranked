@@ -14,7 +14,8 @@ import {
   IconFlag,
   IconFlag2,
   IconFlag3,
-  IconFlagOff
+  IconFlagOff,
+  IconNotes
 } from '../icons';
 import MessageList from './MessageList';
 import MessageInput from './MessageInput';
@@ -23,6 +24,7 @@ import StatusModal from './StatusModal';
 import TagsModal from './TagsModal';
 import PriorityModal from './PriorityModal';
 import ClientOrdersModal from './ClientOrdersModal';
+import NoteModal from './NoteModal';
 import IconButton from './IconButton';
 import '../styles/ChatWindow.css';
 
@@ -37,6 +39,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId }) => {
   const [showTagsModal, setShowTagsModal] = useState(false);
   const [showPriorityModal, setShowPriorityModal] = useState(false);
   const [showClientOrdersModal, setShowClientOrdersModal] = useState(false);
+  const [showNoteModal, setShowNoteModal] = useState(false);
   const { updateChat, chats, toggleClientCard, isClientCardOpen } = useChatStore();
   const queryClient = useQueryClient();
 
@@ -208,8 +211,10 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId }) => {
   }
 
   // Get client name from various possible fields
+  // Check for client_nickname in metadata (renamed by manager)
   const client = displayChat?.clientUser;
-  const clientName = client?.name || displayChat?.client_name || 'Unknown';
+  const clientNickname = displayChat?.metadata?.client_nickname;
+  const clientName = clientNickname || client?.name || displayChat?.client_name || 'Unknown';
   const source = displayChat?.source || 'unknown';
 
   return (
@@ -241,6 +246,11 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId }) => {
             icon={<IconTags />}
             onClick={() => setShowTagsModal(true)}
             title="Теги"
+          />
+          <IconButton
+            icon={<IconNotes />}
+            onClick={() => setShowNoteModal(true)}
+            title="Нотатки та ім'я клієнта"
           />
           <IconButton
             icon={<IconShoppingCart />}
@@ -367,6 +377,13 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId }) => {
           isOpen={showClientOrdersModal}
           onClose={() => setShowClientOrdersModal(false)}
           chatId={chatId}
+        />
+      )}
+
+      {showNoteModal && (
+        <NoteModal
+          chatId={chatId}
+          onClose={() => setShowNoteModal(false)}
         />
       )}
     </div>

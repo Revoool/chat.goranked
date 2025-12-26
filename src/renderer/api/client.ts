@@ -457,6 +457,48 @@ class ApiClient {
     }
   }
 
+  // Update chat note (visible to all managers)
+  async updateChatNote(chatId: number, note: string | null): Promise<any> {
+    if (!chatId || !Number.isInteger(chatId) || chatId <= 0) {
+      throw new Error('Invalid chat ID');
+    }
+    if (note !== null && (typeof note !== 'string' || note.length > 5000)) {
+      throw new Error('Invalid note (max 5000 characters)');
+    }
+    try {
+      const response = await this.client.post(`/api/manager-client-chats/${chatId}/note`, {
+        note: note || null,
+      });
+      return response.data;
+    } catch (error: any) {
+      if (error.response?.status === 403) {
+        throw new Error('Access denied');
+      }
+      throw new Error(error.response?.data?.message || error.message || 'Failed to update note');
+    }
+  }
+
+  // Update client nickname (for display in chat list)
+  async updateClientNickname(chatId: number, clientNickname: string | null): Promise<any> {
+    if (!chatId || !Number.isInteger(chatId) || chatId <= 0) {
+      throw new Error('Invalid chat ID');
+    }
+    if (clientNickname !== null && (typeof clientNickname !== 'string' || clientNickname.length > 255)) {
+      throw new Error('Invalid client nickname (max 255 characters)');
+    }
+    try {
+      const response = await this.client.post(`/api/manager-client-chats/${chatId}/client-nickname`, {
+        client_nickname: clientNickname || null,
+      });
+      return response.data;
+    } catch (error: any) {
+      if (error.response?.status === 403) {
+        throw new Error('Access denied');
+      }
+      throw new Error(error.response?.data?.message || error.message || 'Failed to update client nickname');
+    }
+  }
+
   // Tags are stored in metadata field, no separate endpoint
   async updateChatTags(chatId: number, tags: string[]): Promise<any> {
     console.warn('⚠️ Tags endpoint not available. Tags should be stored in metadata field.');

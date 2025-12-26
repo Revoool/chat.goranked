@@ -186,14 +186,14 @@ const ClientCard: React.FC<ClientCardProps> = ({ chatId }) => {
           </div>
         )}
 
-        <div className="client-notes">
-          <h5>Нотатки</h5>
-          <textarea
-            className="notes-textarea"
-            placeholder="Внутрішні нотатки про клієнта..."
-            rows={4}
-          />
-        </div>
+        {chatData.metadata?.note && (
+          <div className="client-notes">
+            <h5>Нотатки</h5>
+            <div className="notes-content">
+              {chatData.metadata.note}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

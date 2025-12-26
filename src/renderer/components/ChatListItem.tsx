@@ -126,8 +126,10 @@ const ChatListItem: React.FC<ChatListItemProps> = ({ chat, onClick }) => {
   }
 
   // Use clientUser relation or fallback to client_name
+  // Check for client_nickname in metadata (renamed by manager)
   const client = chat.clientUser;
-  const clientName = client?.name || chat.client_name || 'Unknown';
+  const clientNickname = chat.metadata?.client_nickname;
+  const clientName = clientNickname || client?.name || chat.client_name || 'Unknown';
   const clientAvatar = chat.client_avatar || client?.avatar;
   const source = chat.source || 'unknown';
 
