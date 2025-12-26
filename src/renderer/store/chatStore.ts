@@ -45,9 +45,16 @@ export const useChatStore = create<ChatState>((set) => ({
   },
   updateChat: (chatId, updates) =>
     set((state) => ({
-      chats: state.chats.map((chat) =>
-        chat.id === chatId ? { ...chat, ...updates } : chat
-      ),
+      chats: state.chats.map((chat) => {
+        if (chat.id === chatId) {
+          // Deep merge for metadata to preserve existing fields
+          if (updates.metadata && chat.metadata) {
+            return { ...chat, ...updates, metadata: { ...chat.metadata, ...updates.metadata } };
+          }
+          return { ...chat, ...updates };
+        }
+        return chat;
+      }),
     })),
   addChat: (chat) =>
     set((state) => ({

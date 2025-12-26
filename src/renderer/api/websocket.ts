@@ -304,13 +304,36 @@ class WebSocketClient {
       return;
     }
     
+    console.log('📡 Chat updated via WebSocket:', { chatId, chat, metadata: chat.metadata });
+    
+    // Update store immediately for instant UI update (ChatListItem uses store)
+    const { updateChat } = useChatStore.getState();
+    updateChat(chatId, chat);
+    
+    // Update React Query cache immediately for instant UI update (ChatWindow uses React Query)
     if (this.queryClient) {
+      // Update individual chat cache
+      this.queryClient.setQueryData(['chat', chatId], chat);
+      
+      // Update chats list cache
+      this.queryClient.setQueryData(['chats'], (oldChats: any[]) => {
+        if (!Array.isArray(oldChats)) return oldChats;
+        return oldChats.map((c) => {
+          if (c.id === chatId) {
+            // Deep merge for metadata to preserve existing fields
+            if (chat.metadata && c.metadata) {
+              return { ...c, ...chat, metadata: { ...c.metadata, ...chat.metadata } };
+            }
+            return { ...c, ...chat };
+          }
+          return c;
+        });
+      });
+      
+      // Also invalidate queries to ensure consistency with server
       this.queryClient.invalidateQueries({ queryKey: ['chat', chatId] });
       this.queryClient.invalidateQueries({ queryKey: ['chats'] });
     }
-
-    const { updateChat } = useChatStore.getState();
-    updateChat(chatId, chat);
   }
 
   private handleTyping(data: any) {

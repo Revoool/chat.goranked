@@ -14,22 +14,31 @@ const NoteModal: React.FC<NoteModalProps> = ({ chatId, onClose }) => {
   const queryClient = useQueryClient();
   const chat = chats.find(c => c.id === chatId);
   
+  // Get original client name
+  const client = chat?.clientUser;
+  const originalClientName = client?.name || chat?.client_name || 'Unknown';
+  
   const [note, setNote] = useState('');
   const [clientNickname, setClientNickname] = useState('');
   const [originalNote, setOriginalNote] = useState('');
   const [originalNickname, setOriginalNickname] = useState('');
 
   // Load current note and nickname from chat metadata
+  // If nickname is not set, use original client name
   useEffect(() => {
     if (chat?.metadata) {
       const currentNote = chat.metadata.note || '';
-      const currentNickname = chat.metadata.client_nickname || '';
+      const currentNickname = chat.metadata.client_nickname || originalClientName;
       setNote(currentNote);
       setClientNickname(currentNickname);
       setOriginalNote(currentNote);
       setOriginalNickname(currentNickname);
+    } else {
+      // Initialize with original name if no metadata
+      setClientNickname(originalClientName);
+      setOriginalNickname(originalClientName);
     }
-  }, [chat]);
+  }, [chat, originalClientName]);
 
   const updateNoteMutation = useMutation({
     mutationFn: async (newNote: string | null) => {
@@ -47,7 +56,11 @@ const NoteModal: React.FC<NoteModalProps> = ({ chatId, onClose }) => {
 
   const updateNicknameMutation = useMutation({
     mutationFn: async (newNickname: string | null) => {
-      return apiClient.updateClientNickname(chatId, newNickname);
+      // Only save if different from original name, otherwise save null to use original
+      const finalNickname = newNickname && newNickname.trim() !== originalClientName.trim() 
+        ? newNickname.trim() 
+        : null;
+      return apiClient.updateClientNickname(chatId, finalNickname);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['chats'] });
@@ -61,7 +74,7 @@ const NoteModal: React.FC<NoteModalProps> = ({ chatId, onClose }) => {
 
   const handleSave = () => {
     const noteChanged = note !== originalNote;
-    const nicknameChanged = clientNickname !== originalNickname;
+    const nicknameChanged = clientNickname.trim() !== originalNickname.trim();
 
     if (noteChanged) {
       updateNoteMutation.mutate(note.trim() || null);
@@ -91,32 +104,44 @@ const NoteModal: React.FC<NoteModalProps> = ({ chatId, onClose }) => {
         </div>
         <div className="modal-body">
           <div className="form-section">
-            <label htmlFor="client-nickname">Ім'я клієнта (для відображення в списку):</label>
-            <input
-              id="client-nickname"
-              type="text"
-              className="form-input"
-              placeholder="Наприклад: вова заказ 111"
-              value={clientNickname}
-              onChange={(e) => setClientNickname(e.target.value)}
-              maxLength={255}
-            />
+            <label htmlFor="client-nickname" className="form-label">
+              <span className="label-text">Ім'я для відображення</span>
+              <span className="label-badge">Заметка</span>
+            </label>
+            <div className="input-wrapper">
+              <input
+                id="client-nickname"
+                type="text"
+                className="form-input"
+                placeholder="Наприклад: Іван, заказ 1001"
+                value={clientNickname}
+                onChange={(e) => setClientNickname(e.target.value)}
+                maxLength={255}
+              />
+            </div>
             <p className="form-hint">
-              Це ім'я буде видно всім менеджерам у списку чатів. Оригінальне ім'я клієнта не змінюється.
+              Це ім'я буде видно всім менеджерам у списку чатів як помітка. Оригінальне ім'я клієнта не змінюється.
             </p>
           </div>
 
           <div className="form-section">
-            <label htmlFor="chat-note">Нотатка до чату:</label>
-            <textarea
-              id="chat-note"
-              className="form-textarea"
-              placeholder="Внутрішні нотатки про цей чат (видимі всім менеджерам)..."
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-              rows={6}
-              maxLength={5000}
-            />
+            <label htmlFor="chat-note" className="form-label">
+              <span className="label-text">Нотатка до чату</span>
+            </label>
+            <div className="textarea-wrapper">
+              <textarea
+                id="chat-note"
+                className="form-textarea"
+                placeholder="Внутрішні нотатки про цей чат (видимі всім менеджерам)..."
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                rows={6}
+                maxLength={5000}
+              />
+              <div className="char-counter">
+                {note.length} / 5000
+              </div>
+            </div>
             <p className="form-hint">
               Нотатка буде видна всім менеджерам у цьому чаті.
             </p>
