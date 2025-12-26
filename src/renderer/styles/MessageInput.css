@@ -158,6 +158,10 @@
 }
 
 .message-input-textarea {
+  user-select: text;
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
   flex: 1;
   padding: 12px 16px;
   background: var(--graphite-dark);

@@ -253,6 +253,18 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSend, disabled, chatId })
             e.target.style.height = `${e.target.scrollHeight}px`;
           }}
           onKeyDown={handleKeyDown}
+          onCopy={(e) => {
+            // Allow default copy behavior
+            e.stopPropagation();
+          }}
+          onPaste={(e) => {
+            // Allow default paste behavior
+            e.stopPropagation();
+          }}
+          onCut={(e) => {
+            // Allow default cut behavior
+            e.stopPropagation();
+          }}
           placeholder={sendMessageKey === 'enter'
             ? 'Введіть повідомлення... (Enter для відправки, Shift+Enter для нового рядка)'
             : 'Введіть повідомлення... (Ctrl+Enter для відправки, Enter для нового рядка)'}

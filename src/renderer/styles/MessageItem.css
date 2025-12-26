@@ -137,6 +137,10 @@
   min-width: 0;
   max-width: 100%;
   overflow: hidden;
+  user-select: text;
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
 }
 
 .message-attachments {

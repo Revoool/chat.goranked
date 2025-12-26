@@ -184,8 +184,13 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, onUpdate }) => {
       ref={messageRef}
       className={`message-item ${isClient ? 'message-item-client' : 'message-item-agent'} ${message.pinned ? 'message-pinned' : ''} ${message.unread ? 'message-unread' : ''}`}
       onContextMenu={(e) => {
-        e.preventDefault();
-        setShowContextMenu(true);
+        // Only show custom context menu if no text is selected
+        const selection = window.getSelection();
+        if (!selection || selection.toString().trim().length === 0) {
+          e.preventDefault();
+          setShowContextMenu(true);
+        }
+        // If text is selected, allow default browser context menu for copy
       }}
     >
       <div className="message-content">
@@ -249,7 +254,17 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, onUpdate }) => {
                   <IconPencil size={14} />
                 </button>
               )}
-              <div className="message-text">{messageText}</div>
+              <div 
+                className="message-text"
+                onCopy={(e) => {
+                  // Allow default copy behavior
+                  e.stopPropagation();
+                }}
+                onPaste={(e) => {
+                  // Allow default paste behavior
+                  e.stopPropagation();
+                }}
+              >{messageText}</div>
               {message.files && message.files.length > 0 && (
                 <div className="message-attachments">
                   {message.files.map((file) => {
