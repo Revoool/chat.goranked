@@ -243,18 +243,26 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, onUpdate }) => {
               <div className="message-text">{messageText}</div>
               {message.files && message.files.length > 0 && (
                 <div className="message-attachments">
-                  {message.files.map((file) => (
-                    <div key={file.id} className="message-attachment">
-                      {file.mime_type.startsWith('image/') ? (
-                        <img src={file.file_path} alt={file.file_name} />
-                      ) : (
-                        <a href={file.file_path} target="_blank" rel="noopener noreferrer">
-                          <IconPaperclip size={16} style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: '4px' }} />
-                          {file.file_name}
-                        </a>
-                      )}
-                    </div>
-                  ))}
+                  {message.files.map((file) => {
+                    // Security: Use API endpoint for file access instead of direct file_path
+                    // This ensures server-side authorization checks
+                    const fileUrl = file.file_path?.startsWith('http') 
+                      ? file.file_path 
+                      : `/api/manager-client-chats/${message.chat_id}/messages/${message.id}/files/${file.id}`;
+                    
+                    return (
+                      <div key={file.id} className="message-attachment">
+                        {file.mime_type.startsWith('image/') ? (
+                          <img src={fileUrl} alt={file.file_name} />
+                        ) : (
+                          <a href={fileUrl} target="_blank" rel="noopener noreferrer" download={file.file_name}>
+                            <IconPaperclip size={16} style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: '4px' }} />
+                            {file.file_name}
+                          </a>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </>

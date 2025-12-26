@@ -68,7 +68,10 @@ module.exports = (env, argv) => {
           return `${wsScheme}://${host}${port === '443' ? '' : ':' + port}/app/${appKey}`;
         })()),
         'process.env.NODE_ENV': JSON.stringify(argv.mode || 'development'),
-        'process.env.MOCK_MODE': JSON.stringify(process.env.MOCK_MODE || 'false'),
+        // Security: Disable MOCK_MODE in production builds
+        'process.env.MOCK_MODE': JSON.stringify(
+          isProduction ? 'false' : (process.env.MOCK_MODE || 'false')
+        ),
         'global': 'globalThis',
       }),
       new webpack.ProvidePlugin({

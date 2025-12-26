@@ -53,11 +53,19 @@ class ApiClient {
   }
 
   async login(email: string, password: string, role?: string): Promise<any> {
-    // Mock mode for local development (remove in production)
+    // Mock mode ONLY for local development (disabled in production)
     const MOCK_MODE = process.env.MOCK_MODE === 'true';
+    const isProduction = process.env.NODE_ENV === 'production';
     
-    if (MOCK_MODE && (email === 'test@goranked.gg' || email === 'demo@test.com')) {
-      // Mock response for testing
+    // Security: Never allow mock mode in production builds
+    if (isProduction && MOCK_MODE) {
+      console.error('SECURITY ERROR: MOCK_MODE cannot be enabled in production');
+      throw new Error('Mock mode is disabled in production for security reasons');
+    }
+    
+    if (MOCK_MODE && !isProduction && (email === 'test@goranked.gg' || email === 'demo@test.com')) {
+      // Mock response for testing (development only)
+      console.warn('⚠️ Using mock mode - this should only be used in development');
       return {
         accessToken: 'mock-token-' + Date.now(),
         userData: {
