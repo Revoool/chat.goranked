@@ -46,13 +46,21 @@ class WebSocketClient {
       return;
     }
 
+    // Security: Validate token
+    if (!token || typeof token !== 'string' || token.trim().length === 0) {
+      throw new Error('Invalid authentication token');
+    }
+
     this.isConnecting = true;
 
     try {
       // Laravel Reverb uses Pusher-compatible protocol
       // Format: wss://host/app/app_key?protocol=7&client=js&version=8.4.0&flash=false
+      // Note: Token authentication is handled server-side via Laravel Reverb authorization
+      // The server validates the token when subscribing to private channels
       const url = `${WS_URL_VAL}?protocol=7&client=js&version=8.4.0&flash=false`;
       this.ws = new WebSocket(url);
+      this.currentToken = token; // Store token for channel authorization
 
       this.ws.onopen = () => {
         console.log('WebSocket connected to Reverb');
@@ -185,7 +193,14 @@ class WebSocketClient {
   }
 
   subscribeToChat(chatId: number) {
+    // Security: Validate chatId
+    if (!chatId || !Number.isInteger(chatId) || chatId <= 0) {
+      console.error('Invalid chat ID for subscription:', chatId);
+      return;
+    }
+    
     // Subscribe to specific chat channel
+    // Note: Server-side authorization will validate token and chat access
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
       const subscribeMessage = JSON.stringify({
         event: 'pusher:subscribe',
@@ -194,7 +209,6 @@ class WebSocketClient {
         },
       });
       this.ws.send(subscribeMessage);
-      console.log(`✅ Subscribed to manager-client-chats.${chatId} channel`);
     }
   }
 

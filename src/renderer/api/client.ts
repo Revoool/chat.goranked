@@ -53,19 +53,27 @@ class ApiClient {
   }
 
   async login(email: string, password: string, role?: string): Promise<any> {
+    // Security: Validate inputs
+    if (!email || typeof email !== 'string' || email.trim().length === 0) {
+      throw new Error('Email is required');
+    }
+    if (!password || typeof password !== 'string' || password.length === 0) {
+      throw new Error('Password is required');
+    }
+    if (email.length > 255) {
+      throw new Error('Email too long');
+    }
+    
     // Mock mode ONLY for local development (disabled in production)
     const MOCK_MODE = process.env.MOCK_MODE === 'true';
     const isProduction = process.env.NODE_ENV === 'production';
     
     // Security: Never allow mock mode in production builds
     if (isProduction && MOCK_MODE) {
-      console.error('SECURITY ERROR: MOCK_MODE cannot be enabled in production');
       throw new Error('Mock mode is disabled in production for security reasons');
     }
     
     if (MOCK_MODE && !isProduction && (email === 'test@goranked.gg' || email === 'demo@test.com')) {
-      // Mock response for testing (development only)
-      console.warn('⚠️ Using mock mode - this should only be used in development');
       return {
         accessToken: 'mock-token-' + Date.now(),
         userData: {
@@ -77,13 +85,11 @@ class ApiClient {
       };
     }
 
-    console.log('Attempting login to:', this.client.defaults.baseURL + '/api/auth/login');
-    const requestBody: any = { email, password };
-    if (role) {
+    const requestBody: any = { email: email.trim(), password };
+    if (role && ['agent', 'manager', 'admin'].includes(role)) {
       requestBody.role = role;
     }
     const response = await this.client.post('/api/auth/login', requestBody);
-    console.log('Login response:', response.data);
     return response.data;
   }
 
@@ -134,105 +140,146 @@ class ApiClient {
   }
 
   async getChats(filters: any = {}): Promise<any> {
-    console.log('🔍 Requesting chats with filters:', filters);
-    
-    // Convert filters to API format
+    // Security: Validate and sanitize filters
     const params: any = {};
-    if (filters.status) params.status = filters.status;
-    if (filters.source) params.source = filters.source;
-    if (filters.manager_id !== undefined && filters.manager_id !== null) {
-      params.manager_id = filters.manager_id;
-    }
-    if (filters.priority) params.priority = filters.priority;
-    if (filters.q || filters.search) params.search = filters.q || filters.search;
-    if (filters.page) params.page = filters.page;
-    if (filters.per_page) params.per_page = filters.per_page;
     
-    console.log('🔍 Full URL:', this.client.defaults.baseURL + '/api/manager-client-chats', 'Params:', params);
+    // Validate status
+    if (filters.status && ['new', 'in_progress', 'closed', 'snoozed'].includes(filters.status)) {
+      params.status = filters.status;
+    }
+    
+    // Validate source
+    if (filters.source && typeof filters.source === 'string') {
+      params.source = filters.source;
+    }
+    
+    // Validate manager_id
+    if (filters.manager_id !== undefined && filters.manager_id !== null) {
+      const managerId = Number(filters.manager_id);
+      if (Number.isInteger(managerId) && managerId > 0) {
+        params.manager_id = managerId;
+      }
+    }
+    
+    // Validate priority
+    if (filters.priority && ['low', 'normal', 'high', 'urgent'].includes(filters.priority)) {
+      params.priority = filters.priority;
+    }
+    
+    // Validate search (sanitize)
+    if (filters.q || filters.search) {
+      const search = String(filters.q || filters.search).trim().substring(0, 100);
+      if (search) {
+        params.search = search;
+      }
+    }
+    
+    // Validate pagination
+    if (filters.page) {
+      const page = Number(filters.page);
+      if (Number.isInteger(page) && page > 0) {
+        params.page = page;
+      }
+    }
+    
+    if (filters.per_page) {
+      const perPage = Number(filters.per_page);
+      if (Number.isInteger(perPage) && perPage > 0 && perPage <= 100) {
+        params.per_page = perPage;
+      }
+    }
     
     try {
       const response = await this.client.get('/api/manager-client-chats', { params });
-      console.log('✅ Chats response received:', response);
-      console.log('✅ Response data:', response.data);
-      console.log('✅ Response meta:', response.data?.meta);
-      
-      if (response.data?.data) {
-        console.log('✅ First chat example:', response.data.data[0]);
-      }
-      
       return response.data;
     } catch (error: any) {
-      console.error('❌ Error fetching chats:', error);
-      console.error('❌ Error status:', error.response?.status);
-      console.error('❌ Error data:', error.response?.data);
       throw error;
     }
   }
 
   async getChat(chatId: number): Promise<any> {
-    console.log('🔍 Requesting chat details for chatId:', chatId);
-    console.log('🔍 Endpoint:', this.client.defaults.baseURL + `/api/manager-client-chats/${chatId}`);
+    // Security: Validate chatId
+    if (!chatId || !Number.isInteger(chatId) || chatId <= 0) {
+      throw new Error('Invalid chat ID');
+    }
+    
+    if (process.env.NODE_ENV === 'development') {
+      console.log('🔍 Requesting chat details for chatId:', chatId);
+    }
     
     try {
       const response = await this.client.get(`/api/manager-client-chats/${chatId}`);
-      console.log('✅ Chat details response:', response);
-      console.log('✅ Chat data:', response.data);
       return response.data;
     } catch (error: any) {
-      console.error('❌ Error fetching chat:', error);
-      console.error('❌ Error status:', error.response?.status);
-      console.error('❌ Error data:', error.response?.data);
+      if (error.response?.status === 403) {
+        throw new Error('Access denied to this chat');
+      }
+      if (error.response?.status === 404) {
+        throw new Error('Chat not found');
+      }
       throw error;
     }
   }
 
   async getMessages(chatId: number, before?: string, limit: number = 50): Promise<any> {
-    console.log('💬 Requesting messages for chatId:', chatId, 'before:', before, 'limit:', limit);
-    
-    const params: any = { limit };
-    if (before) {
-      params.before = before; // ISO timestamp
+    // Security: Validate chatId and limit
+    if (!chatId || !Number.isInteger(chatId) || chatId <= 0) {
+      throw new Error('Invalid chat ID');
+    }
+    if (!Number.isInteger(limit) || limit <= 0 || limit > 100) {
+      limit = 50; // Enforce max limit
     }
     
-    console.log('💬 Endpoint:', this.client.defaults.baseURL + `/api/manager-client-chats/${chatId}/messages`);
+    const params: any = { limit };
+    if (before && typeof before === 'string') {
+      params.before = before;
+    }
     
     try {
       const response = await this.client.get(`/api/manager-client-chats/${chatId}/messages`, { params });
-      console.log('✅ Messages response:', response);
-      console.log('✅ Messages data:', response.data);
-      console.log('✅ Messages count:', response.data?.data?.length);
       return response.data;
     } catch (error: any) {
-      console.error('❌ Error fetching messages:', error);
-      console.error('❌ Error status:', error.response?.status);
-      console.error('❌ Error data:', error.response?.data);
+      if (error.response?.status === 403) {
+        throw new Error('Access denied to this chat');
+      }
+      if (error.response?.status === 404) {
+        throw new Error('Chat not found');
+      }
       throw error;
     }
   }
 
   async sendMessage(chatId: number, body: string, file?: File, type?: string): Promise<any> {
-    console.log('📤 Sending message to chatId:', chatId, 'body:', body, 'hasFile:', !!file, 'file:', file?.name, 'type:', type);
+    // Security: Validate chatId
+    if (!chatId || !Number.isInteger(chatId) || chatId <= 0) {
+      throw new Error('Invalid chat ID');
+    }
     
     // Validate: need either body or file
     if (!body?.trim() && !file) {
       throw new Error('Message must have either text or file');
     }
     
-    const formData = new FormData();
+    // Security: Validate file size (max 50MB)
+    if (file && file.size > 50 * 1024 * 1024) {
+      throw new Error('File size exceeds maximum allowed size (50MB)');
+    }
     
-    // Body is required - ensure it's always a string
-    // If no text but file exists, send empty string (API requires body field)
-    // Always send body as string, even if empty (when file is present)
+    // Security: Validate body length (max 10000 characters)
     const bodyValue = body ? String(body).trim() : '';
-    console.log('📤 Body value to send:', bodyValue, 'type:', typeof bodyValue, 'length:', bodyValue.length);
+    if (bodyValue.length > 10000) {
+      throw new Error('Message body exceeds maximum length (10000 characters)');
+    }
     
-    // Always append body - Laravel validation requires it to be a string
-    // When file is present, body can be empty string
+    const formData = new FormData();
     formData.append('body', bodyValue);
     
     if (file) {
+      // Security: Validate file name length
+      if (file.name.length > 255) {
+        throw new Error('File name too long');
+      }
       formData.append('file', file);
-      // Auto-detect type from file if not provided
       if (!type) {
         if (file.type.startsWith('image/')) {
           type = 'image';
@@ -245,9 +292,7 @@ class ApiClient {
         }
       }
       formData.append('type', type);
-      console.log('📤 File attached:', file.name, 'size:', file.size, 'mime:', file.type, 'detected type:', type);
     } else if (bodyValue) {
-      // If no file but has text, set type to text
       formData.append('type', 'text');
     }
     
@@ -257,20 +302,23 @@ class ApiClient {
           'Content-Type': 'multipart/form-data',
         },
       });
-      console.log('✅ Message sent successfully:', response.data);
       return response.data;
     } catch (error: any) {
-      console.error('❌ Error sending message:', error);
-      console.error('❌ Error status:', error.response?.status);
-      console.error('❌ Error data:', error.response?.data);
-      console.error('❌ Error message:', error.response?.data?.message || error.message);
+      if (error.response?.status === 403) {
+        throw new Error('Access denied to this chat');
+      }
       throw error;
     }
   }
 
   async updateMessage(chatId: number, messageId: number, body: string): Promise<any> {
-    console.log('✏️ Updating message:', { chatId, messageId, body });
-    
+    // Security: Validate inputs
+    if (!chatId || !Number.isInteger(chatId) || chatId <= 0) {
+      throw new Error('Invalid chat ID');
+    }
+    if (!messageId || !Number.isInteger(messageId) || messageId <= 0) {
+      throw new Error('Invalid message ID');
+    }
     if (!body?.trim()) {
       throw new Error('Message body cannot be empty');
     }
@@ -279,18 +327,22 @@ class ApiClient {
       const response = await this.client.put(`/api/manager-client-chats/${chatId}/messages/${messageId}`, {
         body: body.trim(),
       });
-      console.log('✅ Message updated successfully:', response.data);
       return response.data;
     } catch (error: any) {
-      console.error('❌ Error updating message:', error);
-      console.error('❌ Error response:', error.response);
-      console.error('❌ Error data:', error.response?.data);
+      if (error.response?.status === 403) {
+        throw new Error('Access denied');
+      }
       throw error;
     }
   }
 
   async assignChat(chatId: number, managerId: number): Promise<any> {
-    console.log('👤 Assigning chat', chatId, 'to manager', managerId);
+    if (!chatId || !Number.isInteger(chatId) || chatId <= 0) {
+      throw new Error('Invalid chat ID');
+    }
+    if (!managerId || !Number.isInteger(managerId) || managerId <= 0) {
+      throw new Error('Invalid manager ID');
+    }
     const response = await this.client.post(`/api/manager-client-chats/${chatId}/assign`, {
       manager_id: managerId,
     });
@@ -298,13 +350,20 @@ class ApiClient {
   }
 
   async takeChat(chatId: number): Promise<any> {
-    console.log('👤 Taking chat', chatId);
+    if (!chatId || !Number.isInteger(chatId) || chatId <= 0) {
+      throw new Error('Invalid chat ID');
+    }
     const response = await this.client.post(`/api/manager-client-chats/${chatId}/take`);
     return response.data;
   }
 
   async transferChat(chatId: number, managerId: number): Promise<any> {
-    console.log('👤 Transferring chat', chatId, 'to manager', managerId);
+    if (!chatId || !Number.isInteger(chatId) || chatId <= 0) {
+      throw new Error('Invalid chat ID');
+    }
+    if (!managerId || !Number.isInteger(managerId) || managerId <= 0) {
+      throw new Error('Invalid manager ID');
+    }
     const response = await this.client.post(`/api/manager-client-chats/${chatId}/transfer`, {
       manager_id: managerId,
     });
@@ -312,61 +371,68 @@ class ApiClient {
   }
 
   async closeChat(chatId: number): Promise<any> {
-    console.log('🔒 Closing chat', chatId);
+    if (!chatId || !Number.isInteger(chatId) || chatId <= 0) {
+      throw new Error('Invalid chat ID');
+    }
     const response = await this.client.post(`/api/manager-client-chats/${chatId}/close`);
     return response.data;
   }
 
   async reopenChat(chatId: number): Promise<any> {
-    console.log('🔓 Reopening chat', chatId);
+    if (!chatId || !Number.isInteger(chatId) || chatId <= 0) {
+      throw new Error('Invalid chat ID');
+    }
     const response = await this.client.post(`/api/manager-client-chats/${chatId}/reopen`);
     return response.data;
   }
 
   async deferChat(chatId: number): Promise<any> {
-    console.log('⏸️ Deferring chat', chatId);
+    if (!chatId || !Number.isInteger(chatId) || chatId <= 0) {
+      throw new Error('Invalid chat ID');
+    }
     const response = await this.client.post(`/api/manager-client-chats/${chatId}/defer`);
     return response.data;
   }
 
   async undeferChat(chatId: number): Promise<any> {
-    console.log('▶️ Undeferring chat', chatId);
+    if (!chatId || !Number.isInteger(chatId) || chatId <= 0) {
+      throw new Error('Invalid chat ID');
+    }
     const response = await this.client.post(`/api/manager-client-chats/${chatId}/undefer`);
     return response.data;
   }
 
   // Update chat metadata (including tags)
   async updateChatMetadata(chatId: number, metadata: any): Promise<any> {
-    console.log('🏷️ Updating chat metadata:', chatId, metadata);
+    if (!chatId || !Number.isInteger(chatId) || chatId <= 0) {
+      throw new Error('Invalid chat ID');
+    }
+    if (!metadata || typeof metadata !== 'object') {
+      throw new Error('Invalid metadata');
+    }
     try {
-      // Try POST to metadata endpoint first
       try {
         const response = await this.client.post(`/api/manager-client-chats/${chatId}/metadata`, {
           metadata,
         });
-        console.log('✅ Metadata updated via /metadata endpoint');
         return response.data;
       } catch (metadataError: any) {
-        // If metadata endpoint doesn't exist, try PUT instead of PATCH
-        console.log('⚠️ /metadata endpoint not available, trying PUT');
         try {
           const response = await this.client.put(`/api/manager-client-chats/${chatId}`, {
             metadata,
           });
-          console.log('✅ Metadata updated via PUT');
           return response.data;
         } catch (putError: any) {
-          // If PUT also fails, try POST to /update endpoint
-          console.log('⚠️ PUT not available, trying POST to /update');
           const response = await this.client.post(`/api/manager-client-chats/${chatId}/update`, {
             metadata,
           });
-          console.log('✅ Metadata updated via /update endpoint');
           return response.data;
         }
       }
     } catch (error: any) {
-      console.error('❌ Error updating chat metadata:', error);
+      if (error.response?.status === 403) {
+        throw new Error('Access denied');
+      }
       throw error;
     }
   }
@@ -379,65 +445,99 @@ class ApiClient {
   }
 
   async markAsRead(chatId: number): Promise<any> {
-    console.log('✅ Marking chat as read:', chatId);
+    if (!chatId || !Number.isInteger(chatId) || chatId <= 0) {
+      throw new Error('Invalid chat ID');
+    }
     try {
       const response = await this.client.post(`/api/manager-client-chats/${chatId}/read`);
-      console.log('✅ Chat marked as read successfully:', response.data);
       return response.data;
     } catch (error: any) {
-      console.error('❌ Failed to mark chat as read:', error);
-      console.error('❌ Error status:', error.response?.status);
-      console.error('❌ Error data:', error.response?.data);
-      throw error; // Throw error so caller can handle it
+      if (error.response?.status === 403) {
+        throw new Error('Access denied');
+      }
+      throw error;
     }
   }
 
   async markMessageAsRead(chatId: number, messageId: number): Promise<any> {
-    console.log('✅ Marking message as read:', chatId, messageId);
+    if (!chatId || !Number.isInteger(chatId) || chatId <= 0) {
+      throw new Error('Invalid chat ID');
+    }
+    if (!messageId || !Number.isInteger(messageId) || messageId <= 0) {
+      throw new Error('Invalid message ID');
+    }
     try {
       const response = await this.client.post(`/api/manager-client-chats/${chatId}/messages/${messageId}/read`);
       return response.data;
     } catch (error: any) {
-      console.warn('⚠️ Could not mark message as read:', error.response?.data?.message);
+      if (error.response?.status === 403) {
+        throw new Error('Access denied');
+      }
       return { success: false };
     }
   }
 
   async pinMessage(chatId: number, messageId: number): Promise<any> {
-    console.log('📌 Pinning message:', chatId, messageId);
+    if (!chatId || !Number.isInteger(chatId) || chatId <= 0) {
+      throw new Error('Invalid chat ID');
+    }
+    if (!messageId || !Number.isInteger(messageId) || messageId <= 0) {
+      throw new Error('Invalid message ID');
+    }
     try {
       const response = await this.client.post(`/api/manager-client-chats/${chatId}/messages/${messageId}/pin`);
       return response.data;
     } catch (error: any) {
-      console.error('❌ Error pinning message:', error);
+      if (error.response?.status === 403) {
+        throw new Error('Access denied');
+      }
       throw error;
     }
   }
 
   async unpinMessage(chatId: number, messageId: number): Promise<any> {
-    console.log('📌 Unpinning message:', chatId, messageId);
+    if (!chatId || !Number.isInteger(chatId) || chatId <= 0) {
+      throw new Error('Invalid chat ID');
+    }
+    if (!messageId || !Number.isInteger(messageId) || messageId <= 0) {
+      throw new Error('Invalid message ID');
+    }
     try {
       const response = await this.client.delete(`/api/manager-client-chats/${chatId}/messages/${messageId}/pin`);
       return response.data;
     } catch (error: any) {
-      console.error('❌ Error unpinning message:', error);
+      if (error.response?.status === 403) {
+        throw new Error('Access denied');
+      }
       throw error;
     }
   }
 
   async markMessageAsUnread(chatId: number, messageId: number): Promise<any> {
-    console.log('🔴 Marking message as unread:', chatId, messageId);
+    if (!chatId || !Number.isInteger(chatId) || chatId <= 0) {
+      throw new Error('Invalid chat ID');
+    }
+    if (!messageId || !Number.isInteger(messageId) || messageId <= 0) {
+      throw new Error('Invalid message ID');
+    }
     try {
       const response = await this.client.post(`/api/manager-client-chats/${chatId}/messages/${messageId}/unread`);
       return response.data;
     } catch (error: any) {
-      console.error('❌ Error marking message as unread:', error);
+      if (error.response?.status === 403) {
+        throw new Error('Access denied');
+      }
       throw error;
     }
   }
 
   async sendTyping(chatId: number, isTyping: boolean): Promise<any> {
-    console.log('⌨️ Sending typing status:', chatId, isTyping);
+    if (!chatId || !Number.isInteger(chatId) || chatId <= 0) {
+      throw new Error('Invalid chat ID');
+    }
+    if (typeof isTyping !== 'boolean') {
+      throw new Error('Invalid typing status');
+    }
     const response = await this.client.post(`/api/manager-client-chats/${chatId}/typing`, {
       is_typing: isTyping,
     });
@@ -480,38 +580,52 @@ class ApiClient {
 
   // Priority management
   async updateChatPriority(chatId: number, priority: 'low' | 'normal' | 'high' | 'urgent'): Promise<any> {
-    console.log('🎯 Updating chat priority:', chatId, priority);
+    if (!chatId || !Number.isInteger(chatId) || chatId <= 0) {
+      throw new Error('Invalid chat ID');
+    }
+    if (!['low', 'normal', 'high', 'urgent'].includes(priority)) {
+      throw new Error('Invalid priority value');
+    }
     try {
       const response = await this.client.put(`/api/manager-client-chats/${chatId}/priority`, {
         priority,
       });
       return response.data;
     } catch (error: any) {
-      console.error('❌ Error updating chat priority:', error);
+      if (error.response?.status === 403) {
+        throw new Error('Access denied');
+      }
       throw error;
     }
   }
 
   // Skip chat (mark as no response needed)
   async skipChat(chatId: number): Promise<any> {
-    console.log('⏭️ Skipping chat:', chatId);
+    if (!chatId || !Number.isInteger(chatId) || chatId <= 0) {
+      throw new Error('Invalid chat ID');
+    }
     try {
       const response = await this.client.post(`/api/manager-client-chats/${chatId}/skip`);
       return response.data;
     } catch (error: any) {
-      console.error('❌ Error skipping chat:', error);
+      if (error.response?.status === 403) {
+        throw new Error('Access denied');
+      }
       throw error;
     }
   }
 
-  // Unskip chat (remove no response needed flag)
   async unskipChat(chatId: number): Promise<any> {
-    console.log('↩️ Unskipping chat:', chatId);
+    if (!chatId || !Number.isInteger(chatId) || chatId <= 0) {
+      throw new Error('Invalid chat ID');
+    }
     try {
       const response = await this.client.post(`/api/manager-client-chats/${chatId}/unskip`);
       return response.data;
     } catch (error: any) {
-      console.error('❌ Error unskipping chat:', error);
+      if (error.response?.status === 403) {
+        throw new Error('Access denied');
+      }
       throw error;
     }
   }
@@ -540,12 +654,16 @@ class ApiClient {
   }
 
   async ignoreSlaViolation(chatId: number): Promise<any> {
-    console.log('✅ Ignoring SLA violation for chat:', chatId);
+    if (!chatId || !Number.isInteger(chatId) || chatId <= 0) {
+      throw new Error('Invalid chat ID');
+    }
     try {
       const response = await this.client.post(`/api/manager-client-chats/${chatId}/ignore-sla`);
       return response.data;
     } catch (error: any) {
-      console.error('❌ Error ignoring SLA violation:', error);
+      if (error.response?.status === 403) {
+        throw new Error('Access denied');
+      }
       throw error;
     }
   }
@@ -576,23 +694,31 @@ class ApiClient {
 
   // Client info (информация о клиенте)
   async getClientInfo(chatId: number): Promise<any> {
-    console.log('👤 Requesting client info for chat:', chatId);
+    if (!chatId || !Number.isInteger(chatId) || chatId <= 0) {
+      throw new Error('Invalid chat ID');
+    }
     try {
       const response = await this.client.get(`/api/manager-client-chats/${chatId}/client-info`);
       return response.data;
     } catch (error: any) {
-      console.error('❌ Error fetching client info:', error);
+      if (error.response?.status === 403) {
+        throw new Error('Access denied');
+      }
       throw error;
     }
   }
 
   async getClientOrders(chatId: number): Promise<any> {
-    console.log('🛒 Requesting client orders for chat:', chatId);
+    if (!chatId || !Number.isInteger(chatId) || chatId <= 0) {
+      throw new Error('Invalid chat ID');
+    }
     try {
       const response = await this.client.get(`/api/manager-client-chats/${chatId}/client-orders`);
       return response.data;
     } catch (error: any) {
-      console.error('❌ Error fetching client orders:', error);
+      if (error.response?.status === 403) {
+        throw new Error('Access denied');
+      }
       throw error;
     }
   }
