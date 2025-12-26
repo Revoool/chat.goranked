@@ -16,6 +16,7 @@ const ChatListItem: React.FC<ChatListItemProps> = ({ chat, onClick }) => {
   const queryClient = useQueryClient();
   const [showContextMenu, setShowContextMenu] = useState(false);
   const [isMarkingUnread, setIsMarkingUnread] = useState(false);
+  const [contextMenuPosition, setContextMenuPosition] = useState<{ top: number; left: number } | null>(null);
   const contextMenuRef = useRef<HTMLDivElement>(null);
   const itemRef = useRef<HTMLDivElement>(null);
   const isSelected = selectedChatId === chat.id;
@@ -82,6 +83,7 @@ const ChatListItem: React.FC<ChatListItemProps> = ({ chat, onClick }) => {
         !itemRef.current.contains(event.target as Node)
       ) {
         setShowContextMenu(false);
+        setContextMenuPosition(null);
       }
     };
 
@@ -95,6 +97,7 @@ const ChatListItem: React.FC<ChatListItemProps> = ({ chat, onClick }) => {
 
   const handleMarkAsUnread = async (e: React.MouseEvent) => {
     e.stopPropagation();
+    e.preventDefault();
     if (isMarkingUnread) return;
     setIsMarkingUnread(true);
     try {
@@ -107,6 +110,7 @@ const ChatListItem: React.FC<ChatListItemProps> = ({ chat, onClick }) => {
         updateChat(chat.id, { unread_count: 1 });
       }
       setShowContextMenu(false);
+      setContextMenuPosition(null);
       queryClient.invalidateQueries({ queryKey: ['chats'] });
       queryClient.invalidateQueries({ queryKey: ['chat', chat.id] });
     } catch (error) {
@@ -129,15 +133,26 @@ const ChatListItem: React.FC<ChatListItemProps> = ({ chat, onClick }) => {
 
   const hasSlaViolation = chat.active_sla_violation || chat.sla_attention;
 
+  // Calculate context menu position
+  const handleContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const rect = itemRef.current?.getBoundingClientRect();
+    if (rect) {
+      setContextMenuPosition({
+        top: rect.bottom + 4,
+        left: rect.left + rect.width / 2,
+      });
+      setShowContextMenu(true);
+    }
+  };
+
   return (
     <div
       ref={itemRef}
       className={`chat-list-item ${isSelected ? 'selected' : ''} ${hasSlaViolation ? 'has-sla-violation' : ''}`}
       onClick={onClick}
-      onContextMenu={(e) => {
-        e.preventDefault();
-        setShowContextMenu(true);
-      }}
+      onContextMenu={handleContextMenu}
     >
       <div className="chat-item-header">
         <div className="chat-item-client">
@@ -248,14 +263,23 @@ const ChatListItem: React.FC<ChatListItemProps> = ({ chat, onClick }) => {
         )}
       </div>
 
-      {showContextMenu && (
-        <div ref={contextMenuRef} className="chat-item-context-menu">
+      {showContextMenu && contextMenuPosition && (
+        <div 
+          ref={contextMenuRef} 
+          className="chat-item-context-menu"
+          style={{
+            position: 'fixed',
+            top: `${contextMenuPosition.top}px`,
+            left: `${contextMenuPosition.left}px`,
+            transform: 'translateX(-50%)',
+          }}
+        >
           <button
             className="context-menu-item"
             onClick={handleMarkAsUnread}
             disabled={isMarkingUnread}
           >
-            <IconCircleDot size={16} style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: '6px' }} />
+            <IconCircleDot size={16} style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: '8px' }} />
             {isMarkingUnread ? 'Позначається...' : 'Позначити як непрочитане'}
           </button>
         </div>

@@ -433,29 +433,27 @@ class ApiClient {
       throw new Error('Invalid metadata');
     }
     try {
-      try {
-        const response = await this.client.post(`/api/manager-client-chats/${chatId}/metadata`, {
-          metadata,
-        });
-        return response.data;
-      } catch (metadataError: any) {
+      // Try the dedicated metadata endpoint first
+      const response = await this.client.post(`/api/manager-client-chats/${chatId}/metadata`, {
+        metadata,
+      });
+      return response.data;
+    } catch (error: any) {
+      if (error.response?.status === 404) {
+        // If metadata endpoint doesn't exist, try PUT to update the whole chat
         try {
           const response = await this.client.put(`/api/manager-client-chats/${chatId}`, {
             metadata,
           });
           return response.data;
         } catch (putError: any) {
-          const response = await this.client.post(`/api/manager-client-chats/${chatId}/update`, {
-            metadata,
-          });
-          return response.data;
+          throw new Error(putError.response?.data?.message || putError.message || 'Failed to update metadata');
         }
       }
-    } catch (error: any) {
       if (error.response?.status === 403) {
         throw new Error('Access denied');
       }
-      throw error;
+      throw new Error(error.response?.data?.message || error.message || 'Failed to update metadata');
     }
   }
 
@@ -771,4 +769,5 @@ class ApiClient {
 }
 
 export const apiClient = new ApiClient();
+
 
