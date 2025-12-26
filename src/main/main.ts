@@ -15,6 +15,12 @@ let isQuiting = false;
 function createMenu() {
   const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
   
+  // Для Windows скрываем меню полностью
+  if (process.platform === 'win32') {
+    Menu.setApplicationMenu(null);
+    return;
+  }
+  
   const template: Electron.MenuItemConstructorOptions[] = [
     {
       label: 'Edit',
@@ -79,7 +85,7 @@ function createMenu() {
       ],
     });
   } else {
-    // Для Windows и Linux добавляем меню File с опцией Quit
+    // Для Linux добавляем меню File с опцией Quit
     template.unshift({
       label: 'File',
       submenu: [
