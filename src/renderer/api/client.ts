@@ -1,6 +1,16 @@
 import axios, { AxiosInstance } from 'axios';
 
-const API_BASE_URL = process.env.API_URL || 'https://goranked.gg';
+// Security: Validate API URL - ensure HTTPS in production
+const getApiBaseUrl = (): string => {
+  const url = process.env.API_URL || 'https://goranked.gg';
+  if (process.env.NODE_ENV === 'production' && !url.startsWith('https://')) {
+    console.error('SECURITY: API URL must use HTTPS in production');
+    return 'https://goranked.gg';
+  }
+  return url;
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 class ApiClient {
   private client: AxiosInstance;
@@ -11,6 +21,7 @@ class ApiClient {
       headers: {
         'Content-Type': 'application/json',
       },
+      timeout: 30000,
     });
 
     // Request interceptor to add token
