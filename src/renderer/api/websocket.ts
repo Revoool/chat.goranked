@@ -36,6 +36,7 @@ class WebSocketClient {
   private reconnectDelay = 1000;
   private isConnecting = false;
   private queryClient: QueryClient | null = null;
+  private currentToken: string | null = null;
 
   setQueryClient(queryClient: QueryClient) {
     this.queryClient = queryClient;
