@@ -15,38 +15,22 @@ const ChatList: React.FC = () => {
   });
 
   useEffect(() => {
-    console.log('📋 ChatList useEffect triggered');
-    console.log('📋 data:', data);
-    console.log('📋 isLoading:', isLoading);
-    console.log('📋 error:', error);
-    console.log('📋 data?.data:', data?.data);
-    
     if (data) {
-      console.log('📋 Full data object:', JSON.stringify(data, null, 2));
-      
       // Try different possible response structures
       let chatsArray = data.data || data.chats || data;
       
       // Ensure it's an array
       if (!Array.isArray(chatsArray)) {
-        console.warn('⚠️ Chats data is not an array, converting:', typeof chatsArray);
         chatsArray = [];
       }
       
-      console.log('📋 Extracted chats array:', chatsArray);
-      console.log('📋 Chats array length:', chatsArray.length);
-      
-      if (chatsArray.length > 0) {
-        console.log('✅ Setting chats:', chatsArray.length, 'chats');
-        setChats(chatsArray);
-      } else {
-        console.warn('⚠️ No chats found in response');
-        setChats([]);
-      }
+      setChats(chatsArray);
     } else if (error) {
-      console.error('❌ Error in ChatList:', error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('ChatList error:', error);
+      }
     }
-  }, [data, error, isLoading, setChats]);
+  }, [data, error, setChats]);
 
   if (isLoading) {
     console.log('⏳ ChatList: Loading...');
@@ -61,7 +45,6 @@ const ChatList: React.FC = () => {
   }
 
   if (error) {
-    console.error('❌ ChatList: Error loading chats:', error);
     return (
       <div className="chat-list">
         <div className="chat-list-header">
@@ -73,9 +56,6 @@ const ChatList: React.FC = () => {
       </div>
     );
   }
-
-  console.log('📋 ChatList render - chats:', chats);
-  console.log('📋 ChatList render - chats length:', chats.length);
 
   return (
     <div className="chat-list">

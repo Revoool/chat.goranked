@@ -13,13 +13,19 @@ const MessageList: React.FC<MessageListProps> = ({ messages, onUpdate }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messageListRef = useRef<HTMLDivElement>(null);
   const isInitialLoad = useRef(true);
-
-  console.log('💬 MessageList rendered with messages:', messages.length);
-  console.log('💬 Messages data:', messages);
+  const prevMessagesLength = useRef(0);
 
   // Scroll to bottom when messages change
   useEffect(() => {
     if (!messages || messages.length === 0) return;
+
+    // Only scroll if new messages were added (not on initial render or when messages decrease)
+    const hasNewMessages = messages.length > prevMessagesLength.current;
+    prevMessagesLength.current = messages.length;
+
+    if (!hasNewMessages && !isInitialLoad.current) {
+      return; // Don't scroll if messages were removed or filtered
+    }
 
     const scrollToBottom = () => {
       const container = messageListRef.current;
@@ -27,35 +33,19 @@ const MessageList: React.FC<MessageListProps> = ({ messages, onUpdate }) => {
       
       if (!container || !endMarker) return;
 
-      // Use multiple methods to ensure we scroll to the very bottom
-      // Method 1: scrollIntoView with instant behavior (more reliable)
-      endMarker.scrollIntoView({ behavior: 'auto', block: 'end' });
-      
-      // Method 2: Direct scrollTop manipulation (fallback)
+      // Use requestAnimationFrame for smooth scrolling
       requestAnimationFrame(() => {
-        if (container) {
-          container.scrollTop = container.scrollHeight;
-        }
+        endMarker.scrollIntoView({ behavior: 'smooth', block: 'end' });
+        container.scrollTop = container.scrollHeight;
       });
-      
-      // Method 3: Double-check after a short delay (for async content)
-      setTimeout(() => {
-        if (container && endMarker) {
-          endMarker.scrollIntoView({ behavior: 'auto', block: 'end' });
-          container.scrollTop = container.scrollHeight;
-        }
-      }, 100);
     };
 
     // For initial load, wait a bit longer to ensure all content is rendered
     if (isInitialLoad.current && messages.length > 0) {
       isInitialLoad.current = false;
-      // Wait for DOM to fully render
-      setTimeout(scrollToBottom, 200);
-      // Also try after a longer delay for very long message lists
-      setTimeout(scrollToBottom, 500);
-    } else {
-      // For subsequent updates, scroll immediately
+      setTimeout(scrollToBottom, 100);
+    } else if (hasNewMessages) {
+      // For new messages, scroll immediately
       scrollToBottom();
     }
   }, [messages]);
@@ -68,9 +58,21 @@ const MessageList: React.FC<MessageListProps> = ({ messages, onUpdate }) => {
     );
   }
 
-  // Separate pinned and regular messages
-  const pinnedMessages = messages.filter(msg => msg.pinned);
-  const regularMessages = messages.filter(msg => !msg.pinned);
+  // Separate pinned and regular messages (memoized for performance)
+  const { pinnedMessages, regularMessages } = React.useMemo(() => {
+    const pinned: Message[] = [];
+    const regular: Message[] = [];
+    
+    messages.forEach(msg => {
+      if (msg.pinned) {
+        pinned.push(msg);
+      } else {
+        regular.push(msg);
+      }
+    });
+    
+    return { pinnedMessages: pinned, regularMessages: regular };
+  }, [messages]);
 
   return (
     <div className="message-list" ref={messageListRef}>
