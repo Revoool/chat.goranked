@@ -1,6 +1,9 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Chat } from '../types';
 import { useChatStore } from '../store/chatStore';
+import { apiClient } from '../api/client';
+import { useQueryClient } from '@tanstack/react-query';
+import { IconCircleDot, IconAlertCircle, IconFlag, IconFlag2, IconFlag3, IconFlagOff } from '../icons';
 import '../styles/ChatListItem.css';
 
 interface ChatListItemProps {
@@ -9,7 +12,12 @@ interface ChatListItemProps {
 }
 
 const ChatListItem: React.FC<ChatListItemProps> = ({ chat, onClick }) => {
-  const { selectedChatId } = useChatStore();
+  const { selectedChatId, updateChat } = useChatStore();
+  const queryClient = useQueryClient();
+  const [showContextMenu, setShowContextMenu] = useState(false);
+  const [isMarkingUnread, setIsMarkingUnread] = useState(false);
+  const contextMenuRef = useRef<HTMLDivElement>(null);
+  const itemRef = useRef<HTMLDivElement>(null);
   const isSelected = selectedChatId === chat.id;
 
   const formatTime = (dateString: string) => {
@@ -34,6 +42,80 @@ const ChatListItem: React.FC<ChatListItemProps> = ({ chat, onClick }) => {
     }
   };
 
+  const getPriorityColor = (priority?: string) => {
+    switch (priority) {
+      case 'urgent': return '#f44336';
+      case 'high': return '#ff9800';
+      case 'normal': return '#2196f3';
+      case 'low': return '#4caf50';
+      default: return 'transparent';
+    }
+  };
+
+  const getPriorityIcon = (priority?: string) => {
+    switch (priority) {
+      case 'urgent': return <IconFlag3 size={14} />;
+      case 'high': return <IconFlag2 size={14} />;
+      case 'normal': return <IconFlag size={14} />;
+      case 'low': return <IconFlagOff size={14} />;
+      default: return null;
+    }
+  };
+
+  const getPriorityLabel = (priority?: string) => {
+    switch (priority) {
+      case 'urgent': return 'Терміново';
+      case 'high': return 'Високий';
+      case 'normal': return 'Нормальний';
+      case 'low': return 'Низький';
+      default: return '';
+    }
+  };
+
+  // Close context menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        contextMenuRef.current &&
+        !contextMenuRef.current.contains(event.target as Node) &&
+        itemRef.current &&
+        !itemRef.current.contains(event.target as Node)
+      ) {
+        setShowContextMenu(false);
+      }
+    };
+
+    if (showContextMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+      };
+    }
+  }, [showContextMenu]);
+
+  const handleMarkAsUnread = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (isMarkingUnread) return;
+    setIsMarkingUnread(true);
+    try {
+      // Mark last message as unread to make chat appear unread
+      if (chat.last_message) {
+        await apiClient.markMessageAsUnread(chat.id, chat.last_message.id);
+      } else {
+        // If no last message, we can't mark as unread via API
+        // But we can update local state to show unread badge
+        updateChat(chat.id, { unread_count: 1 });
+      }
+      setShowContextMenu(false);
+      queryClient.invalidateQueries({ queryKey: ['chats'] });
+      queryClient.invalidateQueries({ queryKey: ['chat', chat.id] });
+    } catch (error) {
+      console.error('Error marking chat as unread:', error);
+    } finally {
+      setIsMarkingUnread(false);
+    }
+  };
+
   // Safety checks
   if (!chat) {
     return null;
@@ -45,10 +127,17 @@ const ChatListItem: React.FC<ChatListItemProps> = ({ chat, onClick }) => {
   const clientAvatar = chat.client_avatar || client?.avatar;
   const source = chat.source || 'unknown';
 
+  const hasSlaViolation = chat.active_sla_violation || chat.sla_attention;
+
   return (
     <div
-      className={`chat-list-item ${isSelected ? 'selected' : ''}`}
+      ref={itemRef}
+      className={`chat-list-item ${isSelected ? 'selected' : ''} ${hasSlaViolation ? 'has-sla-violation' : ''}`}
       onClick={onClick}
+      onContextMenu={(e) => {
+        e.preventDefault();
+        setShowContextMenu(true);
+      }}
     >
       <div className="chat-item-header">
         <div className="chat-item-client">
@@ -71,8 +160,31 @@ const ChatListItem: React.FC<ChatListItemProps> = ({ chat, onClick }) => {
             )}
           </div>
           <div className="chat-item-info">
-            <div className="chat-item-name">{clientName}</div>
-            <div className="chat-item-source">{source}</div>
+            <div className="chat-item-name-row">
+              <div className="chat-item-name">{clientName}</div>
+              {chat.priority && (
+                <div 
+                  className="chat-item-priority"
+                  style={{ color: getPriorityColor(chat.priority) }}
+                  title={getPriorityLabel(chat.priority)}
+                >
+                  {getPriorityIcon(chat.priority)}
+                </div>
+              )}
+              {hasSlaViolation && (
+                <div className="chat-item-sla-warning" title="Нарушение SLA">
+                  <IconAlertCircle size={14} />
+                </div>
+              )}
+            </div>
+            <div className="chat-item-meta-row">
+              <div className="chat-item-source">{source}</div>
+              {chat.assigned_manager && (
+                <div className="chat-item-manager">
+                  • {chat.assigned_manager.name}
+                </div>
+              )}
+            </div>
           </div>
         </div>
         <div className="chat-item-meta">
@@ -89,20 +201,39 @@ const ChatListItem: React.FC<ChatListItemProps> = ({ chat, onClick }) => {
 
       {chat.last_message && (
         <div className="chat-item-preview">
+          {chat.last_message.from_manager && (
+            <span className="chat-item-preview-sender">Ви: </span>
+          )}
           {(chat.last_message.body || '').substring(0, 60)}
           {(chat.last_message.body || '').length > 60 ? '...' : ''}
         </div>
       )}
 
       <div className="chat-item-footer">
-        {chat.status && (
-          <div
-            className="chat-item-status"
-            style={{ backgroundColor: getStatusColor(chat.status) }}
-          >
-            {chat.status}
-          </div>
-        )}
+        <div className="chat-item-footer-left">
+          {chat.status && (
+            <div
+              className="chat-item-status"
+              style={{ backgroundColor: getStatusColor(chat.status) }}
+            >
+              {chat.status === 'new' ? 'Новий' : 
+               chat.status === 'in_progress' ? 'В роботі' :
+               chat.status === 'snoozed' ? 'Відкладено' :
+               chat.status === 'closed' ? 'Закрито' : chat.status}
+            </div>
+          )}
+          {chat.priority && (
+            <div
+              className="chat-item-priority-badge"
+              style={{ 
+                backgroundColor: getPriorityColor(chat.priority),
+                color: 'white'
+              }}
+            >
+              {getPriorityLabel(chat.priority)}
+            </div>
+          )}
+        </div>
         {chat.metadata && typeof chat.metadata === 'object' && chat.metadata.tags && Array.isArray(chat.metadata.tags) && chat.metadata.tags.length > 0 && (
           <div className="chat-item-tags">
             {chat.metadata.tags.slice(0, 2).map((tag: string) => (
@@ -110,9 +241,25 @@ const ChatListItem: React.FC<ChatListItemProps> = ({ chat, onClick }) => {
                 {tag}
               </span>
             ))}
+            {chat.metadata.tags.length > 2 && (
+              <span className="chat-item-tag-more">+{chat.metadata.tags.length - 2}</span>
+            )}
           </div>
         )}
       </div>
+
+      {showContextMenu && (
+        <div ref={contextMenuRef} className="chat-item-context-menu">
+          <button
+            className="context-menu-item"
+            onClick={handleMarkAsUnread}
+            disabled={isMarkingUnread}
+          >
+            <IconCircleDot size={16} style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: '6px' }} />
+            {isMarkingUnread ? 'Позначається...' : 'Позначити як непрочитане'}
+          </button>
+        </div>
+      )}
     </div>
   );
 };

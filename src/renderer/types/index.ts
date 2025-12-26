@@ -82,6 +82,8 @@ export interface Chat {
   messages?: Message[]; // Last 50 messages (from getChat)
   last_message?: Message; // Last message preview (from getChats)
   metrics?: any;
+  active_sla_violation?: any; // SLA violation data
+  sla_attention?: any; // SLA attention flag
 }
 
 export interface LoginRequest {

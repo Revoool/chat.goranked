@@ -240,6 +240,15 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, onUpdate }) => {
             </div>
           ) : (
             <>
+              {canEdit && (
+                <button
+                  className="message-edit-button"
+                  onClick={handleStartEdit}
+                  title="Редагувати повідомлення"
+                >
+                  <IconPencil size={14} />
+                </button>
+              )}
               <div className="message-text">{messageText}</div>
               {message.files && message.files.length > 0 && (
                 <div className="message-attachments">

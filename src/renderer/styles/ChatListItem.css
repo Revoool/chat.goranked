@@ -5,7 +5,13 @@
   transition: all 0.2s ease;
   animation: slideInLeft 0.3s ease-out;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
+  min-height: 80px;
+}
+
+.chat-list-item.has-sla-violation {
+  border-left: 3px solid var(--warning);
+  background: rgba(255, 152, 0, 0.05);
 }
 
 .chat-list-item::before {
@@ -166,5 +172,109 @@
   font-size: 14px;
   color: var(--warning);
   cursor: help;
+}
+
+.chat-list-item.has-sla-violation {
+  border-left: 3px solid var(--error);
+}
+
+.chat-item-name-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.chat-item-priority {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.chat-item-sla-warning {
+  color: var(--error);
+  display: flex;
+  align-items: center;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.chat-item-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.chat-item-manager {
+  color: var(--text-secondary);
+  font-size: 11px;
+}
+
+.chat-item-preview-sender {
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.chat-item-footer-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.chat-item-priority-badge {
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.chat-item-tag-more {
+  font-size: 10px;
+  padding: 2px 6px;
+  background: var(--graphite-medium);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  color: var(--text-muted);
+}
+
+.chat-item-context-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: var(--graphite-medium);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+  margin-top: 4px;
+  padding: 4px;
+  animation: slideDown 0.2s ease-out;
+}
+
+.chat-item-context-menu .context-menu-item {
+  width: 100%;
+  padding: 10px 12px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+}
+
+.chat-item-context-menu .context-menu-item:hover:not(:disabled) {
+  background: var(--graphite-light);
+}
+
+.chat-item-context-menu .context-menu-item:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
