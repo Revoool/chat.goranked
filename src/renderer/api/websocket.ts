@@ -230,28 +230,18 @@ class WebSocketClient {
   }
 
   private handleNewMessage(data: any) {
-    console.log('📨 handleNewMessage called with data:', data);
-    
-    // Data format: { message: { id, chat_id, from_manager, user_id, body, type, ... } }
-    // Or sometimes: { id, chat_id, from_manager, ... } directly
-    const message = data.message || data;
-    const chatId = message?.chat_id || message?.chatId || data?.chat_id || data?.chatId;
-    
-    console.log('📨 Extracted message:', message);
-    console.log('📨 Extracted chatId:', chatId);
-    
-    if (!chatId && chatId !== 0) {
-      console.warn('⚠️ Received message without chat_id:', {
-        data,
-        message,
-        chatId,
-        'message.chat_id': message?.chat_id,
-        'data.chat_id': data?.chat_id,
-      });
+    // Security: Validate and sanitize incoming data
+    if (!data || typeof data !== 'object') {
       return;
     }
     
-    console.log('✅ Processing message for chatId:', chatId, 'from_manager:', message?.from_manager);
+    const message = data.message || data;
+    const chatId = message?.chat_id || message?.chatId || data?.chat_id || data?.chatId;
+    
+    // Security: Validate chatId
+    if (!chatId || !Number.isInteger(chatId) || chatId <= 0) {
+      return;
+    }
     
     if (this.queryClient) {
       this.queryClient.invalidateQueries({ queryKey: ['messages', chatId] });
@@ -259,11 +249,8 @@ class WebSocketClient {
       this.queryClient.invalidateQueries({ queryKey: ['chats'] });
     }
 
-    // Update chat store
     const { updateChat, chats, selectedChatId } = useChatStore.getState();
     const chat = chats.find((c) => c.id === chatId);
-    
-    console.log('📨 Chat found:', !!chat, 'from_manager:', message?.from_manager, 'selectedChatId:', selectedChatId);
     
     if (chat) {
       const isChatSelected = selectedChatId === chatId;
@@ -278,8 +265,8 @@ class WebSocketClient {
       });
 
       if (!message.from_manager) {
-        const clientName = chat.clientUser?.name || chat.client_name || 'Unknown';
-        const messageText = String(message.body || '').substring(0, 200); // Limit length
+        const clientName = String(chat.clientUser?.name || chat.client_name || 'Unknown').substring(0, 100);
+        const messageText = String(message.body || '').substring(0, 200);
         
         notificationService.notifyNewMessage(
           clientName,
