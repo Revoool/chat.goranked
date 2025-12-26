@@ -88,22 +88,29 @@ function createMenu() {
 function createTray() {
   let iconPath: string;
   
+  // Для macOS используем меньшую иконку для menu bar (32x32)
+  // Для других платформ можно использовать большую иконку
+  const iconFileName = process.platform === 'darwin' ? 'tray-icon.png' : 'icon.png';
+  
   if (app.isPackaged) {
     // В собранном приложении иконка в extraResources
-    iconPath = path.join(process.resourcesPath, 'icon.png');
+    iconPath = path.join(process.resourcesPath, iconFileName);
   } else {
     // В режиме разработки
-    iconPath = path.join(__dirname, '..', '..', 'build', 'icon.png');
+    iconPath = path.join(__dirname, '..', '..', 'build', iconFileName);
   }
 
-  // Если иконка не найдена, логируем предупреждение
+  // Если иконка не найдена, логируем предупреждение и пробуем альтернативные пути
   if (!fs.existsSync(iconPath)) {
     console.warn('Tray icon not found at:', iconPath, 'Trying alternative paths...');
     // Пробуем альтернативные пути
     const altPaths = [
-      path.join(process.resourcesPath, 'build', 'icon.png'),
-      path.join(app.getAppPath(), 'build', 'icon.png'),
-      path.join(__dirname, '..', 'build', 'icon.png'),
+      path.join(process.resourcesPath, 'build', iconFileName),
+      path.join(app.getAppPath(), 'build', iconFileName),
+      path.join(__dirname, '..', 'build', iconFileName),
+      path.join(__dirname, '..', '..', 'build', iconFileName),
+      // Fallback на обычную иконку если tray-icon не найден
+      path.join(process.resourcesPath, 'icon.png'),
       path.join(__dirname, '..', '..', 'build', 'icon.png'),
     ];
     const foundPath = altPaths.find(p => fs.existsSync(p));
@@ -116,6 +123,11 @@ function createTray() {
   }
 
   tray = new Tray(iconPath);
+  
+  // Для macOS устанавливаем размер иконки (menu bar требует 22x22 или меньше)
+  if (process.platform === 'darwin') {
+    tray.setImage(iconPath); // Убеждаемся что используется правильная иконка
+  }
   
   const contextMenu = Menu.buildFromTemplate([
     {

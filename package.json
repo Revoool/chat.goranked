@@ -1,6 +1,6 @@
 {
   "name": "goranked-chat-desk",
-  "version": "1.0.37",
+  "version": "1.0.38",
   "description": "GoRanked Chat Desk - Desktop application for support operators",
   "main": "dist/main.js",
   "author": "GoRanked",
@@ -83,6 +83,13 @@
       {
         "from": "build/icon.png",
         "to": "icon.png",
+        "filter": [
+          "**/*"
+        ]
+      },
+      {
+        "from": "build/tray-icon.png",
+        "to": "tray-icon.png",
         "filter": [
           "**/*"
         ]
