@@ -3,6 +3,7 @@ import { User } from '../types';
 import { useChatStore } from '../store/chatStore';
 import { useAuthStore } from '../store/authStore';
 import { IconInbox, IconUser, IconCheck, IconSettings, IconLogout } from '../icons';
+import logoImage from '../assets/logo.png';
 import '../styles/Sidebar.css';
 
 interface SidebarProps {
@@ -76,7 +77,7 @@ const Sidebar: React.FC<SidebarProps> = ({ user, onLogout }) => {
     <div className="sidebar">
       <div className="sidebar-header">
         <img 
-          src="/storage/upload/settings/fMxxtSaKzItYj9pHuHi7LBNDMmKguZuAHUOU95ld.svg" 
+          src={logoImage} 
           alt="Goranked" 
           className="sidebar-logo"
         />
