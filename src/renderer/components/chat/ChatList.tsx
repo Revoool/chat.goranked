@@ -1,9 +1,9 @@
 import React, { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { useChatStore } from '../store/chatStore';
-import { apiClient } from '../api/client';
+import { useChatStore } from '../../store/chatStore';
+import { apiClient } from '../../api/client';
 import ChatListItem from './ChatListItem';
-import '../styles/ChatList.css';
+import '../../styles/ChatList.css';
 
 const ChatList: React.FC = () => {
   const { filters, chats, setChats, setSelectedChat } = useChatStore();

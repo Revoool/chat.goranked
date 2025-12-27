@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { useAuthStore } from '../store/authStore';
-import Sidebar from '../components/Sidebar';
-import ChatList from '../components/ChatList';
-import ChatWindow from '../components/ChatWindow';
-import ClientCard from '../components/ClientCard';
-import Settings from '../components/Settings';
+import Sidebar from '../components/layout/Sidebar';
+import ChatList from '../components/chat/ChatList';
+import ChatWindow from '../components/chat/ChatWindow';
+import ClientCard from '../components/client/ClientCard';
+import Settings from '../components/settings/Settings';
 import TasksList from '../components/tasks/TasksList';
 import TaskDialog from '../components/tasks/TaskDialog';
 import { useChatStore } from '../store/chatStore';

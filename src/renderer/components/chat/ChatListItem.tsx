@@ -1,10 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Chat } from '../types';
-import { useChatStore } from '../store/chatStore';
-import { apiClient } from '../api/client';
+import { Chat } from '../../types';
+import { useChatStore } from '../../store/chatStore';
+import { apiClient } from '../../api/client';
 import { useQueryClient } from '@tanstack/react-query';
-import { IconCircleDot, IconAlertCircle, IconFlag, IconFlag2, IconFlag3, IconFlagOff } from '../icons';
-import '../styles/ChatListItem.css';
+import { IconCircleDot, IconAlertCircle, IconFlag, IconFlag2, IconFlag3, IconFlagOff } from '../../icons';
+import '../../styles/ChatListItem.css';
 
 interface ChatListItemProps {
   chat: Chat;

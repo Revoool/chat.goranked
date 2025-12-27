@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { apiClient } from '../api/client';
-import '../styles/ClientOrdersModal.css';
+import { apiClient } from '../../../api/client';
+import '../../../styles/ClientOrdersModal.css';
 
 interface ClientOrdersModalProps {
   isOpen: boolean;

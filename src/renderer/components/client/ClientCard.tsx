@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { apiClient } from '../api/client';
-import { useChatStore } from '../store/chatStore';
-import { IconPhone, IconMail, IconDeviceMobile } from '../icons';
-import '../styles/ClientCard.css';
+import { apiClient } from '../../api/client';
+import { useChatStore } from '../../store/chatStore';
+import { IconPhone, IconMail, IconDeviceMobile } from '../../icons';
+import '../../styles/ClientCard.css';
 
 interface ClientCardProps {
   chatId: number;

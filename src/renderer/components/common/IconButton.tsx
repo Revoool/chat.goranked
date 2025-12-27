@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import '../styles/IconButton.css';
+import '../../styles/IconButton.css';
 
 interface IconButtonProps {
   icon: React.ReactNode;

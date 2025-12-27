@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { useAuthStore } from "../store/authStore";
-import "../styles/Settings.css";
+import { useAuthStore } from "../../store/authStore";
+import "../../styles/Settings.css";
 
 interface SettingsState {
   language: "ru" | "uk" | "en";

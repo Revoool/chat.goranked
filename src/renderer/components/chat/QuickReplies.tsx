@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { apiClient } from '../api/client';
-import '../styles/QuickReplies.css';
+import { apiClient } from '../../api/client';
+import '../../styles/QuickReplies.css';
 
 interface QuickReply {
   id: number;

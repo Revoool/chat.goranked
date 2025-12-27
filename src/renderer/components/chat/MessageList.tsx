@@ -1,10 +1,10 @@
 import React, { useEffect, useRef } from 'react';
-import { Message } from '../types';
-import { IconPin } from '../icons';
+import { Message } from '../../types';
+import { IconPin } from '../../icons';
 import MessageItem from './MessageItem';
-import TypingIndicator from './TypingIndicator';
-import { useChatStore } from '../store/chatStore';
-import '../styles/MessageList.css';
+import TypingIndicator from '../common/TypingIndicator';
+import { useChatStore } from '../../store/chatStore';
+import '../../styles/MessageList.css';
 
 interface MessageListProps {
   messages: Message[];

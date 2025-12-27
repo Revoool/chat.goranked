@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { User } from '../types';
-import { useChatStore } from '../store/chatStore';
-import { useAuthStore } from '../store/authStore';
-import { IconInbox, IconUser, IconCheck, IconSettings, IconLogout, IconNotes } from '../icons';
-import logoImage from '../assets/logo.png';
-import '../styles/Sidebar.css';
+import { User } from '../../types';
+import { useChatStore } from '../../store/chatStore';
+import { useAuthStore } from '../../store/authStore';
+import { IconInbox, IconUser, IconCheck, IconSettings, IconLogout, IconNotes } from '../../icons';
+import logoImage from '../../assets/logo.png';
+import '../../styles/Sidebar.css';
 
 interface SidebarProps {
   user: User | null;

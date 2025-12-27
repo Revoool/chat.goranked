@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import '../styles/EmojiPicker.css';
+import '../../styles/EmojiPicker.css';
 
 interface EmojiPickerProps {
   onSelect: (emoji: string) => void;

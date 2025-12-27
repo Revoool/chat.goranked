@@ -1,9 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiClient } from '../api/client';
-import { useChatStore } from '../store/chatStore';
-import { wsClient } from '../api/websocket';
-import { useAuthStore } from '../store/authStore';
+import { apiClient } from '../../api/client';
+import { useChatStore } from '../../store/chatStore';
+import { wsClient } from '../../api/websocket';
+import { useAuthStore } from '../../store/authStore';
 import { 
   IconInfoCircle, 
   IconUserPlus, 
@@ -16,17 +16,17 @@ import {
   IconFlag3,
   IconFlagOff,
   IconNotes
-} from '../icons';
+} from '../../icons';
 import MessageList from './MessageList';
 import MessageInput from './MessageInput';
-import AssignModal from './AssignModal';
-import StatusModal from './StatusModal';
-import TagsModal from './TagsModal';
-import PriorityModal from './PriorityModal';
-import ClientOrdersModal from './ClientOrdersModal';
-import NoteModal from './NoteModal';
-import IconButton from './IconButton';
-import '../styles/ChatWindow.css';
+import AssignModal from './modals/AssignModal';
+import StatusModal from './modals/StatusModal';
+import TagsModal from './modals/TagsModal';
+import PriorityModal from './modals/PriorityModal';
+import ClientOrdersModal from './modals/ClientOrdersModal';
+import NoteModal from './modals/NoteModal';
+import IconButton from '../common/IconButton';
+import '../../styles/ChatWindow.css';
 
 interface ChatWindowProps {
   chatId: number;

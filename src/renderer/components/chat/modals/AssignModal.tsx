@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { apiClient } from '../api/client';
-import { useAuthStore } from '../store/authStore';
-import { useChatStore } from '../store/chatStore';
-import '../styles/Modal.css';
+import { apiClient } from '../../../api/client';
+import { useAuthStore } from '../../../store/authStore';
+import { useChatStore } from '../../../store/chatStore';
+import '../../../styles/Modal.css';
 
 interface Manager {
   id: number;

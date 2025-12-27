@@ -1,5 +1,5 @@
 import React from 'react';
-import '../styles/TypingIndicator.css';
+import '../../styles/TypingIndicator.css';
 
 interface TypingIndicatorProps {
   userName: string | null;
