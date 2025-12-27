@@ -654,8 +654,20 @@ const TaskDialog: React.FC<TaskDialogProps> = ({ open, task, subdata, onClose, o
                       )}
                       {localTask.order_id && localTask.order_type && (
                         <a
-                          href={`${localTask.order_type === 'boost' ? '/orders/edit/' : '/accounts/orders/edit/'}${localTask.order_id}`}
-                          target="_blank"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            const baseUrl = 'https://goranked.gg';
+                            const url = localTask.order_type === 'boost' 
+                              ? `${baseUrl}/orders/edit/${localTask.order_id}`
+                              : `${baseUrl}/accounts/orders/edit/${localTask.order_id}`;
+                            if (window.electronAPI?.openExternal) {
+                              window.electronAPI.openExternal(url);
+                            } else {
+                              window.open(url, '_blank');
+                            }
+                          }}
+                          href="#"
                           rel="noopener noreferrer"
                           className="order-link-btn"
                         >

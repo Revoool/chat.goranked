@@ -9,6 +9,8 @@
   gap: 12px;
   min-height: 44px;
   animation: slideInLeft 0.3s ease-out;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 @media (max-width: 1400px) {
@@ -190,6 +192,9 @@
   display: inline-flex;
   align-items: center;
   transition: all 0.2s;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
 }
 
 .order-chip:hover {

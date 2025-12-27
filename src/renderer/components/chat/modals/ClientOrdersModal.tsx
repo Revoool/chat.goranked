@@ -66,10 +66,14 @@ const ClientOrdersModal: React.FC<ClientOrdersModalProps> = ({ isOpen, onClose, 
     // Базовый URL для открытия заказов на сайте
     const baseUrl = 'https://goranked.gg';
     
-    if (order.type === 'service') {
-      window.open(`${baseUrl}/orders/edit/${order.id}`, '_blank');
+    const url = order.type === 'service'
+      ? `${baseUrl}/orders/edit/${order.id}`
+      : `${baseUrl}/products/orders/${order.id}`;
+    
+    if (window.electronAPI?.openExternal) {
+      window.electronAPI.openExternal(url);
     } else {
-      window.open(`${baseUrl}/products/orders/${order.id}`, '_blank');
+      window.open(url, '_blank');
     }
   };
 

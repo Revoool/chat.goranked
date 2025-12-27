@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, nativeTheme, dialog, Menu, globalShortcut, Tray } from 'electron';
+import { app, BrowserWindow, ipcMain, nativeTheme, dialog, Menu, globalShortcut, Tray, shell } from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as keytar from 'keytar';

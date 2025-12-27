@@ -269,15 +269,24 @@ const TaskRow: React.FC<TaskRowProps> = ({ task, subdata, onClick, onStatusUpdat
       {/* Order */}
       <div className="task-col-order" onClick={(e) => e.stopPropagation()}>
         {task.order_id && task.order_type ? (
-          <a
-            href={`${task.order_type === 'boost' ? '/orders/edit/' : '/accounts/orders/edit/'}${task.order_id}`}
-            target="_blank"
-            rel="noopener noreferrer"
+          <button
             className="order-chip"
-            onClick={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              const baseUrl = 'https://goranked.gg';
+              const url = task.order_type === 'boost' 
+                ? `${baseUrl}/orders/edit/${task.order_id}`
+                : `${baseUrl}/accounts/orders/edit/${task.order_id}`;
+              if (window.electronAPI?.openExternal) {
+                window.electronAPI.openExternal(url);
+              } else {
+                window.open(url, '_blank');
+              }
+            }}
           >
             {task.order_type === 'boost' ? 'Буст' : 'Маркет'} #{task.order_id}
-          </a>
+          </button>
         ) : (
           <span className="text-muted">—</span>
         )}

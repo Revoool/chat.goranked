@@ -39,5 +39,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
     };
   },
   getSoundPath: () => ipcRenderer.invoke('get-sound-path'),
+  openExternal: (url: string) => ipcRenderer.invoke('open-external', url),
 });
 
