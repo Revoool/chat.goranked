@@ -25,5 +25,9 @@ export {
   IconDeviceMobile,
   IconMoodSmile,
   IconNotes,
+  IconInbox,
+  IconUser,
+  IconSettings,
+  IconLogout,
 } from '@tabler/icons-react';
 

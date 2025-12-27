@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { User } from '../types';
 import { useChatStore } from '../store/chatStore';
 import { useAuthStore } from '../store/authStore';
+import { IconInbox, IconUser, IconCheck, IconSettings, IconLogout } from '../icons';
 import '../styles/Sidebar.css';
 
 interface SidebarProps {
@@ -10,6 +11,38 @@ interface SidebarProps {
 }
 
 type MenuItem = 'inbox' | 'assigned' | 'closed' | 'settings';
+
+interface NavButtonProps {
+  icon: React.ReactNode;
+  title: string;
+  active: boolean;
+  onClick: () => void;
+}
+
+const NavButton: React.FC<NavButtonProps> = ({ icon, title, active, onClick }) => {
+  const [showTooltip, setShowTooltip] = useState(false);
+
+  return (
+    <div 
+      className="nav-button-wrapper" 
+      onMouseEnter={() => setShowTooltip(true)}
+      onMouseLeave={() => setShowTooltip(false)}
+    >
+      <button 
+        className={`nav-item ${active ? 'active' : ''}`}
+        onClick={onClick}
+        title={title}
+      >
+        {icon}
+      </button>
+      {showTooltip && (
+        <div className="nav-item-tooltip">
+          {title}
+        </div>
+      )}
+    </div>
+  );
+};
 
 const Sidebar: React.FC<SidebarProps> = ({ user, onLogout }) => {
   const { activeMenu, setActiveMenu, setFilters } = useChatStore();
@@ -42,39 +75,38 @@ const Sidebar: React.FC<SidebarProps> = ({ user, onLogout }) => {
   return (
     <div className="sidebar">
       <div className="sidebar-header">
-        <h2 className="sidebar-logo">Goranked</h2>
-        <p className="sidebar-slogan">Go forward, get ranked!</p>
+        <img 
+          src="/storage/upload/settings/fMxxtSaKzItYj9pHuHi7LBNDMmKguZuAHUOU95ld.svg" 
+          alt="Goranked" 
+          className="sidebar-logo"
+        />
       </div>
 
       <nav className="sidebar-nav">
-        <button 
-          className={`nav-item ${activeMenu === 'inbox' ? 'active' : ''}`}
+        <NavButton
+          icon={<IconInbox size={20} />}
+          title="Вхідні"
+          active={activeMenu === 'inbox'}
           onClick={() => handleMenuClick('inbox')}
-        >
-          <span>📥</span>
-          <span>Вхідні</span>
-        </button>
-        <button 
-          className={`nav-item ${activeMenu === 'assigned' ? 'active' : ''}`}
+        />
+        <NavButton
+          icon={<IconUser size={20} />}
+          title="Призначені"
+          active={activeMenu === 'assigned'}
           onClick={() => handleMenuClick('assigned')}
-        >
-          <span>👤</span>
-          <span>Призначені</span>
-        </button>
-        <button 
-          className={`nav-item ${activeMenu === 'closed' ? 'active' : ''}`}
+        />
+        <NavButton
+          icon={<IconCheck size={20} />}
+          title="Закриті"
+          active={activeMenu === 'closed'}
           onClick={() => handleMenuClick('closed')}
-        >
-          <span>✅</span>
-          <span>Закриті</span>
-        </button>
-        <button 
-          className={`nav-item ${activeMenu === 'settings' ? 'active' : ''}`}
+        />
+        <NavButton
+          icon={<IconSettings size={20} />}
+          title="Налаштування"
+          active={activeMenu === 'settings'}
           onClick={() => handleMenuClick('settings')}
-        >
-          <span>⚙️</span>
-          <span>Налаштування</span>
-        </button>
+        />
       </nav>
 
       <div className="sidebar-footer">
@@ -82,14 +114,13 @@ const Sidebar: React.FC<SidebarProps> = ({ user, onLogout }) => {
           <div className="user-avatar">
             {user?.name.charAt(0).toUpperCase() || 'U'}
           </div>
-          <div className="user-details">
-            <div className="user-name">{user?.name || 'User'}</div>
-            <div className="user-role">{user?.role || 'agent'}</div>
-          </div>
         </div>
-        <button className="logout-button" onClick={onLogout}>
-          Вийти
-        </button>
+        <NavButton
+          icon={<IconLogout size={20} />}
+          title="Вийти"
+          active={false}
+          onClick={onLogout}
+        />
       </div>
     </div>
   );
