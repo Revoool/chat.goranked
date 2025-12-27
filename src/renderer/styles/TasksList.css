@@ -42,6 +42,37 @@
   gap: 8px;
 }
 
+.tasks-view-toggle {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--graphite-light);
+  border-radius: 6px;
+  padding: 2px;
+}
+
+.tasks-view-btn {
+  padding: 6px 10px;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  transition: all 0.2s;
+}
+
+.tasks-view-btn:hover {
+  color: var(--text-primary);
+  background: var(--graphite-medium);
+}
+
+.tasks-view-btn.active {
+  background: var(--flame-orange);
+  color: white;
+}
+
 .tasks-date {
   font-size: 14px;
   color: var(--text-secondary);

@@ -1021,6 +1021,186 @@ class ApiClient {
     // For now, return true - backend will handle actual authorization
     return true;
   }
+
+  // Reorder boards
+  async reorderBoards(boardIds: number[]): Promise<void> {
+    console.log('📋 Reordering boards', boardIds);
+    try {
+      await this.client.post('/api/boards/reorder', { ids: boardIds });
+    } catch (error: any) {
+      console.error('❌ Error reordering boards:', error);
+      throw error;
+    }
+  }
+
+  // Create board
+  async createBoard(name: string): Promise<Board> {
+    console.log('📋 Creating board', name);
+    try {
+      const response = await this.client.post('/api/boards', { name });
+      return response.data;
+    } catch (error: any) {
+      console.error('❌ Error creating board:', error);
+      throw error;
+    }
+  }
+
+  // Update board
+  async updateBoard(boardId: number, data: { name?: string }): Promise<Board> {
+    console.log('📋 Updating board', boardId, data);
+    try {
+      const response = await this.client.post(`/api/boards/${boardId}`, data);
+      return response.data;
+    } catch (error: any) {
+      console.error('❌ Error updating board:', error);
+      throw error;
+    }
+  }
+
+  // Delete board
+  async deleteBoard(boardId: number): Promise<void> {
+    console.log('📋 Deleting board', boardId);
+    try {
+      await this.client.delete(`/api/boards/${boardId}`);
+    } catch (error: any) {
+      console.error('❌ Error deleting board:', error);
+      throw error;
+    }
+  }
+
+  // ==================== STATUSES & CATEGORIES MANAGEMENT ====================
+
+  // Create status
+  async createStatus(data: { name: string; color?: string }): Promise<any> {
+    console.log('📋 Creating status', data);
+    try {
+      const response = await this.client.post('/api/boards/statuses', data);
+      return response.data;
+    } catch (error: any) {
+      console.error('❌ Error creating status:', error);
+      throw error;
+    }
+  }
+
+  // Update status
+  async updateStatus(statusId: number, data: { name?: string; color?: string }): Promise<any> {
+    console.log('📋 Updating status', statusId, data);
+    try {
+      const response = await this.client.post(`/api/boards/statuses/${statusId}`, data);
+      return response.data;
+    } catch (error: any) {
+      console.error('❌ Error updating status:', error);
+      throw error;
+    }
+  }
+
+  // Delete status
+  async deleteStatus(statusId: number): Promise<void> {
+    console.log('📋 Deleting status', statusId);
+    try {
+      await this.client.delete(`/api/boards/statuses/${statusId}`);
+    } catch (error: any) {
+      console.error('❌ Error deleting status:', error);
+      throw error;
+    }
+  }
+
+  // Create category
+  async createCategory(data: {
+    name: string;
+    color?: string;
+    visible_role_ids?: number[];
+    create_role_ids?: number[];
+  }): Promise<any> {
+    console.log('📋 Creating category', data);
+    try {
+      const response = await this.client.post('/api/boards/categories', data);
+      return response.data;
+    } catch (error: any) {
+      console.error('❌ Error creating category:', error);
+      throw error;
+    }
+  }
+
+  // Update category
+  async updateCategory(
+    categoryId: number,
+    data: {
+      name?: string;
+      color?: string;
+      visible_role_ids?: number[];
+      create_role_ids?: number[];
+    }
+  ): Promise<any> {
+    console.log('📋 Updating category', categoryId, data);
+    try {
+      const response = await this.client.post(`/api/boards/categories/${categoryId}`, data);
+      return response.data;
+    } catch (error: any) {
+      console.error('❌ Error updating category:', error);
+      throw error;
+    }
+  }
+
+  // Delete category
+  async deleteCategory(categoryId: number): Promise<void> {
+    console.log('📋 Deleting category', categoryId);
+    try {
+      await this.client.delete(`/api/boards/categories/${categoryId}`);
+    } catch (error: any) {
+      console.error('❌ Error deleting category:', error);
+      throw error;
+    }
+  }
+
+  // ==================== AUTOMATION ====================
+
+  // Get automation rules
+  async getAutomationRules(): Promise<any[]> {
+    console.log('🤖 Requesting automation rules');
+    try {
+      const response = await this.client.get('/api/boards/automation-rules');
+      return Array.isArray(response.data) ? response.data : [];
+    } catch (error: any) {
+      console.error('❌ Error fetching automation rules:', error);
+      throw error;
+    }
+  }
+
+  // Create automation rule
+  async createAutomationRule(rule: any): Promise<any> {
+    console.log('🤖 Creating automation rule', rule);
+    try {
+      const response = await this.client.post('/api/boards/automation-rules', rule);
+      return response.data;
+    } catch (error: any) {
+      console.error('❌ Error creating automation rule:', error);
+      throw error;
+    }
+  }
+
+  // Update automation rule
+  async updateAutomationRule(ruleId: number, rule: any): Promise<any> {
+    console.log('🤖 Updating automation rule', ruleId, rule);
+    try {
+      const response = await this.client.post(`/api/boards/automation-rules/${ruleId}`, rule);
+      return response.data;
+    } catch (error: any) {
+      console.error('❌ Error updating automation rule:', error);
+      throw error;
+    }
+  }
+
+  // Delete automation rule
+  async deleteAutomationRule(ruleId: number): Promise<void> {
+    console.log('🤖 Deleting automation rule', ruleId);
+    try {
+      await this.client.delete(`/api/boards/automation-rules/${ruleId}`);
+    } catch (error: any) {
+      console.error('❌ Error deleting automation rule:', error);
+      throw error;
+    }
+  }
 }
 
 export const apiClient = new ApiClient();

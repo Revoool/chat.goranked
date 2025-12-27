@@ -172,6 +172,8 @@ export interface Task {
   completed_by_user?: User; // Пользователь, который выполнил задачу
   category_id?: number;
   is_priority?: boolean;
+  sort?: number; // Порядок сортировки для канбана
+  comments_count?: number; // Количество комментариев
   created_at?: string;
   updated_at?: string;
   status?: TaskStatus;

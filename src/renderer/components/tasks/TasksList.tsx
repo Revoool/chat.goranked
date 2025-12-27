@@ -4,7 +4,8 @@ import { apiClient } from '../../api/client';
 import { Task, TaskGroup, TasksSubdata, TaskFilters as TaskFiltersType } from '../../types';
 import TaskRow from './TaskRow';
 import TaskFilters from './TaskFilters';
-import { IconChevronDown, IconChevronRight, IconPlus } from '../../icons';
+import KanbanBoard from './KanbanBoard';
+import { IconChevronDown, IconChevronRight, IconPlus, IconLayoutKanban, IconList } from '../../icons';
 import '../../styles/TasksList.css';
 
 interface TasksListProps {
@@ -18,6 +19,7 @@ const TasksList: React.FC<TasksListProps> = ({ onTaskClick }) => {
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const [groupBy, setGroupBy] = useState<GroupByType>('status');
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
+  const [viewMode, setViewMode] = useState<'list' | 'kanban'>('list');
 
   // Load subdata
   const { data: subdata, isLoading: loadingSubdata } = useQuery<TasksSubdata>({
@@ -145,6 +147,38 @@ const TasksList: React.FC<TasksListProps> = ({ onTaskClick }) => {
     return <div className="tasks-error">Помилка завантаження даних</div>;
   }
 
+  // Show Kanban view
+  if (viewMode === 'kanban') {
+    return (
+      <div className="tasks-list-container">
+        <div className="tasks-header">
+          <div className="tasks-header-left">
+            <h1 className="tasks-title">Канбан дошки</h1>
+          </div>
+          <div className="tasks-header-right">
+            <div className="tasks-view-toggle">
+              <button
+                className={`tasks-view-btn ${viewMode === 'list' ? 'active' : ''}`}
+                onClick={() => setViewMode('list')}
+                title="Список"
+              >
+                <IconList size={18} />
+              </button>
+              <button
+                className={`tasks-view-btn ${viewMode === 'kanban' ? 'active' : ''}`}
+                onClick={() => setViewMode('kanban')}
+                title="Канбан"
+              >
+                <IconLayoutKanban size={18} />
+              </button>
+            </div>
+          </div>
+        </div>
+        <KanbanBoard onTaskClick={onTaskClick} />
+      </div>
+    );
+  }
+
   return (
     <div className="tasks-list-container">
       {/* Header */}
@@ -154,6 +188,22 @@ const TasksList: React.FC<TasksListProps> = ({ onTaskClick }) => {
           <span className="tasks-status-badge">Активний</span>
         </div>
         <div className="tasks-header-right">
+          <div className="tasks-view-toggle">
+            <button
+              className={`tasks-view-btn ${viewMode === 'list' ? 'active' : ''}`}
+              onClick={() => setViewMode('list')}
+              title="Список"
+            >
+              <IconList size={18} />
+            </button>
+            <button
+              className={`tasks-view-btn ${viewMode === 'kanban' ? 'active' : ''}`}
+              onClick={() => setViewMode('kanban')}
+              title="Канбан"
+            >
+              <IconLayoutKanban size={18} />
+            </button>
+          </div>
           <span className="tasks-date">{currentDate}</span>
         </div>
       </div>

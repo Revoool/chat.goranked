@@ -37,5 +37,10 @@ export {
   IconRotateClockwise,
   IconCheck,
   IconPlus,
+  IconGripVertical,
+  IconDots,
+  IconMessage,
+  IconLayoutKanban,
+  IconList,
 } from '@tabler/icons-react';
 
