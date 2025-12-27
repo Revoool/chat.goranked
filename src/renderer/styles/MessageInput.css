@@ -207,3 +207,17 @@
   cursor: not-allowed;
 }
 
+.message-input-send {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform, background-color;
+}
+
+.message-input-send:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(255, 107, 53, 0.3);
+}
+
+.message-input-send:active:not(:disabled) {
+  transform: translateY(0);
+}
+
