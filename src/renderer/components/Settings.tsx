@@ -39,16 +39,44 @@ const Settings: React.FC = () => {
   const [isDownloading, setIsDownloading] = useState(false);
   const [updateHistory, setUpdateHistory] = useState<UpdateHistoryItem[]>([]);
   const [showUpdateHistory, setShowUpdateHistory] = useState(false);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+
+  // Fetch release history from GitHub
+  const fetchUpdateHistory = async () => {
+    setIsLoadingHistory(true);
+    try {
+      const response = await fetch('https://api.github.com/repos/Revoool/chat.goranked/releases?per_page=50');
+      if (!response.ok) {
+        throw new Error('Failed to fetch releases');
+      }
+      const releases = await response.json();
+      const history: UpdateHistoryItem[] = releases.map((release: any) => ({
+        version: release.tag_name.replace('v', ''),
+        releaseDate: release.published_at,
+        changelog: release.body || '',
+        installedAt: release.published_at, // Use published date as installed date
+      }));
+      setUpdateHistory(history);
+    } catch (error) {
+      console.error('Failed to fetch update history:', error);
+      // Fallback to localStorage if GitHub API fails
+      const savedHistory = localStorage.getItem('updateHistory');
+      if (savedHistory) {
+        try {
+          setUpdateHistory(JSON.parse(savedHistory));
+        } catch (e) {
+          console.error('Failed to parse update history:', e);
+        }
+      }
+    } finally {
+      setIsLoadingHistory(false);
+    }
+  };
 
   useEffect(() => {
-    // Load update history from localStorage
-    const savedHistory = localStorage.getItem('updateHistory');
-    if (savedHistory) {
-      try {
-        setUpdateHistory(JSON.parse(savedHistory));
-      } catch (e) {
-        console.error('Failed to parse update history:', e);
-      }
+    // Fetch update history from GitHub when component mounts or when showing history
+    if (showUpdateHistory && updateHistory.length === 0) {
+      fetchUpdateHistory();
     }
 
     // Get app version
@@ -116,17 +144,10 @@ const Settings: React.FC = () => {
         setDownloadProgress(100);
         setUpdateStatus(`Оновлення ${info.version} завантажено! Додаток буде перезапущено для встановлення.`);
         
-        // Add to update history
+        // Refresh update history from GitHub after update is downloaded
         if (updateInfo) {
-          const historyItem: UpdateHistoryItem = {
-            version: updateInfo.version,
-            releaseDate: updateInfo.releaseDate,
-            changelog: updateInfo.changelog,
-            installedAt: new Date().toISOString(),
-          };
-          const newHistory = [historyItem, ...updateHistory].slice(0, 50); // Keep last 50 updates
-          setUpdateHistory(newHistory);
-          localStorage.setItem('updateHistory', JSON.stringify(newHistory));
+          // Fetch fresh history from GitHub
+          fetchUpdateHistory();
         }
         
         // Close modal after showing success message
@@ -538,7 +559,13 @@ const Settings: React.FC = () => {
                 <div style={{ marginTop: '12px' }}>
                   <button
                     className="settings-update-btn"
-                    onClick={() => setShowUpdateHistory(!showUpdateHistory)}
+                    onClick={() => {
+                      setShowUpdateHistory(!showUpdateHistory);
+                      if (!showUpdateHistory && updateHistory.length === 0) {
+                        fetchUpdateHistory();
+                      }
+                    }}
+                    disabled={isLoadingHistory}
                     style={{ 
                       fontSize: '12px', 
                       padding: '6px 12px',
@@ -547,10 +574,27 @@ const Settings: React.FC = () => {
                       color: 'var(--text-secondary)'
                     }}
                   >
-                    {showUpdateHistory ? 'Сховати' : 'Показати'} історію оновлень
+                    {isLoadingHistory 
+                      ? 'Завантаження...' 
+                      : showUpdateHistory 
+                        ? 'Сховати' 
+                        : 'Показати'} історію оновлень
                   </button>
                 </div>
-                {showUpdateHistory && updateHistory.length > 0 && (
+                {isLoadingHistory && (
+                  <div style={{ 
+                    marginTop: '12px', 
+                    padding: '12px', 
+                    backgroundColor: 'var(--graphite-light)', 
+                    borderRadius: '8px',
+                    fontSize: '12px',
+                    color: 'var(--text-muted)',
+                    textAlign: 'center'
+                  }}>
+                    Завантаження історії оновлень...
+                  </div>
+                )}
+                {showUpdateHistory && !isLoadingHistory && updateHistory.length > 0 && (
                   <div style={{ 
                     marginTop: '12px', 
                     padding: '12px', 
