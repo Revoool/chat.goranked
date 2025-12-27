@@ -186,6 +186,7 @@
 .task-group {
   border-bottom: 1px solid var(--border-color);
   min-width: 900px;
+  animation: fadeIn 0.3s ease-out;
 }
 
 .task-group-header {
@@ -257,6 +258,7 @@
 
 .task-group-tasks {
   background: var(--graphite-dark);
+  animation: slideUp 0.2s ease-out;
 }
 
 .tasks-loading {
