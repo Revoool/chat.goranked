@@ -58,15 +58,22 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSend, disabled, chatId })
           console.warn('Failed to stop typing indicator:', err);
         });
       }
-      onSend(text.trim(), attachments);
+      const messageText = text.trim();
+      const messageAttachments = [...attachments];
+      onSend(messageText, messageAttachments);
       setText('');
       setAttachments([]);
       if (textareaRef.current) {
         textareaRef.current.style.height = 'auto';
         // Return focus to textarea after sending message
-        setTimeout(() => {
-          textareaRef.current?.focus();
-        }, 0);
+        // Use requestAnimationFrame to ensure focus happens after React updates
+        requestAnimationFrame(() => {
+          setTimeout(() => {
+            if (textareaRef.current) {
+              textareaRef.current.focus();
+            }
+          }, 10);
+        });
       }
     }
   };
@@ -287,6 +294,10 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSend, disabled, chatId })
           type="submit"
           className="message-input-send"
           disabled={disabled || (!text.trim() && attachments.length === 0)}
+          onMouseDown={(e) => {
+            // Prevent button from taking focus
+            e.preventDefault();
+          }}
         >
           Відправити
         </button>
