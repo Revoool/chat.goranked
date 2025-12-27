@@ -11,6 +11,7 @@ export interface ElectronAPI {
   onUpdateDownloadProgress: (callback: (progress: any) => void) => (() => void) | undefined;
   onUpdateDownloaded: (callback: (info: any) => void) => (() => void) | undefined;
   getSoundPath: () => Promise<{ success: boolean; path?: string; error?: string }>;
+  openExternal: (url: string) => Promise<{ success: boolean; error?: string }>;
 }
 
 declare global {
