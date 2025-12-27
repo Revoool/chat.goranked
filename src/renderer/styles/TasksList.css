@@ -2,8 +2,10 @@
   display: flex;
   flex-direction: column;
   height: 100%;
+  width: 100%;
   background: var(--graphite-dark);
   color: var(--text-primary);
+  overflow: hidden;
 }
 
 .tasks-header {
@@ -162,6 +164,7 @@
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   width: 100%;
+  min-width: 0;
 }
 
 .task-list-header {
@@ -171,6 +174,9 @@
   top: 0;
   z-index: 2;
   padding: 8px 24px;
+  width: 100%;
+  min-width: max-content;
+  box-sizing: border-box;
 }
 
 .task-list-header-row {
@@ -185,6 +191,7 @@
   gap: 12px;
   padding: 12px 16px;
   width: 100%;
+  min-width: max-content;
   box-sizing: border-box;
 }
 
@@ -213,6 +220,13 @@
 .task-group {
   border-bottom: 1px solid var(--border-color);
   animation: fadeIn 0.3s ease-out;
+  width: 100%;
+  min-width: max-content;
+}
+
+.tasks-groups {
+  width: 100%;
+  min-width: max-content;
 }
 
 .task-group-header {
@@ -225,6 +239,9 @@
   position: sticky;
   top: 40px;
   z-index: 1;
+  width: 100%;
+  min-width: max-content;
+  box-sizing: border-box;
 }
 
 .task-group-header-content {
@@ -285,6 +302,8 @@
 .task-group-tasks {
   background: var(--graphite-dark);
   animation: slideUp 0.2s ease-out;
+  width: 100%;
+  min-width: max-content;
 }
 
 .tasks-loading {
@@ -355,6 +374,7 @@
   width: 100%;
   overflow-x: auto;
   overflow-y: auto;
+  min-width: 0;
 }
 
 @media (max-width: 768px) {

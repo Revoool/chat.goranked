@@ -10,6 +10,7 @@
   min-height: 44px;
   animation: slideInLeft 0.3s ease-out;
   width: 100%;
+  min-width: max-content;
   box-sizing: border-box;
 }
 
