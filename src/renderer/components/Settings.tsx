@@ -21,6 +21,13 @@ interface UpdateInfo {
   changelog?: string;
 }
 
+interface UpdateHistoryItem {
+  version: string;
+  releaseDate?: string;
+  changelog?: string;
+  installedAt: string;
+}
+
 const Settings: React.FC = () => {
   const { user } = useAuthStore();
   const [appVersion, setAppVersion] = useState<string>("1.0.0");
@@ -30,8 +37,20 @@ const Settings: React.FC = () => {
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [updateHistory, setUpdateHistory] = useState<UpdateHistoryItem[]>([]);
+  const [showUpdateHistory, setShowUpdateHistory] = useState(false);
 
   useEffect(() => {
+    // Load update history from localStorage
+    const savedHistory = localStorage.getItem('updateHistory');
+    if (savedHistory) {
+      try {
+        setUpdateHistory(JSON.parse(savedHistory));
+      } catch (e) {
+        console.error('Failed to parse update history:', e);
+      }
+    }
+
     // Get app version
     if (window.electronAPI) {
       window.electronAPI.getAppVersion().then((result) => {
@@ -43,10 +62,12 @@ const Settings: React.FC = () => {
         console.log('📥 Update download progress (IPC):', progress);
         setDownloadProgress(progress.percent || 0);
         setIsDownloading(progress.percent < 100);
+        // Keep modal open during download, show progress inside modal
         if (progress.percent >= 100) {
-          setIsDownloading(false);
           setUpdateStatus('Оновлення завантажено! Додаток буде перезапущено для встановлення.');
-          setTimeout(() => setDownloadProgress(null), 5000);
+          // Don't close modal here, let handleUpdateDownloaded handle it
+        } else {
+          setUpdateStatus(`Завантаження: ${Math.round(progress.percent || 0)}%`);
         }
       });
 
@@ -67,9 +88,12 @@ const Settings: React.FC = () => {
         console.log('📥 Update progress (event):', progress);
         setDownloadProgress(progress.percent || 0);
         setIsDownloading(progress.percent < 100);
+        // Keep modal open during download, show progress inside modal
         if (progress.percent >= 100) {
-          setIsDownloading(false);
           setUpdateStatus('Оновлення завантажено! Додаток буде перезапущено для встановлення.');
+          // Don't close modal here, let handleUpdateDownloaded handle it
+        } else {
+          setUpdateStatus(`Завантаження: ${Math.round(progress.percent || 0)}%`);
         }
       };
 
@@ -91,7 +115,25 @@ const Settings: React.FC = () => {
         setIsDownloading(false);
         setDownloadProgress(100);
         setUpdateStatus(`Оновлення ${info.version} завантажено! Додаток буде перезапущено для встановлення.`);
-        setTimeout(() => setDownloadProgress(null), 5000);
+        
+        // Add to update history
+        if (updateInfo) {
+          const historyItem: UpdateHistoryItem = {
+            version: updateInfo.version,
+            releaseDate: updateInfo.releaseDate,
+            changelog: updateInfo.changelog,
+            installedAt: new Date().toISOString(),
+          };
+          const newHistory = [historyItem, ...updateHistory].slice(0, 50); // Keep last 50 updates
+          setUpdateHistory(newHistory);
+          localStorage.setItem('updateHistory', JSON.stringify(newHistory));
+        }
+        
+        // Close modal after showing success message
+        setTimeout(() => {
+          setShowUpdateModal(false);
+          setDownloadProgress(null);
+        }, 3000);
       };
 
       window.addEventListener('update-available', handleUpdateAvailable as EventListener);
@@ -163,20 +205,23 @@ const Settings: React.FC = () => {
     if (!window.electronAPI || !updateInfo) return;
 
     setIsDownloading(true);
-    setShowUpdateModal(false);
+    // Keep modal open during download to show progress
     setUpdateStatus(`Завантаження версії ${updateInfo.version}...`);
 
     try {
       const result = await window.electronAPI.downloadUpdate();
       if (result.success) {
         setUpdateStatus(`Завантаження розпочато. Прогрес відображається нижче.`);
+        // Modal will close automatically when download completes (in handleUpdateDownloaded)
       } else {
         setUpdateStatus(result.error || "Помилка при завантаженні");
         setIsDownloading(false);
+        // Don't close modal on error, let user see the error and close manually
       }
     } catch (error: any) {
       setUpdateStatus("Помилка: " + (error.message || "Невідома помилка"));
       setIsDownloading(false);
+      // Don't close modal on error, let user see the error and close manually
     }
   };
 
@@ -490,6 +535,66 @@ const Settings: React.FC = () => {
                     {updateStatus}
                   </p>
                 )}
+                <div style={{ marginTop: '12px' }}>
+                  <button
+                    className="settings-update-btn"
+                    onClick={() => setShowUpdateHistory(!showUpdateHistory)}
+                    style={{ 
+                      fontSize: '12px', 
+                      padding: '6px 12px',
+                      backgroundColor: 'transparent',
+                      border: '1px solid var(--border-color)',
+                      color: 'var(--text-secondary)'
+                    }}
+                  >
+                    {showUpdateHistory ? 'Сховати' : 'Показати'} історію оновлень
+                  </button>
+                </div>
+                {showUpdateHistory && updateHistory.length > 0 && (
+                  <div style={{ 
+                    marginTop: '12px', 
+                    padding: '12px', 
+                    backgroundColor: 'var(--graphite-light)', 
+                    borderRadius: '8px',
+                    maxHeight: '300px',
+                    overflowY: 'auto'
+                  }}>
+                    <h4 style={{ marginBottom: '12px', fontSize: '14px' }}>Історія оновлень</h4>
+                    {updateHistory.map((item, idx) => (
+                      <div key={idx} style={{ 
+                        marginBottom: '12px', 
+                        paddingBottom: '12px',
+                        borderBottom: idx < updateHistory.length - 1 ? '1px solid var(--border-color)' : 'none'
+                      }}>
+                        <div style={{ fontWeight: 600, marginBottom: '4px' }}>
+                          Версія {item.version}
+                        </div>
+                        {item.installedAt && (
+                          <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '4px' }}>
+                            Встановлено: {new Date(item.installedAt).toLocaleString('uk-UA')}
+                          </div>
+                        )}
+                        {item.changelog && (
+                          <div style={{ fontSize: '12px', color: 'var(--text-secondary)', whiteSpace: 'pre-wrap' }}>
+                            {parseChangelog(item.changelog)}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {showUpdateHistory && updateHistory.length === 0 && (
+                  <div style={{ 
+                    marginTop: '12px', 
+                    padding: '12px', 
+                    backgroundColor: 'var(--graphite-light)', 
+                    borderRadius: '8px',
+                    fontSize: '12px',
+                    color: 'var(--text-muted)'
+                  }}>
+                    Історія оновлень порожня
+                  </div>
+                )}
                 <p className="settings-hint">
                   Додаток автоматично перевіряє оновлення кожні 30 хвилин.
                   Ви також можете перевірити вручну.
@@ -526,20 +631,68 @@ const Settings: React.FC = () => {
                         ))}
                       </div>
                     </div>
+                    {isDownloading && downloadProgress !== null && downloadProgress < 100 && (
+                      <div style={{ marginTop: '16px' }}>
+                        <div style={{ 
+                          width: '100%', 
+                          height: '8px', 
+                          backgroundColor: 'var(--graphite-medium)', 
+                          borderRadius: '4px',
+                          overflow: 'hidden',
+                          marginBottom: '8px'
+                        }}>
+                          <div style={{ 
+                            width: `${downloadProgress}%`, 
+                            height: '100%', 
+                            backgroundColor: 'var(--flame-orange)',
+                            transition: 'width 0.3s ease'
+                          }} />
+                        </div>
+                        <p style={{ fontSize: '12px', color: 'var(--text-secondary)', textAlign: 'center' }}>
+                          Завантаження: {Math.round(downloadProgress)}%
+                        </p>
+                      </div>
+                    )}
+                    {updateStatus && isDownloading && (
+                      <p style={{ 
+                        marginTop: '12px', 
+                        fontSize: '12px', 
+                        color: updateStatus.includes("Помилка") ? 'var(--error)' : 'var(--text-secondary)',
+                        textAlign: 'center'
+                      }}>
+                        {updateStatus}
+                      </p>
+                    )}
                   </div>
                   <div className="update-modal-footer">
                     <button
                       className="update-modal-btn update-modal-btn-cancel"
-                      onClick={() => setShowUpdateModal(false)}
+                      onClick={() => {
+                        setShowUpdateModal(false);
+                        setIsDownloading(false);
+                        setDownloadProgress(null);
+                        setUpdateStatus(null);
+                      }}
+                      disabled={isDownloading && downloadProgress !== null && downloadProgress < 100}
                     >
-                      Скасувати
+                      {isDownloading ? 'Скасувати' : 'Закрити'}
                     </button>
-                    <button
-                      className="update-modal-btn update-modal-btn-confirm"
-                      onClick={handleDownloadUpdate}
-                    >
-                      Завантажити оновлення
-                    </button>
+                    {!isDownloading && (
+                      <button
+                        className="update-modal-btn update-modal-btn-confirm"
+                        onClick={handleDownloadUpdate}
+                      >
+                        Завантажити оновлення
+                      </button>
+                    )}
+                    {isDownloading && downloadProgress === 100 && (
+                      <button
+                        className="update-modal-btn update-modal-btn-confirm"
+                        disabled
+                      >
+                        Завантажено
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
