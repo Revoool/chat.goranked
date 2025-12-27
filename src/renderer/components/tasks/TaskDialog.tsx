@@ -117,7 +117,7 @@ const TaskDialog: React.FC<TaskDialogProps> = ({ open, task, subdata, onClose, o
 
   const selectOrder = (orderId: number | null) => {
     if (!orderId) {
-      setLocalTask({ ...localTask, order_id: null, order_type: null });
+      setLocalTask({ ...localTask, order_id: undefined, order_type: undefined });
       setSelectedOrder(null);
       setOrderSearch('');
       return;
@@ -163,12 +163,13 @@ const TaskDialog: React.FC<TaskDialogProps> = ({ open, task, subdata, onClose, o
 
   const sendComment = async () => {
     if ((!newComment.trim() && !selectedFile) || !localTask.id || !localTask.board_id || localTask.id === 0 || sendingComment) return;
+    if (typeof localTask.board_id !== 'number' || typeof localTask.id !== 'number') return;
 
     setSendingComment(true);
     try {
       await apiClient.createTaskComment(
-        localTask.board_id!,
-        localTask.id!,
+        localTask.board_id,
+        localTask.id,
         newComment.trim() || '',
         selectedFile || undefined
       );
@@ -184,11 +185,11 @@ const TaskDialog: React.FC<TaskDialogProps> = ({ open, task, subdata, onClose, o
   };
 
   const deleteComment = async (commentId: number) => {
-    if (!localTask.id || !localTask.board_id) return;
+    if (!localTask.id || !localTask.board_id || typeof localTask.board_id !== 'number' || typeof localTask.id !== 'number') return;
     if (!confirm('Ви впевнені, що хочете видалити цей коментар?')) return;
 
     try {
-      await apiClient.deleteTaskComment(localTask.board_id!, localTask.id!, commentId);
+      await apiClient.deleteTaskComment(localTask.board_id, localTask.id, commentId);
       refetchComments();
     } catch (error) {
       console.error('Error deleting comment:', error);
