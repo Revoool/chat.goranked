@@ -1,17 +1,34 @@
 .task-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: 24px 2fr 120px 120px 120px 80px 140px 120px;
   align-items: center;
-  padding: 6px 24px;
+  padding: 8px 16px;
   border-bottom: 1px solid var(--border-color);
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  min-width: 900px;
-  min-height: 40px;
+  gap: 12px;
+  min-height: 44px;
   animation: slideInLeft 0.3s ease-out;
 }
 
+@media (max-width: 1400px) {
+  .task-row {
+    grid-template-columns: 24px 2fr 100px 100px 100px 70px 120px 100px;
+    padding: 8px 12px;
+    gap: 8px;
+  }
+}
+
+@media (max-width: 1200px) {
+  .task-row {
+    grid-template-columns: 24px 2fr 90px 90px 90px 60px 110px 90px;
+    padding: 8px 8px;
+    gap: 6px;
+  }
+}
+
 .task-row:hover {
-  background-color: var(--graphite-light);
+  background-color: rgba(255, 255, 255, 0.03);
 }
 
 .task-row.task-row-closed {
@@ -19,24 +36,70 @@
 }
 
 .task-col-checkbox {
-  flex: 0 0 20px;
-  min-width: 20px;
+  flex: 0 0 24px;
+  min-width: 24px;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
+  padding-left: 4px;
 }
 
-.task-checkbox {
+.custom-checkbox {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  user-select: none;
+}
+
+.task-checkbox-input {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+  width: 0;
+  height: 0;
+}
+
+.custom-checkbox-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   width: 18px;
   height: 18px;
-  cursor: pointer;
-  accent-color: var(--success);
+  border: 2px solid var(--text-muted);
+  border-radius: 4px;
+  background: transparent;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  color: transparent;
+}
+
+.custom-checkbox:hover .custom-checkbox-mark {
+  border-color: var(--flame-orange);
+  background: rgba(255, 107, 53, 0.1);
+}
+
+.task-checkbox-input:checked + .custom-checkbox-mark {
+  background: var(--success);
+  border-color: var(--success);
+  color: white;
+}
+
+.task-checkbox-input:checked + .custom-checkbox-mark svg {
+  display: block;
+}
+
+.custom-checkbox-mark svg {
+  display: none;
+  width: 12px;
+  height: 12px;
+  stroke: currentColor;
 }
 
 .task-col-name {
-  flex: 2;
-  min-width: 200px;
-  padding-right: 12px;
+  min-width: 0;
+  overflow: hidden;
+  padding-right: 8px;
 }
 
 .task-name-content {
@@ -50,6 +113,9 @@
   line-height: 1.5;
   font-weight: 400;
   color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .category-chip {
@@ -63,11 +129,11 @@
 }
 
 .task-col-assignee {
-  flex: 1;
-  min-width: 120px;
+  min-width: 0;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
+  overflow: hidden;
 }
 
 .assignees-overlap {
@@ -106,11 +172,11 @@
 }
 
 .task-col-order {
-  flex: 0.8;
-  min-width: 100px;
+  min-width: 0;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
+  overflow: hidden;
 }
 
 .order-chip {
@@ -132,11 +198,11 @@
 }
 
 .task-col-due {
-  flex: 1;
-  min-width: 100px;
+  min-width: 0;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
+  overflow: hidden;
 }
 
 .task-date-content {
@@ -156,11 +222,10 @@
 }
 
 .task-col-priority {
-  flex: 0.5;
-  min-width: 80px;
+  min-width: 0;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
 }
 
 .priority-btn {
@@ -186,12 +251,12 @@
 }
 
 .task-col-status {
-  flex: 1;
-  min-width: 120px;
+  min-width: 0;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   position: relative;
+  overflow: visible;
 }
 
 .status-select-wrapper {
@@ -267,11 +332,11 @@
 }
 
 .task-col-start {
-  flex: 1;
-  min-width: 120px;
+  min-width: 0;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
+  overflow: hidden;
 }
 
 .text-muted {
@@ -287,9 +352,37 @@
   color: var(--success);
 }
 
-@media (max-width: 960px) {
+
+@media (max-width: 768px) {
   .task-row {
-    min-width: 1000px;
+    grid-template-columns: 24px 1fr;
+    grid-template-rows: auto auto;
+    gap: 8px;
+    padding: 12px;
+  }
+  
+  .task-col-name {
+    grid-column: 2;
+    grid-row: 1;
+  }
+  
+  .task-col-assignee,
+  .task-col-order,
+  .task-col-due,
+  .task-col-priority,
+  .task-col-status,
+  .task-col-start {
+    grid-column: 2;
+    grid-row: auto;
+    justify-content: flex-start;
+    margin-top: 4px;
+  }
+  
+  .task-col-checkbox {
+    grid-column: 1;
+    grid-row: 1 / -1;
+    align-self: start;
+    padding-top: 2px;
   }
 }
 

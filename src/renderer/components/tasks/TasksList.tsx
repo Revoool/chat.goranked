@@ -263,14 +263,14 @@ const TasksList: React.FC<TasksListProps> = ({ onTaskClick }) => {
         {/* Table Header */}
         <div className="task-list-header">
           <div className="task-list-header-row">
-            <div style={{ flex: '0 0 20px', minWidth: '20px' }}></div>
-            <div className="task-col-name" style={{ flex: 2, minWidth: '200px' }}>Назва</div>
-            <div className="task-col-assignee text-center" style={{ flex: 1, minWidth: '120px' }}>Виконавці</div>
-            <div className="task-col-order text-center" style={{ flex: '0.8', minWidth: '100px' }}>Замовлення</div>
-            <div className="task-col-due text-center" style={{ flex: 1, minWidth: '100px' }}>Дедлайн</div>
-            <div className="task-col-priority text-center" style={{ flex: '0.5', minWidth: '80px' }}>Пріоритет</div>
-            <div className="task-col-status text-center" style={{ flex: 1, minWidth: '120px' }}>Статус</div>
-            <div className="task-col-start text-center" style={{ flex: 1, minWidth: '120px' }}>Дата початку</div>
+            <div></div>
+            <div>НАЗВА</div>
+            <div>ВИКОНАВЦІ</div>
+            <div>ЗАМОВЛЕННЯ</div>
+            <div>ДЕДЛАЙН</div>
+            <div>ПРІОРИТЕТ</div>
+            <div>СТАТУС</div>
+            <div>ДАТА ПОЧАТКУ</div>
           </div>
         </div>
 
