@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { User } from '../types';
 import { useChatStore } from '../store/chatStore';
 import { useAuthStore } from '../store/authStore';
-import { IconInbox, IconUser, IconCheck, IconSettings, IconLogout } from '../icons';
+import { IconInbox, IconUser, IconCheck, IconSettings, IconLogout, IconNotes } from '../icons';
 import logoImage from '../assets/logo.png';
 import '../styles/Sidebar.css';
 
@@ -11,7 +11,7 @@ interface SidebarProps {
   onLogout: () => void;
 }
 
-type MenuItem = 'inbox' | 'assigned' | 'closed' | 'settings';
+type MenuItem = 'inbox' | 'assigned' | 'closed' | 'settings' | 'tasks';
 
 interface NavButtonProps {
   icon: React.ReactNode;
@@ -101,6 +101,12 @@ const Sidebar: React.FC<SidebarProps> = ({ user, onLogout }) => {
           title="Закриті"
           active={activeMenu === 'closed'}
           onClick={() => handleMenuClick('closed')}
+        />
+        <NavButton
+          icon={<IconNotes size={20} />}
+          title="Задачі"
+          active={activeMenu === 'tasks'}
+          onClick={() => handleMenuClick('tasks')}
         />
         <NavButton
           icon={<IconSettings size={20} />}

@@ -808,6 +808,219 @@ class ApiClient {
       throw error;
     }
   }
+
+  // ==================== TASKS API ====================
+
+  // Get boards subdata (статусы, пользователи, доски, категории)
+  async getBoardsSubdata(): Promise<any> {
+    console.log('📋 Requesting boards subdata');
+    try {
+      const response = await this.client.get('/api/boards/subdata');
+      return response.data;
+    } catch (error: any) {
+      console.error('❌ Error fetching boards subdata:', error);
+      throw error;
+    }
+  }
+
+  // Get all boards
+  async getBoards(): Promise<any[]> {
+    console.log('📋 Requesting boards');
+    try {
+      const response = await this.client.get('/api/boards');
+      return Array.isArray(response.data) ? response.data : [];
+    } catch (error: any) {
+      console.error('❌ Error fetching boards:', error);
+      throw error;
+    }
+  }
+
+  // Get tasks list with grouping
+  async getTasksList(params: {
+    category_id?: number;
+    status_id?: number;
+    assignee_id?: number;
+    board_id?: number;
+    status_filter?: 'open' | 'closed';
+    group_by?: 'status' | 'finish_at' | 'assignee' | 'board';
+  }): Promise<any> {
+    console.log('📋 Requesting tasks list', params);
+    try {
+      const queryParams = new URLSearchParams();
+      if (params.category_id) queryParams.append('category_id', params.category_id.toString());
+      if (params.status_id) queryParams.append('status_id', params.status_id.toString());
+      if (params.assignee_id) queryParams.append('assignee_id', params.assignee_id.toString());
+      if (params.board_id) queryParams.append('board_id', params.board_id.toString());
+      if (params.status_filter) queryParams.append('status_filter', params.status_filter);
+      if (params.group_by) queryParams.append('group_by', params.group_by);
+      
+      const response = await this.client.get(`/api/boards/tasks/list?${queryParams.toString()}`);
+      return response.data;
+    } catch (error: any) {
+      console.error('❌ Error fetching tasks list:', error);
+      throw error;
+    }
+  }
+
+  // Get tasks assigned to me
+  async getAssignedTasks(): Promise<any[]> {
+    console.log('📋 Requesting assigned tasks');
+    try {
+      const response = await this.client.get('/api/boards/tasks/assigned-to-me');
+      return response.data?.data || [];
+    } catch (error: any) {
+      console.error('❌ Error fetching assigned tasks:', error);
+      throw error;
+    }
+  }
+
+  // Get single task
+  async getTask(boardId: number, taskId: number): Promise<any> {
+    console.log('📋 Requesting task', { boardId, taskId });
+    try {
+      const response = await this.client.get(`/api/boards/${boardId}/tasks/${taskId}`);
+      return response.data?.task || response.data;
+    } catch (error: any) {
+      console.error('❌ Error fetching task:', error);
+      throw error;
+    }
+  }
+
+  // Create task
+  async createTask(boardId: number, taskData: any): Promise<any> {
+    console.log('📋 Creating task', { boardId, taskData });
+    try {
+      const response = await this.client.post(`/api/boards/${boardId}/tasks`, taskData);
+      return response.data?.task || response.data;
+    } catch (error: any) {
+      console.error('❌ Error creating task:', error);
+      throw error;
+    }
+  }
+
+  // Update task
+  async updateTask(boardId: number, taskId: number, taskData: any): Promise<any> {
+    console.log('📋 Updating task', { boardId, taskId, taskData });
+    try {
+      const response = await this.client.post(`/api/boards/${boardId}/tasks/${taskId}`, taskData);
+      return response.data?.task || response.data;
+    } catch (error: any) {
+      console.error('❌ Error updating task:', error);
+      throw error;
+    }
+  }
+
+  // Delete task
+  async deleteTask(boardId: number, taskId: number): Promise<void> {
+    console.log('📋 Deleting task', { boardId, taskId });
+    try {
+      await this.client.delete(`/api/boards/${boardId}/tasks/${taskId}`);
+    } catch (error: any) {
+      console.error('❌ Error deleting task:', error);
+      throw error;
+    }
+  }
+
+  // Complete recurring task
+  async completeRecurringTask(boardId: number, taskId: number): Promise<any> {
+    console.log('📋 Completing recurring task', { boardId, taskId });
+    try {
+      const response = await this.client.post(`/api/boards/${boardId}/tasks/${taskId}/complete-recurring`);
+      return response.data;
+    } catch (error: any) {
+      console.error('❌ Error completing recurring task:', error);
+      throw error;
+    }
+  }
+
+  // Get task comments
+  async getTaskComments(boardId: number, taskId: number): Promise<any[]> {
+    console.log('💬 Requesting task comments', { boardId, taskId });
+    try {
+      const response = await this.client.get(`/api/boards/${boardId}/tasks/${taskId}/comments`);
+      return Array.isArray(response.data) ? response.data : [];
+    } catch (error: any) {
+      console.error('❌ Error fetching task comments:', error);
+      throw error;
+    }
+  }
+
+  // Create task comment
+  async createTaskComment(boardId: number, taskId: number, comment: string, file?: File): Promise<any> {
+    console.log('💬 Creating task comment', { boardId, taskId });
+    try {
+      const formData = new FormData();
+      formData.append('comment', comment);
+      if (file) {
+        formData.append('file', file);
+      }
+      
+      const response = await this.client.post(
+        `/api/boards/${boardId}/tasks/${taskId}/comments`,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
+      return response.data;
+    } catch (error: any) {
+      console.error('❌ Error creating task comment:', error);
+      throw error;
+    }
+  }
+
+  // Delete task comment
+  async deleteTaskComment(boardId: number, taskId: number, commentId: number): Promise<void> {
+    console.log('💬 Deleting task comment', { boardId, taskId, commentId });
+    try {
+      await this.client.delete(`/api/boards/${boardId}/tasks/${taskId}/comments/${commentId}`);
+    } catch (error: any) {
+      console.error('❌ Error deleting task comment:', error);
+      throw error;
+    }
+  }
+
+  // Search orders for task assignment
+  async searchOrders(params: {
+    type: string;
+    search: string;
+    limit?: number;
+  }): Promise<any[]> {
+    console.log('🔍 Searching orders', params);
+    try {
+      const queryParams = new URLSearchParams();
+      queryParams.append('type', params.type);
+      queryParams.append('search', params.search);
+      if (params.limit) queryParams.append('limit', params.limit.toString());
+      
+      const response = await this.client.get(`/api/tasks/search-orders?${queryParams.toString()}`);
+      return Array.isArray(response.data) ? response.data : [];
+    } catch (error: any) {
+      console.error('❌ Error searching orders:', error);
+      throw error;
+    }
+  }
+
+  // Get roles (for category management)
+  async getRoles(): Promise<any[]> {
+    console.log('👥 Requesting roles');
+    try {
+      const response = await this.client.get('/api/roles');
+      return Array.isArray(response.data) ? response.data : (response.data?.roles || []);
+    } catch (error: any) {
+      console.error('❌ Error fetching roles:', error);
+      throw error;
+    }
+  }
+
+  // Check access (permissions)
+  async checkAccess(subject: string, action: string = 'show'): Promise<boolean> {
+    // This should be handled by backend, but we can cache permissions
+    // For now, return true - backend will handle actual authorization
+    return true;
+  }
 }
 
 export const apiClient = new ApiClient();

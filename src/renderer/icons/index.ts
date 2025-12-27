@@ -29,5 +29,13 @@ export {
   IconUser,
   IconSettings,
   IconLogout,
+  IconCircleCheckFilled,
+  IconCircleDotted,
+  IconFlagFilled,
+  IconChevronDown,
+  IconChevronRight,
+  IconRotateClockwise,
+  IconCheck,
+  IconPlus,
 } from '@tabler/icons-react';
 

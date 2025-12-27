@@ -127,3 +127,114 @@ export interface ChatFilters {
   per_page?: number;
 }
 
+// ==================== TASKS TYPES ====================
+
+export interface TaskStatus {
+  id: number;
+  name: string;
+  color?: string;
+  order?: number;
+}
+
+export interface TaskCategory {
+  id: number;
+  name: string;
+  color?: string;
+  visible_role_ids?: number[];
+  visible_user_ids?: number[];
+  create_role_ids?: number[];
+  create_user_ids?: number[];
+}
+
+export interface Board {
+  id: number;
+  name: string;
+  description?: string;
+  background?: string;
+}
+
+export interface Task {
+  id: number;
+  board_id: number;
+  name: string;
+  content?: string;
+  status_id?: number;
+  user_id?: number; // Первый исполнитель (legacy)
+  assignee_ids?: number[]; // Все исполнители
+  assignees?: User[]; // Массив пользователей-исполнителей
+  author?: User; // Автор задачи
+  order_id?: number;
+  order_type?: string;
+  finish_at?: string;
+  start_at?: string;
+  completed_by?: number;
+  completed_at?: string;
+  completed_by_user?: User; // Пользователь, который выполнил задачу
+  category_id?: number;
+  is_priority?: boolean;
+  created_at?: string;
+  updated_at?: string;
+  status?: TaskStatus;
+  category?: TaskCategory;
+  board?: Board;
+}
+
+export interface TaskComment {
+  id: number;
+  task_id: number;
+  user_id: number;
+  comment: string;
+  file_path?: string;
+  file_name?: string;
+  created_at: string;
+  updated_at?: string;
+  user?: User;
+}
+
+export interface TaskGroup {
+  key: string;
+  label: string;
+  tasks: Task[];
+}
+
+export interface TasksSubdata {
+  statuses: TaskStatus[];
+  users: User[];
+  boards: Board[];
+  categories: TaskCategory[];
+}
+
+export interface TaskFilters {
+  category_id?: number;
+  status_id?: number;
+  assignee_id?: number;
+  board_id?: number;
+  status_filter?: 'open' | 'closed';
+}
+
+export interface AutomationRule {
+  id?: number;
+  name: string;
+  description?: string;
+  is_active: boolean;
+  is_recurring: boolean;
+  task_name: string;
+  task_content?: string;
+  status_id?: number;
+  category_id?: number;
+  assignee_ids?: number[];
+  schedule_type: 'daily' | 'weekly' | 'monthly' | 'custom';
+  schedule_times?: string[];
+  schedule_days?: number[];
+  cron_expression?: string;
+  start_date?: string;
+  end_date?: string;
+  max_creations?: number;
+}
+
+export interface Role {
+  id: number;
+  name: string;
+  display_name?: string;
+}
+

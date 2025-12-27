@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { Chat, ChatFilters } from '../types';
 
-type MenuItem = 'inbox' | 'assigned' | 'closed' | 'settings';
+type MenuItem = 'inbox' | 'assigned' | 'closed' | 'settings' | 'tasks';
 
 interface TypingInfo {
   isTyping: boolean;
@@ -31,7 +31,7 @@ export const useChatStore = create<ChatState>((set) => ({
   selectedChatId: null,
   filters: {},
   chats: [],
-  activeMenu: 'inbox',
+  activeMenu: 'inbox' as MenuItem,
   isClientCardOpen: false,
   typingIndicators: {},
   setSelectedChat: (chatId) => set({ selectedChatId: chatId, isClientCardOpen: false }), // Close card when switching chats
