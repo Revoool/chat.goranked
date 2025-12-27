@@ -768,3 +768,13 @@ ipcMain.handle('get-sound-path', async () => {
   }
 });
 
+ipcMain.handle('open-external', async (_event, url: string) => {
+  try {
+    await shell.openExternal(url);
+    return { success: true };
+  } catch (error: any) {
+    console.error('Error opening external URL:', error);
+    return { success: false, error: error?.message || String(error) };
+  }
+});
+

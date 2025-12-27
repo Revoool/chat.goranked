@@ -519,6 +519,130 @@
   background: #e55a2b;
 }
 
+/* Assignee Dropdown Styles */
+.task-dialog-assignee-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.task-dialog-assignee-btn {
+  width: 100%;
+  padding: 10px 12px;
+  background: var(--graphite-light);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  transition: all 0.2s;
+  outline: none;
+  min-height: 40px;
+}
+
+.task-dialog-assignee-btn:hover {
+  border-color: var(--flame-orange);
+  background: var(--graphite-medium);
+}
+
+.task-dialog-assignee-btn svg {
+  color: var(--text-muted);
+  transition: transform 0.2s;
+  flex-shrink: 0;
+}
+
+.task-dialog-assignee-wrapper:has(.task-dialog-assignee-dropdown:not([style*="display: none"])) .task-dialog-assignee-btn svg {
+  transform: rotate(180deg);
+}
+
+.task-dialog-assignee-selected {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+}
+
+.task-dialog-assignee-chips {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  flex: 1;
+}
+
+.task-dialog-assignee-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  background: var(--graphite-medium);
+  border-radius: 16px;
+  border: 1px solid var(--border-color);
+}
+
+.assignee-chip-name {
+  font-size: 12px;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.assignee-chip-more {
+  font-size: 12px;
+  color: var(--text-muted);
+  padding: 4px 8px;
+}
+
+.assignee-placeholder {
+  color: var(--text-muted);
+}
+
+.task-dialog-assignee-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: var(--graphite-dark);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+  max-height: 300px;
+  overflow-y: auto;
+  margin-top: 4px;
+}
+
+.task-dialog-assignee-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  border-bottom: 1px solid var(--border-color);
+  position: relative;
+}
+
+.task-dialog-assignee-item:last-child {
+  border-bottom: none;
+}
+
+.task-dialog-assignee-item:hover {
+  background: var(--graphite-light);
+}
+
+.task-dialog-assignee-item.active {
+  background: rgba(255, 107, 53, 0.1);
+}
+
+.assignee-check-icon {
+  margin-left: auto;
+  color: var(--flame-orange);
+  flex-shrink: 0;
+}
+
 .task-dialog-select {
   width: 100%;
   padding: 10px 12px;

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { Task, TasksSubdata, TaskComment } from '../../types';
+import { Task, TasksSubdata, TaskComment, User } from '../../types';
 import { apiClient } from '../../api/client';
 import { IconX, IconCheck, IconPaperclip, IconPhoto, IconSend, IconTrash, IconLink, IconFlag } from '../../icons';
 import '../../styles/TaskDialog.css';
@@ -26,6 +26,8 @@ const TaskDialog: React.FC<TaskDialogProps> = ({ open, task, subdata, onClose, o
   const [sendingComment, setSendingComment] = useState(false);
   const [deleteDialog, setDeleteDialog] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [assigneeDropdownOpen, setAssigneeDropdownOpen] = useState(false);
+  const assigneeDropdownRef = useRef<HTMLDivElement>(null);
 
   // Load comments when task is opened
   const { data: comments = [], refetch: refetchComments, isLoading: loadingComments } = useQuery<TaskComment[]>({
@@ -82,8 +84,40 @@ const TaskDialog: React.FC<TaskDialogProps> = ({ open, task, subdata, onClose, o
     if (!open) {
       setNewComment('');
       removeFile();
+      setAssigneeDropdownOpen(false);
     }
   }, [open]);
+
+  // Close assignee dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (assigneeDropdownRef.current && !assigneeDropdownRef.current.contains(event.target as Node)) {
+        setAssigneeDropdownOpen(false);
+      }
+    };
+
+    if (assigneeDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [assigneeDropdownOpen]);
+
+  const getInitials = (name?: string): string => {
+    if (!name) return '?';
+    const parts = name.split(' ');
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[1][0]).toUpperCase();
+    }
+    return name.substring(0, 2).toUpperCase();
+  };
+
+  const getAssigneeColor = (userId?: number): string => {
+    const colors = ['var(--flame-orange)', 'var(--champion-gold)', 'var(--success)', '#ff9800', '#f44336', '#2196f3'];
+    return colors[(userId || 0) % colors.length] || 'var(--flame-orange)';
+  };
 
   const searchOrders = async (search: string) => {
     if (!localTask.order_type) {
@@ -463,7 +497,14 @@ const TaskDialog: React.FC<TaskDialogProps> = ({ open, task, subdata, onClose, o
                                 )}
                                 {comment.file_path && (
                                   <div className="comment-image">
-                                    <img src={comment.file_path} alt="Attachment" />
+                                    <img 
+                                      src={comment.file_path.startsWith('http') ? comment.file_path : `https://goranked.gg${comment.file_path}`} 
+                                      alt="Attachment" 
+                                      onError={(e) => {
+                                        console.error('Error loading image:', comment.file_path);
+                                        (e.target as HTMLImageElement).style.display = 'none';
+                                      }}
+                                    />
                                   </div>
                                 )}
                               </div>
@@ -581,21 +622,93 @@ const TaskDialog: React.FC<TaskDialogProps> = ({ open, task, subdata, onClose, o
               {/* Assignees */}
               <section className="task-dialog-section">
                 <label className="task-dialog-section-label">Відповідальні</label>
-                <select
-                  className="task-dialog-select task-dialog-select-multiple"
-                  multiple
-                  value={localTask.assignee_ids?.map(String) || []}
-                  onChange={(e) => {
-                    const selected = Array.from(e.target.selectedOptions, option => parseInt(option.value));
-                    setLocalTask({ ...localTask, assignee_ids: selected });
-                  }}
-                >
-                  {subdata.users?.map((user) => (
-                    <option key={user.id} value={user.id}>
-                      {user.name} {user.role ? `— ${user.role}` : ''}
-                    </option>
-                  ))}
-                </select>
+                <div className="task-dialog-assignee-wrapper" ref={assigneeDropdownRef}>
+                  <button
+                    type="button"
+                    className="task-dialog-assignee-btn"
+                    onClick={() => setAssigneeDropdownOpen(!assigneeDropdownOpen)}
+                  >
+                    <div className="task-dialog-assignee-selected">
+                      {localTask.assignee_ids && localTask.assignee_ids.length > 0 ? (
+                        <div className="task-dialog-assignee-chips">
+                          {localTask.assignee_ids.slice(0, 3).map((userId) => {
+                            const user = subdata.users?.find(u => u.id === userId);
+                            if (!user) return null;
+                            return (
+                              <div key={userId} className="task-dialog-assignee-chip">
+                                <div
+                                  className="assignee-avatar-small"
+                                  style={{
+                                    backgroundColor: user.avatar ? 'transparent' : getAssigneeColor(user.id),
+                                  }}
+                                >
+                                  {user.avatar ? (
+                                    <img src={user.avatar} alt={user.name} />
+                                  ) : (
+                                    <span className="assignee-initials-small">{getInitials(user.name)}</span>
+                                  )}
+                                </div>
+                                <span className="assignee-chip-name">{user.name}</span>
+                              </div>
+                            );
+                          })}
+                          {localTask.assignee_ids.length > 3 && (
+                            <span className="assignee-chip-more">+{localTask.assignee_ids.length - 3}</span>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="assignee-placeholder">Оберіть відповідальних</span>
+                      )}
+                    </div>
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </button>
+
+                  {assigneeDropdownOpen && (
+                    <div className="task-dialog-assignee-dropdown">
+                      {subdata.users?.map((user) => {
+                        const isSelected = localTask.assignee_ids?.includes(user.id) || false;
+                        return (
+                          <div
+                            key={user.id}
+                            className={`task-dialog-assignee-item ${isSelected ? 'active' : ''}`}
+                            onClick={() => {
+                              const currentIds = localTask.assignee_ids || [];
+                              if (isSelected) {
+                                setLocalTask({ ...localTask, assignee_ids: currentIds.filter(id => id !== user.id) });
+                              } else {
+                                setLocalTask({ ...localTask, assignee_ids: [...currentIds, user.id] });
+                              }
+                            }}
+                          >
+                            <div
+                              className="assignee-avatar-small"
+                              style={{
+                                backgroundColor: user.avatar ? 'transparent' : getAssigneeColor(user.id),
+                              }}
+                            >
+                              {user.avatar ? (
+                                <img src={user.avatar} alt={user.name} />
+                              ) : (
+                                <span className="assignee-initials-small">{getInitials(user.name)}</span>
+                              )}
+                            </div>
+                            <div className="assignee-info">
+                              <span className="assignee-name">{user.name}</span>
+                              {user.role && (
+                                <span className="assignee-role">{user.role}</span>
+                              )}
+                            </div>
+                            {isSelected && (
+                              <IconCheck size={16} className="assignee-check-icon" />
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
                 <p className="task-dialog-hint">Утримайте Ctrl для вибору кількох</p>
               </section>
 
