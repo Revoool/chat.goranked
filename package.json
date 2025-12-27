@@ -1,6 +1,6 @@
 {
   "name": "goranked-chat-desk",
-  "version": "1.0.63",
+  "version": "1.0.64",
   "description": "GoRanked Chat Desk - Desktop application for support operators",
   "main": "dist/main.js",
   "author": "GoRanked",

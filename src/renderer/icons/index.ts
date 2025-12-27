@@ -46,5 +46,9 @@ export {
   IconPhoto,
   IconSend,
   IconLink,
+  IconSearch,
+  IconFilter,
+  IconAdjustments,
+  IconCircle,
 } from '@tabler/icons-react';
 

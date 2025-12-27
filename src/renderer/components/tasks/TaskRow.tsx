@@ -8,7 +8,9 @@ import {
   IconFlag,
   IconRotateClockwise,
   IconCheck,
-  IconChevronDown
+  IconChevronDown,
+  IconCircle,
+  IconDots
 } from '../../icons';
 import '../../styles/TaskRow.css';
 import '../../styles/TaskFilters.css';
@@ -326,18 +328,17 @@ const TaskRow: React.FC<TaskRowProps> = ({ task, subdata, onClick, onStatusUpdat
       {/* Status */}
       <div className="task-col-status status-select-wrapper" onClick={(e) => e.stopPropagation()} ref={statusMenuRef}>
         <div 
-          className="status-display"
+          className={`status-display status-pill ${isClosed ? 'status-pill-closed' : 'status-pill-open'}`}
           onClick={() => setStatusMenuOpen(!statusMenuOpen)}
         >
           {isClosed ? (
-            <IconCircleCheckFilled size={18} className="text-success" />
+            <IconCheck size={12} />
           ) : (
-            <IconCircleDotted size={18} className="text-muted" />
+            <IconCircle size={12} />
           )}
           <span className={`status-text ${updatingStatus ? 'status-text-updating' : ''}`}>
             {updatingStatus ? '...' : (status?.name || 'OPEN')}
           </span>
-          <IconChevronDown size={14} className="text-muted" />
         </div>
 
         {statusMenuOpen && (
@@ -380,6 +381,13 @@ const TaskRow: React.FC<TaskRowProps> = ({ task, subdata, onClick, onStatusUpdat
         ) : (
           <span className="text-muted">—</span>
         )}
+      </div>
+
+      {/* Actions */}
+      <div className="task-col-actions" onClick={(e) => e.stopPropagation()}>
+        <button className="task-actions-btn" title="Дії">
+          <IconDots size={16} />
+        </button>
       </div>
     </div>
   );

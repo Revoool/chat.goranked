@@ -5,7 +5,7 @@ import { Task, TaskGroup, TasksSubdata, TaskFilters as TaskFiltersType } from '.
 import TaskRow from './TaskRow';
 import TaskFilters from './TaskFilters';
 import KanbanBoard from './KanbanBoard';
-import { IconChevronDown, IconChevronRight, IconPlus, IconLayoutKanban, IconList } from '../../icons';
+import { IconChevronDown, IconChevronRight, IconPlus, IconLayoutKanban, IconList, IconSearch, IconFilter, IconAdjustments, IconDots, IconCircle } from '../../icons';
 import '../../styles/TasksList.css';
 
 interface TasksListProps {
@@ -184,27 +184,46 @@ const TasksList: React.FC<TasksListProps> = ({ onTaskClick }) => {
       {/* Header */}
       <div className="tasks-header">
         <div className="tasks-header-left">
-          <h1 className="tasks-title">Sales / Чек Ліст</h1>
-          <span className="tasks-status-badge">Активний</span>
-        </div>
-        <div className="tasks-header-right">
-          <div className="tasks-view-toggle">
+          <div className="tasks-view-tabs">
             <button
-              className="tasks-view-btn active"
-              onClick={() => setViewMode('list')}
-              title="Список"
+              className="tasks-view-tab"
+              onClick={() => setViewMode('kanban')}
+              title="Board"
             >
-              <IconList size={18} />
+              Board
             </button>
             <button
-              className="tasks-view-btn"
-              onClick={() => setViewMode('kanban')}
-              title="Канбан"
+              className="tasks-view-tab active"
+              onClick={() => setViewMode('list')}
+              title="List"
             >
-              <IconLayoutKanban size={18} />
+              List
+            </button>
+            <button
+              className="tasks-view-tab tasks-view-tab-add"
+              title="Add View"
+            >
+              + View
             </button>
           </div>
-          <span className="tasks-date">{currentDate}</span>
+        </div>
+        <div className="tasks-header-right">
+          <button className="tasks-header-action-btn" title="Search">
+            <IconSearch size={18} />
+          </button>
+          <button className="tasks-header-action-btn" title="Filter">
+            <IconFilter size={18} />
+            Filter
+          </button>
+          <button className="tasks-header-action-btn" title="Customize">
+            <IconAdjustments size={18} />
+            Customize
+          </button>
+          <button className="tasks-header-action-btn tasks-header-action-btn-primary" title="Add Task">
+            <IconPlus size={18} />
+            Add Task
+            <IconChevronDown size={14} />
+          </button>
         </div>
       </div>
 
@@ -271,6 +290,7 @@ const TasksList: React.FC<TasksListProps> = ({ onTaskClick }) => {
             <div>ПРІОРИТЕТ</div>
             <div>СТАТУС</div>
             <div>ДАТА ПОЧАТКУ</div>
+            <div></div>
           </div>
         </div>
 

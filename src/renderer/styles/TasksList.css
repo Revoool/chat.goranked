@@ -12,14 +12,58 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 24px;
+  padding: 12px 24px;
   border-bottom: 1px solid var(--border-color);
+  background: var(--graphite-dark);
 }
 
 .tasks-header-left {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 0;
+}
+
+.tasks-view-tabs {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  background: var(--graphite-light);
+  border-radius: 6px;
+  padding: 2px;
+}
+
+.tasks-view-tab {
+  padding: 6px 12px;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.tasks-view-tab:hover {
+  color: var(--text-primary);
+  background: var(--graphite-medium);
+}
+
+.tasks-view-tab.active {
+  background: var(--graphite-dark);
+  color: var(--text-primary);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.tasks-view-tab-add {
+  color: var(--flame-orange);
+  font-weight: 600;
+}
+
+.tasks-view-tab-add:hover {
+  color: var(--flame-orange);
+  background: rgba(255, 107, 53, 0.1);
 }
 
 .tasks-title {
@@ -42,6 +86,40 @@
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.tasks-header-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.tasks-header-action-btn:hover {
+  background: var(--graphite-light);
+  border-color: var(--flame-orange);
+  color: var(--text-primary);
+}
+
+.tasks-header-action-btn-primary {
+  background: var(--flame-orange);
+  border-color: var(--flame-orange);
+  color: white;
+}
+
+.tasks-header-action-btn-primary:hover {
+  background: #e55a2b;
+  border-color: #e55a2b;
+  color: white;
 }
 
 .tasks-view-toggle {
@@ -181,7 +259,7 @@
 
 .task-list-header-row {
   display: grid;
-  grid-template-columns: 24px 2fr 120px 120px 120px 80px 140px 120px;
+  grid-template-columns: 24px 2fr 120px 120px 120px 80px 140px 120px 40px;
   align-items: center;
   font-size: 11px;
   font-weight: 600;
