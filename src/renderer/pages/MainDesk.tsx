@@ -56,6 +56,9 @@ const MainDesk: React.FC = () => {
       }
     } else {
       // Create new task
+      if (!taskData.board_id) {
+        throw new Error('Немає дошки для задачі');
+      }
       await apiClient.createTask(taskData.board_id, taskData);
     }
 

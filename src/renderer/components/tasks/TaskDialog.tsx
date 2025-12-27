@@ -607,7 +607,7 @@ const TaskDialog: React.FC<TaskDialogProps> = ({ open, task, subdata, onClose, o
                     className="task-dialog-select"
                     value={localTask.order_type || ''}
                     onChange={(e) => {
-                      const orderType = e.target.value || null;
+                      const orderType = e.target.value || undefined;
                       setLocalTask({ ...localTask, order_type: orderType, order_id: undefined });
                       setOrderSearch('');
                       setOrderItems([]);
