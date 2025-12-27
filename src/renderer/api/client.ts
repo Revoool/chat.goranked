@@ -1,4 +1,5 @@
 import axios, { AxiosInstance } from 'axios';
+import { Board } from '../types';
 
 // Security: Validate API URL - ensure HTTPS in production
 const getApiBaseUrl = (): string => {

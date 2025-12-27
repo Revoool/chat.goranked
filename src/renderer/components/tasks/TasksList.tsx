@@ -158,14 +158,14 @@ const TasksList: React.FC<TasksListProps> = ({ onTaskClick }) => {
           <div className="tasks-header-right">
             <div className="tasks-view-toggle">
               <button
-                className={`tasks-view-btn ${viewMode === 'list' ? 'active' : ''}`}
+                className="tasks-view-btn"
                 onClick={() => setViewMode('list')}
                 title="Список"
               >
                 <IconList size={18} />
               </button>
               <button
-                className={`tasks-view-btn ${viewMode === 'kanban' ? 'active' : ''}`}
+                className="tasks-view-btn active"
                 onClick={() => setViewMode('kanban')}
                 title="Канбан"
               >
@@ -190,14 +190,14 @@ const TasksList: React.FC<TasksListProps> = ({ onTaskClick }) => {
         <div className="tasks-header-right">
           <div className="tasks-view-toggle">
             <button
-              className={`tasks-view-btn ${viewMode === 'list' ? 'active' : ''}`}
+              className="tasks-view-btn active"
               onClick={() => setViewMode('list')}
               title="Список"
             >
               <IconList size={18} />
             </button>
             <button
-              className={`tasks-view-btn ${viewMode === 'kanban' ? 'active' : ''}`}
+              className="tasks-view-btn"
               onClick={() => setViewMode('kanban')}
               title="Канбан"
             >

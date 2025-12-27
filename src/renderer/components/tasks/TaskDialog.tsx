@@ -42,7 +42,7 @@ const TaskDialog: React.FC<TaskDialogProps> = ({ open, task, subdata, onClose, o
     if (task && task.id !== 0) {
       const taskData = { ...task };
       if (taskData.assignees && Array.isArray(taskData.assignees)) {
-        taskData.assignee_ids = taskData.assignees.map(a => a.id || a);
+        taskData.assignee_ids = taskData.assignees.map(a => (typeof a === 'object' && a.id ? a.id : a)).filter((id): id is number => typeof id === 'number');
       } else if (!taskData.assignee_ids) {
         taskData.assignee_ids = taskData.user_id ? [taskData.user_id] : [];
       }
@@ -61,14 +61,14 @@ const TaskDialog: React.FC<TaskDialogProps> = ({ open, task, subdata, onClose, o
       const newTask: Partial<Task> = {
         name: task?.name || '',
         content: task?.content || '',
-        board_id: task?.board_id || subdata.boards?.[0]?.id || null,
-        status_id: task?.status_id || subdata.statuses?.[0]?.id || null,
+        board_id: task?.board_id || subdata.boards?.[0]?.id || undefined,
+        status_id: task?.status_id || subdata.statuses?.[0]?.id || undefined,
         assignee_ids: task?.assignee_ids || [],
-        category_id: task?.category_id || subdata.categories?.[0]?.id || null,
-        finish_at: task?.finish_at || null,
+        category_id: task?.category_id || subdata.categories?.[0]?.id || undefined,
+        finish_at: task?.finish_at || undefined,
         is_priority: task?.is_priority || false,
-        order_id: task?.order_id || null,
-        order_type: task?.order_type || null,
+        order_id: task?.order_id || undefined,
+        order_type: task?.order_type || undefined,
       };
       setLocalTask(newTask);
       setOrderSearch('');
@@ -549,7 +549,7 @@ const TaskDialog: React.FC<TaskDialogProps> = ({ open, task, subdata, onClose, o
                 <select
                   className="task-dialog-select"
                   value={localTask.category_id || ''}
-                  onChange={(e) => setLocalTask({ ...localTask, category_id: e.target.value ? parseInt(e.target.value) : null })}
+                  onChange={(e) => setLocalTask({ ...localTask, category_id: e.target.value ? parseInt(e.target.value) : undefined })}
                 >
                   <option value="">Оберіть категорію</option>
                   {subdata.categories?.map((category) => (
@@ -566,7 +566,7 @@ const TaskDialog: React.FC<TaskDialogProps> = ({ open, task, subdata, onClose, o
                 <select
                   className="task-dialog-select"
                   value={localTask.status_id || ''}
-                  onChange={(e) => setLocalTask({ ...localTask, status_id: e.target.value ? parseInt(e.target.value) : null })}
+                  onChange={(e) => setLocalTask({ ...localTask, status_id: e.target.value ? parseInt(e.target.value) : undefined })}
                 >
                   <option value="">Оберіть статус</option>
                   {subdata.statuses?.map((status) => (
@@ -607,7 +607,7 @@ const TaskDialog: React.FC<TaskDialogProps> = ({ open, task, subdata, onClose, o
                     value={localTask.order_type || ''}
                     onChange={(e) => {
                       const orderType = e.target.value || null;
-                      setLocalTask({ ...localTask, order_type: orderType, order_id: null });
+                      setLocalTask({ ...localTask, order_type: orderType, order_id: undefined });
                       setOrderSearch('');
                       setOrderItems([]);
                       setSelectedOrder(null);
@@ -674,7 +674,7 @@ const TaskDialog: React.FC<TaskDialogProps> = ({ open, task, subdata, onClose, o
                   type="date"
                   className="task-dialog-input"
                   value={localTask.finish_at ? new Date(localTask.finish_at).toISOString().split('T')[0] : ''}
-                  onChange={(e) => setLocalTask({ ...localTask, finish_at: e.target.value || null })}
+                  onChange={(e) => setLocalTask({ ...localTask, finish_at: e.target.value || undefined })}
                 />
               </section>
 

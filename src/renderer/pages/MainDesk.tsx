@@ -51,7 +51,9 @@ const MainDesk: React.FC = () => {
 
     if (taskData.id) {
       // Update existing task
-      await apiClient.updateTask(taskData.board_id, taskData.id, taskData);
+      if (taskData.board_id && taskData.id) {
+        await apiClient.updateTask(taskData.board_id, taskData.id, taskData);
+      }
     } else {
       // Create new task
       await apiClient.createTask(taskData.board_id, taskData);
@@ -66,7 +68,9 @@ const MainDesk: React.FC = () => {
     if (!task.board_id) {
       throw new Error('Немає дошки для задачі');
     }
-    await apiClient.deleteTask(task.board_id, task.id);
+      if (task.board_id) {
+        await apiClient.deleteTask(task.board_id, task.id);
+      }
     queryClient.invalidateQueries({ queryKey: ['tasks-list'] });
   };
 

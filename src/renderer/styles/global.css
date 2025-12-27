@@ -193,3 +193,31 @@ a:hover {
   animation: shake 0.5s ease-in-out;
 }
 
+/* Smooth transitions for all interactive elements */
+* {
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, transform 0.2s ease, opacity 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Performance optimizations */
+button, a, input, textarea, select {
+  will-change: auto;
+}
+
+button:hover, a:hover {
+  will-change: transform, background-color;
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+

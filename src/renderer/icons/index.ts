@@ -35,12 +35,16 @@ export {
   IconChevronDown,
   IconChevronRight,
   IconRotateClockwise,
-  IconCheck,
   IconPlus,
   IconGripVertical,
   IconDots,
   IconMessage,
   IconLayoutKanban,
   IconList,
+  IconRefresh,
+  IconTrash,
+  IconPhoto,
+  IconSend,
+  IconLink,
 } from '@tabler/icons-react';
 
