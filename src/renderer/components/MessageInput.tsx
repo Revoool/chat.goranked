@@ -63,6 +63,10 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSend, disabled, chatId })
       setAttachments([]);
       if (textareaRef.current) {
         textareaRef.current.style.height = 'auto';
+        // Return focus to textarea after sending message
+        setTimeout(() => {
+          textareaRef.current?.focus();
+        }, 0);
       }
     }
   };
