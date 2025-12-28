@@ -1002,6 +1002,29 @@ class ApiClient {
     }
   }
 
+  /**
+   * Сохранить feedback от менеджера (выбор варианта)
+   */
+  async saveAiFeedback(chatId: number, feedback: {
+    ai_run_id: number;
+    selected_candidate_index?: number | null;
+    final_sent_content: string;
+    final_sent_message_id?: number;
+    notes?: string;
+  }): Promise<any> {
+    console.log("💾 Saving AI feedback:", { chatId, feedback });
+    try {
+      const response = await this.client.post(
+        `/api/manager-client-chats/${chatId}/ai/feedback`,
+        feedback
+      );
+      return response.data;
+    } catch (error: any) {
+      console.error("❌ Error saving AI feedback:", error);
+      throw error;
+    }
+  }
+
   // ==================== TASKS API ====================
 
   // Get boards subdata (статусы, пользователи, доски, категории)

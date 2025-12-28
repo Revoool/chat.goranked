@@ -75,7 +75,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId }) => {
       console.log('📤 Sending message:', { chatId, body, hasFile: !!file, metadata });
       return apiClient.sendMessage(chatId, body, file, undefined, metadata);
     },
-    onSuccess: (responseData) => {
+    onSuccess: (responseData, variables) => {
       console.log('✅ Message sent successfully, full response:', responseData);
       
       // API returns { data: { message object }, chat: {...} }
@@ -84,6 +84,20 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId }) => {
       const message = responseData.data;
       
       console.log('📝 Extracted message from response:', message);
+      
+      // Если сообщение было отправлено с AI suggestion - сохраняем feedback
+      if (variables.metadata?.from_ai_suggestion && variables.metadata?.ai_run_id && message?.id) {
+        apiClient.saveAiFeedback(chatId, {
+          ai_run_id: variables.metadata.ai_run_id,
+          selected_candidate_index: variables.metadata.ai_suggestion_index !== undefined 
+            ? variables.metadata.ai_suggestion_index + 1  // Convert 0-based to 1-based
+            : null,
+          final_sent_content: variables.body,
+          final_sent_message_id: message.id,
+        }).catch(err => {
+          console.warn('⚠️ Failed to save AI feedback:', err);
+        });
+      }
       
       // Optimistically add message to the list immediately
       if (message && message.id) {

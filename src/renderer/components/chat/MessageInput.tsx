@@ -18,7 +18,7 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSend, disabled, chatId })
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showQuickReplies, setShowQuickReplies] = useState(false);
   const [showAiSuggestions, setShowAiSuggestions] = useState(false);
-  const [selectedAiSuggestion, setSelectedAiSuggestion] = useState<{text: string, index: number} | null>(null);
+  const [selectedAiSuggestion, setSelectedAiSuggestion] = useState<{text: string, index: number, aiRunId?: number} | null>(null);
   const [sendMessageKey, setSendMessageKey] = useState<'enter' | 'ctrl-enter'>(
     (localStorage.getItem('settings.sendMessageKey') as 'enter' | 'ctrl-enter') || 'enter'
   );
@@ -70,6 +70,7 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSend, disabled, chatId })
         ai_suggestion_index: selectedAiSuggestion.index,
         original_ai_suggestion: selectedAiSuggestion.text,
         was_edited: messageText !== selectedAiSuggestion.text,
+        ai_run_id: selectedAiSuggestion.aiRunId, // Для связи с feedback
       } : undefined;
       
       onSend(messageText, messageAttachments, metadata);
@@ -159,9 +160,9 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSend, disabled, chatId })
     }
   };
 
-  const handleAiSuggestionSelect = (suggestion: string, index: number) => {
+  const handleAiSuggestionSelect = (suggestion: string, index: number, aiRunId?: number) => {
     setText(suggestion);
-    setSelectedAiSuggestion({ text: suggestion, index });
+    setSelectedAiSuggestion({ text: suggestion, index, aiRunId });
     setShowAiSuggestions(false);
     if (textareaRef.current) {
       textareaRef.current.focus();

@@ -6,7 +6,7 @@ import '../../styles/AiSuggestions.css';
 
 interface AiSuggestionsProps {
   chatId: number;
-  onSelect: (suggestion: string, suggestionIndex: number) => void;
+  onSelect: (suggestion: string, suggestionIndex: number, aiRunId?: number) => void;
   onClose?: () => void;
 }
 
@@ -24,7 +24,8 @@ const AiSuggestions: React.FC<AiSuggestionsProps> = ({ chatId, onSelect, onClose
 
   const handleSelect = (suggestion: string, index: number) => {
     setSelectedIndex(index);
-    onSelect(suggestion, index);
+    const aiRunId = data?.data?.ai_run_id;
+    onSelect(suggestion, index, aiRunId);
   };
 
   if (isLoading) {
