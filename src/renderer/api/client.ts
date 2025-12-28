@@ -974,7 +974,7 @@ class ApiClient {
   // ==================== AI SUGGESTIONS API ====================
 
   // Get AI suggestions for chat replies
-  async getAiSuggestions(chatId: number, options?: { context_limit?: number; model?: string }): Promise<any> {
+  async getAiSuggestions(chatId: number, options?: { context_limit?: number; model?: string; force_refresh?: boolean }): Promise<any> {
     console.log("🤖 Requesting AI suggestions for chat:", chatId);
     try {
       const response = await this.client.get(

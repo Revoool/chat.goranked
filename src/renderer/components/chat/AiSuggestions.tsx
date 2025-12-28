@@ -12,12 +12,13 @@ interface AiSuggestionsProps {
 
 const AiSuggestions: React.FC<AiSuggestionsProps> = ({ chatId, onSelect, onClose }) => {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+  const [forceRefresh, setForceRefresh] = useState(false);
 
   const { data, isLoading, error, refetch } = useQuery({
-    queryKey: ['ai-suggestions', chatId],
-    queryFn: () => apiClient.getAiSuggestions(chatId),
+    queryKey: ['ai-suggestions', chatId, forceRefresh],
+    queryFn: () => apiClient.getAiSuggestions(chatId, { force_refresh: forceRefresh }),
     enabled: !!chatId,
-    staleTime: 30000, // 30 seconds
+    staleTime: 0, // Не кешируем на фронтенде, чтобы всегда запрашивать свежие данные
     retry: 1,
   });
 
@@ -73,11 +74,32 @@ const AiSuggestions: React.FC<AiSuggestionsProps> = ({ chatId, onSelect, onClose
       <div className="ai-suggestions-header">
         <span className="ai-icon">✨</span>
         <span>AI-предложения ответов</span>
-        {onClose && (
-          <button className="ai-suggestions-close" onClick={onClose}>
-            <IconX size={14} />
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          <button 
+            className="ai-suggestions-refresh" 
+            onClick={() => {
+              setForceRefresh(prev => !prev);
+              setTimeout(() => refetch(), 50);
+            }}
+            title="Обновить предложения (игнорировать кеш)"
+            style={{ 
+              background: 'transparent', 
+              border: 'none', 
+              cursor: 'pointer',
+              padding: '4px',
+              display: 'flex',
+              alignItems: 'center',
+              color: '#a0a0a0'
+            }}
+          >
+            🔄
           </button>
-        )}
+          {onClose && (
+            <button className="ai-suggestions-close" onClick={onClose}>
+              <IconX size={14} />
+            </button>
+          )}
+        </div>
       </div>
       <div className="ai-suggestions-list">
         {suggestions.map((suggestion: string, index: number) => (
