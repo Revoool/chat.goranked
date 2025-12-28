@@ -1,12 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
 import QuickReplies from './QuickReplies';
+import AiSuggestions from './AiSuggestions';
 import EmojiPicker from '../common/EmojiPicker';
 import { IconMoodSmile } from '../../icons';
 import { apiClient } from '../../api/client';
 import '../../styles/MessageInput.css';
 
 interface MessageInputProps {
-  onSend: (text: string, attachments: any[]) => void;
+  onSend: (text: string, attachments: any[], metadata?: any) => void;
   disabled?: boolean;
   chatId?: number;
 }
@@ -16,6 +17,8 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSend, disabled, chatId })
   const [attachments, setAttachments] = useState<any[]>([]);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showQuickReplies, setShowQuickReplies] = useState(false);
+  const [showAiSuggestions, setShowAiSuggestions] = useState(false);
+  const [selectedAiSuggestion, setSelectedAiSuggestion] = useState<{text: string, index: number} | null>(null);
   const [sendMessageKey, setSendMessageKey] = useState<'enter' | 'ctrl-enter'>(
     (localStorage.getItem('settings.sendMessageKey') as 'enter' | 'ctrl-enter') || 'enter'
   );
@@ -60,9 +63,19 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSend, disabled, chatId })
       }
       const messageText = text.trim();
       const messageAttachments = [...attachments];
-      onSend(messageText, messageAttachments);
+      
+      // Prepare metadata if AI suggestion was used
+      const metadata = selectedAiSuggestion ? {
+        from_ai_suggestion: true,
+        ai_suggestion_index: selectedAiSuggestion.index,
+        original_ai_suggestion: selectedAiSuggestion.text,
+        was_edited: messageText !== selectedAiSuggestion.text,
+      } : undefined;
+      
+      onSend(messageText, messageAttachments, metadata);
       setText('');
       setAttachments([]);
+      setSelectedAiSuggestion(null);
       if (textareaRef.current) {
         textareaRef.current.style.height = 'auto';
         // Return focus to textarea after sending message
@@ -146,6 +159,17 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSend, disabled, chatId })
     }
   };
 
+  const handleAiSuggestionSelect = (suggestion: string, index: number) => {
+    setText(suggestion);
+    setSelectedAiSuggestion({ text: suggestion, index });
+    setShowAiSuggestions(false);
+    if (textareaRef.current) {
+      textareaRef.current.focus();
+      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+    }
+  };
+
   const handleEmojiSelect = (emoji: string) => {
     const cursorPosition = textareaRef.current?.selectionStart || text.length;
     const newText = text.slice(0, cursorPosition) + emoji + text.slice(cursorPosition);
@@ -176,8 +200,16 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSend, disabled, chatId })
   };
 
   return (
-    <form className="message-input" onSubmit={handleSubmit}>
-      {attachments.length > 0 && (
+    <div className="message-input-wrapper">
+      {showAiSuggestions && chatId && (
+        <AiSuggestions
+          chatId={chatId}
+          onSelect={handleAiSuggestionSelect}
+          onClose={() => setShowAiSuggestions(false)}
+        />
+      )}
+      <form className="message-input" onSubmit={handleSubmit}>
+        {attachments.length > 0 && (
         <div className="message-input-attachments">
           {attachments.map((att, idx) => (
             <div key={idx} className="attachment-preview">
@@ -210,36 +242,76 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSend, disabled, chatId })
             onChange={handleFileSelect}
           />
           {chatId && (
-            <div className="message-input-quickreplies-wrapper">
+            <>
+              <div className="message-input-quickreplies-wrapper">
+                <button
+                  ref={quickRepliesButtonRef}
+                  type="button"
+                  className="message-input-quickreplies-btn"
+                  onClick={() => {
+                    setShowQuickReplies(!showQuickReplies);
+                    setShowEmojiPicker(false);
+                    setShowAiSuggestions(false);
+                  }}
+                  title="Швидкі відповіді"
+                >
+                  <svg width="18" height="18" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path
+                      d="M10 2L3 7V18H8V12H12V18H17V7L10 2Z"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      fill="none"
+                    />
+                  </svg>
+                </button>
+                {showQuickReplies && (
+                  <div className="quick-replies-container">
+                    <QuickReplies 
+                      onSelect={handleQuickReplySelect}
+                    />
+                  </div>
+                )}
+              </div>
               <button
-                ref={quickRepliesButtonRef}
                 type="button"
-                className="message-input-quickreplies-btn"
+                className={`message-input-ai-btn ${showAiSuggestions ? 'active' : ''}`}
                 onClick={() => {
-                  setShowQuickReplies(!showQuickReplies);
+                  setShowAiSuggestions(!showAiSuggestions);
                   setShowEmojiPicker(false);
+                  setShowQuickReplies(false);
                 }}
-                title="Швидкі відповіді"
+                title="AI-предложения ответов"
               >
-                <svg width="18" height="18" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path
-                    d="M10 2L3 7V18H8V12H12V18H17V7L10 2Z"
+                    d="M12 2L2 7L12 12L22 7L12 2Z"
                     stroke="currentColor"
-                    strokeWidth="1.5"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    fill="none"
+                  />
+                  <path
+                    d="M2 17L12 22L22 17"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    fill="none"
+                  />
+                  <path
+                    d="M2 12L12 17L22 12"
+                    stroke="currentColor"
+                    strokeWidth="2"
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     fill="none"
                   />
                 </svg>
               </button>
-              {showQuickReplies && (
-                <div className="quick-replies-container">
-                  <QuickReplies 
-                    onSelect={handleQuickReplySelect}
-                  />
-                </div>
-              )}
-            </div>
+            </>
           )}
           <div className="message-input-emoji-wrapper" style={{ position: 'relative' }}>
             <button
@@ -303,6 +375,7 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSend, disabled, chatId })
         </button>
       </div>
     </form>
+    </div>
   );
 };
 

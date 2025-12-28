@@ -50,5 +50,6 @@ export {
   IconFilter,
   IconAdjustments,
   IconCircle,
+  IconSparkles,
 } from '@tabler/icons-react';
 

@@ -316,7 +316,8 @@ class ApiClient {
     chatId: number,
     body: string,
     file?: File,
-    type?: string
+    type?: string,
+    metadata?: any
   ): Promise<any> {
     // Security: Validate chatId
     if (!chatId || !Number.isInteger(chatId) || chatId <= 0) {
@@ -341,6 +342,11 @@ class ApiClient {
 
     const formData = new FormData();
     formData.append("body", bodyValue);
+
+    // Add metadata if provided (for AI learning)
+    if (metadata) {
+      formData.append("metadata", JSON.stringify(metadata));
+    }
 
     if (file) {
       // Security: Validate file name length
@@ -961,6 +967,37 @@ class ApiClient {
       return response.data;
     } catch (error: any) {
       console.error("❌ Error fetching user:", error);
+      throw error;
+    }
+  }
+
+  // ==================== AI SUGGESTIONS API ====================
+
+  // Get AI suggestions for chat replies
+  async getAiSuggestions(chatId: number, options?: { context_limit?: number; model?: string }): Promise<any> {
+    console.log("🤖 Requesting AI suggestions for chat:", chatId);
+    try {
+      const response = await this.client.get(
+        `/api/manager-client-chats/${chatId}/ai/suggestions`,
+        { params: options }
+      );
+      return response.data;
+    } catch (error: any) {
+      console.error("❌ Error fetching AI suggestions:", error);
+      throw error;
+    }
+  }
+
+  // Mark AI suggestion as used (for learning)
+  async markAiSuggestionUsed(chatId: number, suggestionId: string): Promise<any> {
+    console.log("✅ Marking AI suggestion as used:", { chatId, suggestionId });
+    try {
+      const response = await this.client.post(
+        `/api/manager-client-chats/${chatId}/ai/suggestions/${suggestionId}/use`
+      );
+      return response.data;
+    } catch (error: any) {
+      console.error("❌ Error marking suggestion as used:", error);
       throw error;
     }
   }

@@ -221,3 +221,41 @@
   transform: translateY(0);
 }
 
+.message-input-wrapper {
+  display: flex;
+  flex-direction: column;
+}
+
+.message-input-ai-btn {
+  padding: 10px;
+  background: var(--graphite-light);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.message-input-ai-btn:hover {
+  background: #8b5cf6;
+  border-color: #8b5cf6;
+  color: white;
+}
+
+.message-input-ai-btn.active {
+  background: #8b5cf6;
+  border-color: #8b5cf6;
+  color: white;
+}
+
+.message-input-ai-btn svg {
+  width: 18px;
+  height: 18px;
+}
+

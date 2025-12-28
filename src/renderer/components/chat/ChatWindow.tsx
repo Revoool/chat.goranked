@@ -71,9 +71,9 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId }) => {
   });
 
   const sendMessageMutation = useMutation({
-    mutationFn: ({ body, file }: { body: string; file?: File }) => {
-      console.log('📤 Sending message:', { chatId, body, hasFile: !!file });
-      return apiClient.sendMessage(chatId, body, file);
+    mutationFn: ({ body, file, metadata }: { body: string; file?: File; metadata?: any }) => {
+      console.log('📤 Sending message:', { chatId, body, hasFile: !!file, metadata });
+      return apiClient.sendMessage(chatId, body, file, undefined, metadata);
     },
     onSuccess: (responseData) => {
       console.log('✅ Message sent successfully, full response:', responseData);
@@ -128,8 +128,8 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId }) => {
     },
   });
 
-  const handleSendMessage = (text: string, attachments: any[] = []) => {
-    console.log('📤 handleSendMessage called:', { text, attachments, textLength: text?.length || 0 });
+  const handleSendMessage = (text: string, attachments: any[] = [], metadata?: any) => {
+    console.log('📤 handleSendMessage called:', { text, attachments, textLength: text?.length || 0, metadata });
     
     if (!text?.trim() && attachments.length === 0) {
       console.warn('⚠️ Cannot send empty message');
@@ -154,9 +154,10 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId }) => {
       hasFile: !!file, 
       fileName: file?.name, 
       fileSize: file?.size,
-      fileType: file?.type 
+      fileType: file?.type,
+      metadata
     });
-    sendMessageMutation.mutate({ body, file });
+    sendMessageMutation.mutate({ body, file, metadata });
   };
 
   useEffect(() => {
