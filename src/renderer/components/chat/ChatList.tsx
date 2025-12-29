@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useChatStore } from '../../store/chatStore';
 import { apiClient } from '../../api/client';
@@ -7,6 +7,7 @@ import '../../styles/ChatList.css';
 
 const ChatList: React.FC = () => {
   const { filters, chats, setChats, setSelectedChat } = useChatStore();
+  const [tagSearch, setTagSearch] = useState('');
 
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['chats', filters],
@@ -31,6 +32,31 @@ const ChatList: React.FC = () => {
       }
     }
   }, [data, error, setChats]);
+
+  // Filter chats by tags
+  const filteredChats = useMemo(() => {
+    if (!tagSearch.trim()) {
+      return chats;
+    }
+
+    const searchLower = tagSearch.toLowerCase().trim();
+    return chats.filter((chat) => {
+      if (!chat || !(chat.clientUser || chat.client_name)) {
+        return false;
+      }
+
+      // Check if chat has tags in metadata
+      if (chat.metadata && typeof chat.metadata === 'object' && chat.metadata.tags) {
+        const tags = Array.isArray(chat.metadata.tags) ? chat.metadata.tags : [];
+        // Check if any tag matches the search query
+        return tags.some((tag: string) => 
+          tag.toLowerCase().includes(searchLower)
+        );
+      }
+
+      return false;
+    });
+  }, [chats, tagSearch]);
 
   if (isLoading) {
     console.log('⏳ ChatList: Loading...');
@@ -62,6 +88,13 @@ const ChatList: React.FC = () => {
       <div className="chat-list-header">
         <h3>Чаты</h3>
         <div className="chat-list-filters">
+          <input
+            type="text"
+            placeholder="Поиск по тегам..."
+            value={tagSearch}
+            onChange={(e) => setTagSearch(e.target.value)}
+            className="chat-list-tag-search"
+          />
           <select
             value={filters.status || ''}
             onChange={(e) => {
@@ -79,10 +112,12 @@ const ChatList: React.FC = () => {
       </div>
 
       <div className="chat-list-items">
-        {chats.length === 0 ? (
-          <div className="chat-list-empty">Нет чатов</div>
+        {filteredChats.length === 0 ? (
+          <div className="chat-list-empty">
+            {tagSearch.trim() ? 'Чаты с такими тегами не найдены' : 'Нет чатов'}
+          </div>
         ) : (
-          chats
+          filteredChats
             .filter((chat) => chat && (chat.clientUser || chat.client_name)) // Filter out invalid chats
             .map((chat) => (
               <ChatListItem

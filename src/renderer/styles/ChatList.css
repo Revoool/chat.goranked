@@ -24,6 +24,30 @@
 
 .chat-list-filters {
   -webkit-app-region: no-drag; /* Select should be clickable */
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.chat-list-tag-search {
+  width: 100%;
+  padding: 8px 12px;
+  background: var(--graphite-medium);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-size: 14px;
+  -webkit-app-region: no-drag; /* Input should be clickable */
+  transition: border-color 0.2s ease;
+}
+
+.chat-list-tag-search:focus {
+  outline: none;
+  border-color: var(--flame-orange);
+}
+
+.chat-list-tag-search::placeholder {
+  color: var(--text-muted);
 }
 
 .chat-list-filters select {

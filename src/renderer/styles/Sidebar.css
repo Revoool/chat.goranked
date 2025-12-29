@@ -9,12 +9,20 @@
 
 .sidebar-header {
   padding: 12px;
+  padding-top: 28px; /* Extra padding for Mac window controls */
   border-bottom: 1px solid var(--border-color);
   display: flex;
   align-items: center;
   justify-content: center;
   -webkit-app-region: drag; /* Allow window dragging from header */
   user-select: none; /* Prevent text selection while dragging */
+}
+
+/* Additional padding for Mac (darwin) */
+@supports (-webkit-app-region: drag) {
+  .sidebar-header {
+    padding-top: 28px;
+  }
 }
 
 .sidebar-logo {

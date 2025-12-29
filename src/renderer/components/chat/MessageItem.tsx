@@ -3,7 +3,7 @@ import { Message } from '../../types';
 import { apiClient } from '../../api/client';
 import { useAuthStore } from '../../store/authStore';
 import { useQueryClient } from '@tanstack/react-query';
-import { IconPin, IconCircleDot, IconPencil, IconPaperclip, IconCheck } from '../../icons';
+import { IconPin, IconCircleDot, IconPencil, IconPaperclip, IconCheck, IconSparkles } from '../../icons';
 import '../../styles/MessageItem.css';
 
 interface MessageItemProps {
@@ -36,6 +36,11 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, onUpdate }) => {
   
   // Check if message was edited
   const isEdited = message.metadata?.edited === true;
+  
+  // Check if message is from AI suggestion
+  const isAiSuggestion = message.metadata?.from_ai_suggestion === true;
+  const aiSuggestionIndex = message.metadata?.ai_suggestion_index;
+  const wasAiEdited = message.metadata?.was_edited === true;
 
   // Sync editText when message.body changes (e.g., after update)
   useEffect(() => {
@@ -293,6 +298,14 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, onUpdate }) => {
           )}
         </div>
         <div className="message-meta">
+          {!isClient && isAiSuggestion && (
+            <div className="message-ai-indicator" title={wasAiEdited ? `AI-ответ (вариант ${aiSuggestionIndex !== undefined ? aiSuggestionIndex + 1 : '?'}), отредактирован` : `AI-ответ (вариант ${aiSuggestionIndex !== undefined ? aiSuggestionIndex + 1 : '?'}), без редактирования`}>
+              <IconSparkles size={14} className={wasAiEdited ? 'ai-edited' : 'ai-pure'} />
+              {aiSuggestionIndex !== undefined && (
+                <span className="ai-variant-badge">{aiSuggestionIndex + 1}</span>
+              )}
+            </div>
+          )}
           <span className="message-time">{formatTime(message.created_at)}</span>
           {isEdited && (
             <span className="message-edited-badge" title="Відредаговано">(ред.)</span>

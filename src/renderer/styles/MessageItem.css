@@ -187,6 +187,58 @@
   padding: 0 12px;
 }
 
+.message-ai-indicator {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-right: 4px;
+  cursor: help;
+}
+
+.message-ai-indicator svg {
+  opacity: 0.9;
+  transition: opacity 0.2s ease;
+}
+
+.message-ai-indicator:hover svg {
+  opacity: 1;
+}
+
+.message-ai-indicator svg.ai-pure {
+  color: #4CAF50; /* Зеленый для чистого AI */
+}
+
+.message-ai-indicator svg.ai-edited {
+  color: #FF9800; /* Оранжевый для отредактированного AI */
+}
+
+.message-item-agent .message-ai-indicator svg.ai-pure {
+  color: #81C784; /* Светло-зеленый для чистого AI на оранжевом фоне */
+}
+
+.message-item-agent .message-ai-indicator svg.ai-edited {
+  color: #FFB74D; /* Светло-оранжевый для отредактированного AI на оранжевом фоне */
+}
+
+.ai-variant-badge {
+  font-size: 9px;
+  font-weight: 600;
+  background: var(--graphite-medium);
+  color: var(--text-primary);
+  padding: 1px 4px;
+  border-radius: 3px;
+  line-height: 1.2;
+  border: 1px solid var(--border-color);
+  min-width: 14px;
+  text-align: center;
+}
+
+.message-item-agent .ai-variant-badge {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
 .message-time {
   font-size: 11px;
   color: var(--text-muted);
