@@ -51,7 +51,6 @@
       ],
       "category": "public.app-category.business",
       "artifactName": "GoRanked-Chat-Desk-${version}-${arch}.${ext}",
-      "updaterCacheDirName": "goranked-chat-desk-updater",
       "forceCodeSigning": false,
       "gatekeeperAssess": false,
       "hardenedRuntime": false
