@@ -1,6 +1,6 @@
 {
   "name": "goranked-chat-desk",
-  "version": "1.0.69",
+  "version": "1.0.70",
   "description": "GoRanked Chat Desk - Desktop application for support operators",
   "main": "dist/main.js",
   "author": "GoRanked",
@@ -50,7 +50,8 @@
         }
       ],
       "category": "public.app-category.business",
-      "artifactName": "${productName}-${version}-${arch}.${ext}",
+      "artifactName": "GoRanked-Chat-Desk-${version}-${arch}.${ext}",
+      "updaterCacheDirName": "goranked-chat-desk-updater",
       "forceCodeSigning": false,
       "gatekeeperAssess": false,
       "hardenedRuntime": false
