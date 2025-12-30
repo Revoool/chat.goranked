@@ -143,6 +143,19 @@
   -ms-user-select: text;
 }
 
+.message-search-highlight {
+  background-color: rgba(255, 235, 59, 0.4);
+  color: inherit;
+  padding: 2px 0;
+  border-radius: 2px;
+  font-weight: 500;
+}
+
+.message-item-agent .message-search-highlight {
+  background-color: rgba(255, 255, 255, 0.3);
+  color: white;
+}
+
 .message-attachments {
   margin-top: 8px;
   display: flex;

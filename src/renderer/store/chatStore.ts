@@ -16,6 +16,7 @@ interface ChatState {
   activeMenu: MenuItem;
   isClientCardOpen: boolean;
   typingIndicators: Record<number, TypingInfo>; // chatId -> typing info
+  searchQuery: string; // Текущий поисковый запрос для подсветки
   setSelectedChat: (chatId: number | null) => void;
   setFilters: (filters: Partial<ChatFilters>) => void;
   setChats: (chats: Chat[]) => void;
@@ -25,6 +26,7 @@ interface ChatState {
   toggleClientCard: () => void;
   setClientCardOpen: (isOpen: boolean) => void;
   setTypingIndicator: (chatId: number, typingInfo: TypingInfo | null) => void;
+  setSearchQuery: (query: string) => void;
 }
 
 export const useChatStore = create<ChatState>((set) => ({
@@ -34,8 +36,10 @@ export const useChatStore = create<ChatState>((set) => ({
   activeMenu: 'inbox' as MenuItem,
   isClientCardOpen: false,
   typingIndicators: {},
+  searchQuery: '',
   setSelectedChat: (chatId) => set({ selectedChatId: chatId, isClientCardOpen: false }), // Close card when switching chats
   setFilters: (filters) => set((state) => ({ filters: { ...state.filters, ...filters } })),
+  setSearchQuery: (query) => set({ searchQuery: query }),
   setChats: (chats) => {
     // Ensure chats is always an array
     const safeChats = Array.isArray(chats) ? chats : [];

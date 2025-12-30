@@ -94,6 +94,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId }) => {
             : null,
           final_sent_content: variables.body,
           final_sent_message_id: message.id,
+          was_edited: variables.metadata.was_edited || false, // Используем was_edited из метаданных
         }).catch(err => {
           console.warn('⚠️ Failed to save AI feedback:', err);
         });
@@ -349,7 +350,8 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId }) => {
       <MessageList 
         messages={messagesData?.data || messagesData || []} 
         chatId={chatId}
-        onUpdate={() => refetch()} 
+        onUpdate={() => refetch()}
+        searchQuery={useChatStore((state) => state.searchQuery)}
       />
 
       <MessageInput

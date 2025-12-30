@@ -9,9 +9,10 @@ import '../../styles/MessageItem.css';
 interface MessageItemProps {
   message: Message;
   onUpdate?: () => void;
+  searchQuery?: string;
 }
 
-const MessageItem: React.FC<MessageItemProps> = ({ message, onUpdate }) => {
+const MessageItem: React.FC<MessageItemProps> = ({ message, onUpdate, searchQuery = '' }) => {
   const { user: currentUser } = useAuthStore();
   const queryClient = useQueryClient();
   const [showContextMenu, setShowContextMenu] = useState(false);
@@ -56,6 +57,58 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, onUpdate }) => {
 
   const authorName = message.user?.name || 'Agent';
   const authorAvatar = message.user?.avatar;
+
+  // Функция для подсветки найденного текста (находит все совпадения)
+  const highlightText = (text: string, query: string): React.ReactNode => {
+    if (!query || !query.trim()) {
+      return text;
+    }
+
+    const queryTrimmed = query.trim();
+    const queryLower = queryTrimmed.toLowerCase();
+    const textLower = text.toLowerCase();
+    const parts: Array<string | { text: string; isMatch: boolean }> = [];
+    let lastIndex = 0;
+    let index = textLower.indexOf(queryLower, lastIndex);
+
+    while (index !== -1) {
+      // Добавляем текст до совпадения
+      if (index > lastIndex) {
+        parts.push(text.substring(lastIndex, index));
+      }
+      // Добавляем совпадение
+      parts.push({ text: text.substring(index, index + queryTrimmed.length), isMatch: true });
+      lastIndex = index + queryTrimmed.length;
+      index = textLower.indexOf(queryLower, lastIndex);
+    }
+
+    // Добавляем оставшийся текст
+    if (lastIndex < text.length) {
+      parts.push(text.substring(lastIndex));
+    }
+
+    // Если совпадений не найдено, возвращаем исходный текст
+    if (parts.length === 0 || (parts.length === 1 && typeof parts[0] === 'string')) {
+      return text;
+    }
+
+    // Рендерим части с подсветкой
+    return (
+      <>
+        {parts.map((part, idx) => {
+          if (typeof part === 'string') {
+            return <React.Fragment key={idx}>{part}</React.Fragment>;
+          } else {
+            return (
+              <mark key={idx} className="message-search-highlight">
+                {part.text}
+              </mark>
+            );
+          }
+        })}
+      </>
+    );
+  };
 
   // Close context menu when clicking outside
   useEffect(() => {
@@ -269,7 +322,7 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, onUpdate }) => {
                   // Allow default paste behavior
                   e.stopPropagation();
                 }}
-              >{messageText}</div>
+              >{highlightText(messageText, searchQuery)}</div>
               {message.files && message.files.length > 0 && (
                 <div className="message-attachments">
                   {message.files.map((file) => {

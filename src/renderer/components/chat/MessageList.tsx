@@ -10,9 +10,10 @@ interface MessageListProps {
   messages: Message[];
   chatId: number;
   onUpdate?: () => void;
+  searchQuery?: string;
 }
 
-const MessageList: React.FC<MessageListProps> = ({ messages, chatId, onUpdate }) => {
+const MessageList: React.FC<MessageListProps> = ({ messages, chatId, onUpdate, searchQuery = '' }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messageListRef = useRef<HTMLDivElement>(null);
   const isInitialLoad = useRef(true);
@@ -97,13 +98,13 @@ const MessageList: React.FC<MessageListProps> = ({ messages, chatId, onUpdate })
           </div>
           <div className="pinned-messages-list">
             {pinnedMessages.map((message) => (
-              <MessageItem key={message.id} message={message} onUpdate={onUpdate} />
+              <MessageItem key={message.id} message={message} onUpdate={onUpdate} searchQuery={searchQuery} />
             ))}
           </div>
         </div>
       )}
       {regularMessages.map((message) => (
-        <MessageItem key={message.id} message={message} onUpdate={onUpdate} />
+        <MessageItem key={message.id} message={message} onUpdate={onUpdate} searchQuery={searchQuery} />
       ))}
       {typingInfo?.isTyping && (
         <TypingIndicator userName={typingInfo.userName} />

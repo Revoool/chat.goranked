@@ -6,23 +6,36 @@ import ChatListItem from './ChatListItem';
 import '../../styles/ChatList.css';
 
 const ChatList: React.FC = () => {
-  const { filters, chats, setChats, setSelectedChat } = useChatStore();
+  const { filters, chats, setChats, setSelectedChat, setSearchQuery: setStoreSearchQuery } = useChatStore();
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [showTagFilter, setShowTagFilter] = useState(false);
   const tagFilterRef = useRef<HTMLDivElement>(null);
 
-  // Обновляем фильтры при изменении поискового запроса
+  // Debounce поискового запроса (500ms задержка)
   useEffect(() => {
-    if (searchQuery.trim()) {
-      useChatStore.getState().setFilters({ search: searchQuery.trim() });
-    } else {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+      // Сохраняем поисковый запрос в store для подсветки в сообщениях
+      setStoreSearchQuery(searchQuery);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery, setStoreSearchQuery]);
+
+  // Обновляем фильтры при изменении debounced поискового запроса (только для API поиска по всем сообщениям)
+  useEffect(() => {
+    // Используем API поиск только если запрос длиннее 2 символов
+    if (debouncedSearchQuery.trim().length > 2) {
+      useChatStore.getState().setFilters({ search: debouncedSearchQuery.trim() });
+    } else if (debouncedSearchQuery.trim().length === 0) {
       // Убираем поиск из фильтров, если поле пустое
       const currentFilters = useChatStore.getState().filters;
       const { search, ...restFilters } = currentFilters;
       useChatStore.getState().setFilters(restFilters);
     }
-  }, [searchQuery]);
+  }, [debouncedSearchQuery]);
 
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['chats', filters],
@@ -80,9 +93,35 @@ const ChatList: React.FC = () => {
     return Array.from(tagSet).sort();
   }, [chats]);
 
-  // Фильтруем чаты по выбранным тегам (клиентская фильтрация)
+  // Фильтруем чаты по выбранным тегам и поисковому запросу (клиентская фильтрация)
   const filteredChats = useMemo(() => {
     let result = chats;
+
+    // Клиентский поиск по имени и последнему сообщению (быстрый отклик)
+    if (searchQuery.trim()) {
+      const searchLower = searchQuery.toLowerCase().trim();
+      result = result.filter((chat) => {
+        if (!chat || !(chat.clientUser || chat.client_name)) {
+          return false;
+        }
+
+        // Поиск по имени клиента
+        const clientName = (chat.clientUser?.name || chat.client_name || '').toLowerCase();
+        if (clientName.includes(searchLower)) {
+          return true;
+        }
+
+        // Поиск по последнему сообщению
+        if (chat.last_message?.body) {
+          const lastMessage = chat.last_message.body.toLowerCase();
+          if (lastMessage.includes(searchLower)) {
+            return true;
+          }
+        }
+
+        return false;
+      });
+    }
 
     // Фильтр по тегам
     if (selectedTags.length > 0) {
@@ -104,7 +143,7 @@ const ChatList: React.FC = () => {
     }
 
     return result;
-  }, [chats, selectedTags]);
+  }, [chats, selectedTags, searchQuery]);
 
   if (isLoading) {
     console.log('⏳ ChatList: Loading...');
