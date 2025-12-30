@@ -1011,6 +1011,7 @@ class ApiClient {
     final_sent_content: string;
     final_sent_message_id?: number;
     notes?: string;
+    was_edited?: boolean; // was_edited из метаданных чата
   }): Promise<any> {
     console.log("💾 Saving AI feedback:", { chatId, feedback });
     try {

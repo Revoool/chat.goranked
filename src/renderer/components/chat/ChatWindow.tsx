@@ -95,8 +95,8 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId }) => {
           final_sent_content: variables.body,
           final_sent_message_id: message.id,
           was_edited: variables.metadata.was_edited || false, // Используем was_edited из метаданных
-        }).catch(err => {
-          console.warn('⚠️ Failed to save AI feedback:', err);
+        } as any).catch(() => {
+          // Игнорируем ошибки сохранения feedback
         });
       }
       

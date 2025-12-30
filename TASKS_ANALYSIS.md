@@ -1,164 +1,304 @@
-# Анализ функциональности тасок и возможность переноса в Electron приложение
+Working with evals
+Test and improve model outputs through evaluations.
+Evaluations (often called evals) test model outputs to ensure they meet style and content criteria that you specify. Writing evals to understand how your LLM applications are performing against your expectations, especially when upgrading or trying new models, is an essential component to building reliable applications.
 
-## Обзор функциональности
+In this guide, we will focus on configuring evals programmatically using the Evals API. If you prefer, you can also configure evals in the OpenAI dashboard.
 
-### Основные возможности системы тасок:
+If you're new to evaluations, or want a more iterative environment to experiment in as you build your eval, consider trying Datasets instead.
 
-1. **Управление задачами (Tasks)**
-   - Создание, редактирование, удаление задач
-   - Привязка к заказам (order_id, order_type)
-   - Назначение исполнителей (assignee_ids)
-   - Категории задач
-   - Статусы задач
-   - Приоритеты
-   - Дедлайны (finish_at)
-   - Комментарии к задачам
-   - Вложения файлов
+Broadly, there are three steps to build and run evals for your LLM application.
 
-2. **Доски (Boards) - Канбан**
-   - Визуальное представление задач в виде колонок
-   - Drag & Drop для перемещения задач между статусами
-   - Настройка фона досок
-   - Группировка задач по статусам
+Describe the task to be done as an eval
+Run your eval with test inputs (a prompt and input data)
+Analyze the results, then iterate and improve on your prompt
+This process is somewhat similar to behavior-driven development (BDD), where you begin by specifying how the system should behave before implementing and testing the system. Let's see how we would complete each of the steps above using the Evals API.
 
-3. **Группировка и фильтрация**
-   - Группировка по статусам
-   - Группировка по дате выполнения (finish_at)
-   - Группировка по исполнителям (assignee)
-   - Группировка по доскам (board)
-   - Фильтры по категориям, статусам, исполнителям
-   - Поиск задач
+Create an eval for a task
+Creating an eval begins by describing a task to be done by a model. Let's say that we would like to use a model to classify the contents of IT support tickets into one of three categories: Hardware, Software, or Other.
 
-4. **Автоматизация**
-   - Автоматическое создание задач по расписанию
-   - Регулярные задачи (recurring tasks)
-   - Правила автоматизации с условиями
-   - Cron-выражения для расписания
+To implement this use case, you can use either the Chat Completions API or the Responses API. Both examples below combine a developer message with a user message containing the text of a support ticket.
 
-5. **Управление статусами и категориями**
-   - Создание и редактирование статусов
-   - Цветовая маркировка статусов
-   - Создание и редактирование категорий
-   - Настройка видимости категорий для ролей/пользователей
-   - Настройка прав на создание задач в категориях
+Categorize IT support tickets
+from openai import OpenAI
+client = OpenAI()
 
-6. **Интеграция с заказами**
-   - Поиск и привязка заказов к задачам
-   - Отображение информации о заказе в задаче
+instructions = """
+You are an expert in categorizing IT support tickets. Given the support
+ticket below, categorize the request into one of "Hardware", "Software",
+or "Other". Respond with only one of those words.
+"""
 
-## API Endpoints (из кода)
+ticket = "My monitor won't turn on - help!"
 
-### Основные эндпоинты:
-- `GET /boards/subdata` - получение справочных данных (статусы, пользователи, доски, категории)
-- `GET /boards` - список досок
-- `GET /boards/tasks/list` - список задач с группировкой
-- `GET /boards/{board_id}/tasks/{task_id}` - получение задачи
-- `POST /boards/{board_id}/tasks` - создание задачи
-- `POST /boards/{board_id}/tasks/{task_id}` - обновление задачи
-- `DELETE /boards/{board_id}/tasks/{task_id}` - удаление задачи
-- `GET /boards/tasks/assigned-to-me` - задачи назначенные мне
-- `POST /boards/{board_id}/tasks/{task_id}/complete-recurring` - завершение повторяющейся задачи
-- `GET /boards/{board_id}/tasks/{task_id}/comments` - комментарии к задаче
-- `POST /boards/{board_id}/tasks/{task_id}/comments` - создание комментария
-- `DELETE /boards/{board_id}/tasks/{task_id}/comments/{comment_id}` - удаление комментария
-- `GET /tasks/search-orders` - поиск заказов для привязки
-- `GET /roles` - список ролей (для настроек категорий)
+response = client.responses.create(
+    model="gpt-4.1",
+    input=[
+        {"role": "developer", "content": instructions},
+        {"role": "user", "content": ticket},
+    ],
+)
 
-## Возможность переноса в Electron приложение
+print(response.output_text)
+Let's set up an eval to test this behavior via API. An eval needs two key ingredients:
 
-### ✅ ЧТО МОЖНО ПЕРЕНЕСТИ:
+data_source_config: A schema for the test data you will use along with the eval.
+testing_criteria: The graders that determine if the model output is correct.
+Create an eval
+curl https://api.openai.com/v1/evals \
+    -H "Authorization: Bearer $OPENAI_API_KEY" \
+    -H "Content-Type: application/json" \
+    -d '{
+        "name": "IT Ticket Categorization",
+        "data_source_config": {
+            "type": "custom",
+            "item_schema": {
+                "type": "object",
+                "properties": {
+                    "ticket_text": { "type": "string" },
+                    "correct_label": { "type": "string" }
+                },
+                "required": ["ticket_text", "correct_label"]
+            },
+            "include_sample_schema": true
+        },
+        "testing_criteria": [
+            {
+                "type": "string_check",
+                "name": "Match output to human label",
+                "input": "{{ sample.output_text }}",
+                "operation": "eq",
+                "reference": "{{ item.correct_label }}"
+            }
+        ]
+    }'
+Explanation: data_source_config parameter
+Explanation: testing_criteria parameter
+After creating the eval, it will be assigned a UUID that you will need to address it later when kicking off a run.
 
-1. **Все основные функции управления задачами**
-   - ✅ Создание, редактирование, удаление задач
-   - ✅ Просмотр списка задач
-   - ✅ Фильтрация и группировка
-   - ✅ Назначение исполнителей
-   - ✅ Управление статусами
-   - ✅ Комментарии к задачам
-   - ✅ Вложения файлов
+{
+  "object": "eval",
+  "id": "eval_67e321d23b54819096e6bfe140161184",
+  "data_source_config": {
+    "type": "custom",
+    "schema": { ... omitted for brevity... }
+  },
+  "testing_criteria": [
+    {
+      "name": "Match output to human label",
+      "id": "Match output to human label-c4fdf789-2fa5-407f-8a41-a6f4f9afd482",
+      "type": "string_check",
+      "input": "{{ sample.output_text }}",
+      "reference": "{{ item.correct_label }}",
+      "operation": "eq"
+    }
+  ],
+  "name": "IT Ticket Categorization",
+  "created_at": 1742938578,
+  "metadata": {}
+}
+Now that we've created an eval that describes the desired behavior of our application, let's test a prompt with a set of test data.
 
-2. **API интеграция**
-   - ✅ Все API эндпоинты доступны через HTTP
-   - ✅ Текущий ApiClient в chatapp уже поддерживает авторизацию через Bearer token
-   - ✅ Можно использовать те же API endpoints
+Test a prompt with your eval
+Now that we have defined how we want our app to behave in an eval, let's construct a prompt that reliably generates the correct output for a representative sample of test data.
 
-3. **UI компоненты**
-   - ✅ React компоненты можно адаптировать из Vue компонентов
-   - ✅ Стили можно перенести/адаптировать
-   - ✅ Логика работы с данными аналогична
+Uploading test data
+There are several ways to provide test data for eval runs, but it may be convenient to upload a JSONL file that contains data in the schema we specified when we created our eval. A sample JSONL file that conforms to the schema we set up is below:
 
-### ⚠️ ЧТО НУЖНО АДАПТИРОВАТЬ:
+{ "item": { "ticket_text": "My monitor won't turn on!", "correct_label": "Hardware" } }
+{ "item": { "ticket_text": "I'm in vim and I can't quit!", "correct_label": "Software" } }
+{ "item": { "ticket_text": "Best restaurants in Cleveland?", "correct_label": "Other" } }
+This data set contains both test inputs and ground truth labels to compare model outputs against.
 
-1. **Drag & Drop для Канбан досок**
-   - Нужна библиотека для React (например, `react-beautiful-dnd` или `@dnd-kit/core`)
-   - Адаптация компонентов BoardColumn, BoardCard
+Next, let's upload our test data file to the OpenAI platform so we can reference it later. You can upload files in the dashboard here, but it's possible to upload files via API as well. The samples below assume you are running the command in a directory where you saved the sample JSON data above to a file called tickets.jsonl:
 
-2. **Визуальные компоненты**
-   - Замена Vuetify компонентов на React аналоги (Material-UI, Ant Design, или кастомные)
-   - Адаптация стилей под темную тему приложения
+Upload a test data file
+curl https://api.openai.com/v1/files \
+  -H "Authorization: Bearer $OPENAI_API_KEY" \
+  -F purpose="evals" \
+  -F file="@tickets.jsonl"
+When you upload the file, make note of the unique id property in the response payload (also available in the UI if you uploaded via the browser) - we will need to reference that value later:
 
-3. **Автоматизация**
-   - Логика автоматизации работает на бэкенде
-   - В приложении нужен только UI для управления правилами
-   - Cron-выражения и расписание обрабатываются на сервере
+{
+    "object": "file",
+    "id": "file-CwHg45Fo7YXwkWRPUkLNHW",
+    "purpose": "evals",
+    "filename": "tickets.jsonl",
+    "bytes": 208,
+    "created_at": 1742834798,
+    "expires_at": null,
+    "status": "processed",
+    "status_details": null
+}
+Creating an eval run
+With our test data in place, let's evaluate a prompt and see how it performs against our test criteria. Via API, we can do this by creating an eval run.
 
-4. **Интеграция с заказами**
-   - Поиск заказов через API (`/tasks/search-orders`)
-   - Отображение информации о заказе в задаче
+Make sure to replace YOUR_EVAL_ID and YOUR_FILE_ID with the unique IDs of the eval configuration and test data files you created in the steps above.
 
-### ❌ ОГРАНИЧЕНИЯ/ОСОБЕННОСТИ:
+Create an eval run
+curl https://api.openai.com/v1/evals/YOUR_EVAL_ID/runs \
+    -H "Authorization: Bearer $OPENAI_API_KEY" \
+    -H "Content-Type: application/json" \
+    -d '{
+        "name": "Categorization text run",
+        "data_source": {
+            "type": "responses",
+            "model": "gpt-4.1",
+            "input_messages": {
+                "type": "template",
+                "template": [
+                    {"role": "developer", "content": "You are an expert in categorizing IT support tickets. Given the support ticket below, categorize the request into one of Hardware, Software, or Other. Respond with only one of those words."},
+                    {"role": "user", "content": "{{ item.ticket_text }}"}
+                ]
+            },
+            "source": { "type": "file_id", "id": "YOUR_FILE_ID" }
+        }
+    }'
+When we create the run, we set up a prompt using either a Chat Completions messages array or a Responses input. This prompt is used to generate a model response for every line of test data in your data set. We can use the double curly brace syntax to template in the dynamic variable item.ticket_text, which is drawn from the current test data item.
 
-1. **Права доступа**
-   - Проверка прав (`checkAccess`) должна быть реализована через API
-   - Некоторые функции могут быть недоступны в зависимости от роли пользователя
+If the eval run is successfully created, you'll receive an API response that looks like this:
 
-2. **WebSocket для real-time обновлений**
-   - В chatapp уже есть WebSocket интеграция (Laravel Echo)
-   - Можно использовать тот же механизм для обновлений задач в реальном времени
+{
+    "object": "eval.run",
+    "id": "evalrun_67e44c73eb6481909f79a457749222c7",
+    "eval_id": "eval_67e44c5becec81909704be0318146157",
+    "report_url": "https://platform.openai.com/evaluation/evals/abc123",
+    "status": "queued",
+    "model": "gpt-4.1",
+    "name": "Categorization text run",
+    "created_at": 1743015028,
+    "result_counts": { ... },
+    "per_model_usage": null,
+    "per_testing_criteria_results": null,
+    "data_source": {
+        "type": "responses",
+        "source": {
+            "type": "file_id",
+            "id": "file-J7MoX9ToHXp2TutMEeYnwj"
+        },
+        "input_messages": {
+            "type": "template",
+            "template": [
+                {
+                    "type": "message",
+                    "role": "developer",
+                    "content": {
+                        "type": "input_text",
+                        "text": "You are an expert in...."
+                    }
+                },
+                {
+                    "type": "message",
+                    "role": "user",
+                    "content": {
+                        "type": "input_text",
+                        "text": "{{item.ticket_text}}"
+                    }
+                }
+            ]
+        },
+        "model": "gpt-4.1",
+        "sampling_params": null
+    },
+    "error": null,
+    "metadata": {}
+}
+Your eval run has now been queued, and it will execute asynchronously as it processes every row in your data set, generating responses for testing with the prompt and model we specified.
 
-3. **Файловые вложения**
-   - Загрузка файлов через API
-   - Отображение превью файлов
+Analyze the results
+To receive updates when a run succeeds, fails, or is canceled, create a webhook endpoint and subscribe to the eval.run.succeeded, eval.run.failed, and eval.run.canceled events. See the webhooks guide for more details.
 
-## План реализации
+Depending on the size of your dataset, the eval run may take some time to complete. You can view current status in the dashboard, but you can also fetch the current status of an eval run via API:
 
-### Этап 1: Базовая функциональность
-1. Создать API методы для работы с задачами в `api/client.ts`
-2. Создать компоненты:
-   - `TasksList.tsx` - список задач
-   - `TaskRow.tsx` - строка задачи
-   - `TaskDialog.tsx` - модальное окно редактирования задачи
-   - `TaskFilters.tsx` - фильтры задач
+Retrieve eval run status
+curl https://api.openai.com/v1/evals/YOUR_EVAL_ID/runs/YOUR_RUN_ID \
+    -H "Authorization: Bearer $OPENAI_API_KEY" \
+    -H "Content-Type: application/json"
+You'll need the UUID of both your eval and eval run to fetch its status. When you do, you'll see eval run data that looks like this:
 
-### Этап 2: Группировка и фильтрация
-1. Реализовать группировку по статусам, датам, исполнителям
-2. Добавить фильтры
-3. Добавить поиск
+{
+    "object": "eval.run",
+    "id": "evalrun_67e44c73eb6481909f79a457749222c7",
+    "eval_id": "eval_67e44c5becec81909704be0318146157",
+    "report_url": "https://platform.openai.com/evaluation/evals/xxx",
+    "status": "completed",
+    "model": "gpt-4.1",
+    "name": "Categorization text run",
+    "created_at": 1743015028,
+    "result_counts": {
+        "total": 3,
+        "errored": 0,
+        "failed": 0,
+        "passed": 3
+    },
+    "per_model_usage": [
+        {
+            "model_name": "gpt-4o-2024-08-06",
+            "invocation_count": 3,
+            "prompt_tokens": 166,
+            "completion_tokens": 6,
+            "total_tokens": 172,
+            "cached_tokens": 0
+        }
+    ],
+    "per_testing_criteria_results": [
+        {
+            "testing_criteria": "Match output to human label-40d67441-5000-4754-ab8c-181c125803ce",
+            "passed": 3,
+            "failed": 0
+        }
+    ],
+    "data_source": {
+        "type": "responses",
+        "source": {
+            "type": "file_id",
+            "id": "file-J7MoX9ToHXp2TutMEeYnwj"
+        },
+        "input_messages": {
+            "type": "template",
+            "template": [
+                {
+                    "type": "message",
+                    "role": "developer",
+                    "content": {
+                        "type": "input_text",
+                        "text": "You are an expert in categorizing IT support tickets. Given the support ticket below, categorize the request into one of Hardware, Software, or Other. Respond with only one of those words."
+                    }
+                },
+                {
+                    "type": "message",
+                    "role": "user",
+                    "content": {
+                        "type": "input_text",
+                        "text": "{{item.ticket_text}}"
+                    }
+                }
+            ]
+        },
+        "model": "gpt-4.1",
+        "sampling_params": null
+    },
+    "error": null,
+    "metadata": {}
+}
+The API response contains granular information about test criteria results, API usage for generating model responses, and a report_url property that takes you to a page in the dashboard where you can explore the results visually.
 
-### Этап 3: Канбан доски
-1. Установить библиотеку для Drag & Drop
-2. Создать компоненты BoardColumn, BoardCard
-3. Реализовать перемещение задач между колонками
+In our simple test, the model reliably generated the content we wanted for a small test case sample. In reality, you will often have to run your eval with more criteria, different prompts, and different data sets. But the process above gives you all the tools you need to build robust evals for your LLM apps!
 
-### Этап 4: Дополнительные функции
-1. Комментарии к задачам
-2. Вложения файлов
-3. Интеграция с заказами
-4. Управление статусами и категориями
+Next steps
+Now you know how to create and run evals via API, and using the dashboard! Here are a few other resources that may be useful to you as you continue to improve your model results.
 
-### Этап 5: Автоматизация
-1. UI для управления правилами автоматизации
-2. Просмотр и редактирование правил
+Cookbook: Detecting prompt regressions
+Keep tabs on the performance of your prompts as you iterate on them.
 
-## Вывод
+Cookbook: Bulk model and prompt experimentation
+Compare the results of many different prompts and models at once.
 
-**✅ ВЫВОД: Все функции тасок МОЖНО перенести в Electron приложение**
+Cookbook: Monitoring stored completions
+Examine stored completions to test for prompt regressions.
 
-Все API endpoints доступны через HTTP, логика работы с данными не зависит от платформы. Основная работа - это адаптация UI компонентов с Vue на React и интеграция с существующим API клиентом приложения.
+Fine-tuning
+Improve a model's ability to generate responses tailored to your use case.
 
-**Оценка сложности:** Средняя
-- Адаптация компонентов: 2-3 недели
-- Интеграция с API: 1 неделя
-- Тестирование и доработка: 1 неделя
-- **Итого: ~4-5 недель разработки**
+Model distillation
+Learn how to distill large model results to smaller, cheaper, and faster models.
 
