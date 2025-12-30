@@ -13,7 +13,8 @@ const ChatList: React.FC = () => {
   const [showTagFilter, setShowTagFilter] = useState(false);
   const tagFilterRef = useRef<HTMLDivElement>(null);
 
-  // Debounce поискового запроса (500ms задержка)
+  // Debounce поискового запроса (500ms задержка) - только для подсветки в сообщениях
+  // НЕ обновляем filters, чтобы не вызывать перезагрузку списка чатов
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearchQuery(searchQuery);
@@ -23,19 +24,6 @@ const ChatList: React.FC = () => {
 
     return () => clearTimeout(timer);
   }, [searchQuery, setStoreSearchQuery]);
-
-  // Обновляем фильтры при изменении debounced поискового запроса (только для API поиска по всем сообщениям)
-  useEffect(() => {
-    // Используем API поиск только если запрос длиннее 2 символов
-    if (debouncedSearchQuery.trim().length > 2) {
-      useChatStore.getState().setFilters({ search: debouncedSearchQuery.trim() });
-    } else if (debouncedSearchQuery.trim().length === 0) {
-      // Убираем поиск из фильтров, если поле пустое
-      const currentFilters = useChatStore.getState().filters;
-      const { search, ...restFilters } = currentFilters;
-      useChatStore.getState().setFilters(restFilters);
-    }
-  }, [debouncedSearchQuery]);
 
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['chats', filters],

@@ -181,28 +181,26 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId }) => {
       // Mark chat as read and update store
       apiClient.markAsRead(chatId)
         .then(() => {
-          console.log('✅ Chat marked as read:', chatId);
           // Update unread_count in store
+          const { updateChat } = useChatStore.getState();
           updateChat(chatId, { unread_count: 0 });
           // Invalidate queries to refresh chat list
           queryClient.invalidateQueries({ queryKey: ['chats'] });
           queryClient.invalidateQueries({ queryKey: ['chat', chatId] });
         })
-        .catch((error) => {
-          console.error('❌ Failed to mark chat as read:', error);
+        .catch(() => {
+          // Игнорируем ошибки
         });
       
       // Subscribe to this specific chat's WebSocket channel
       wsClient.subscribeToChat(chatId);
-      console.log('📡 Subscribed to chat channel:', chatId);
       
       // Unsubscribe when chat changes
       return () => {
         wsClient.unsubscribeFromChat(chatId);
-        console.log('📡 Unsubscribed from chat channel:', chatId);
       };
     }
-  }, [chatId, updateChat, queryClient]);
+  }, [chatId, queryClient]); // Оставляем только необходимые зависимости
 
   // Use chat from store if API data not loaded yet
   // Normalize assigned_manager field

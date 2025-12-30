@@ -127,6 +127,11 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, onUpdate, searchQuer
     );
   };
 
+  // Мемоизируем результат подсветки, чтобы избежать лишних ререндеров
+  const highlightedText = React.useMemo(() => {
+    return highlightText(messageText, searchQuery);
+  }, [messageText, searchQuery]);
+
   // Close context menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -339,7 +344,7 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, onUpdate, searchQuer
                   // Allow default paste behavior
                   e.stopPropagation();
                 }}
-              >{highlightText(messageText, searchQuery)}</div>
+              >{highlightedText}</div>
               {message.files && message.files.length > 0 && (
                 <div className="message-attachments">
                   {message.files.map((file) => {
