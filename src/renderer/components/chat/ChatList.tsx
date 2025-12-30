@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useChatStore } from '../../store/chatStore';
 import { apiClient } from '../../api/client';
@@ -7,13 +7,45 @@ import '../../styles/ChatList.css';
 
 const ChatList: React.FC = () => {
   const { filters, chats, setChats, setSelectedChat } = useChatStore();
-  const [tagSearch, setTagSearch] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [showTagFilter, setShowTagFilter] = useState(false);
+  const tagFilterRef = useRef<HTMLDivElement>(null);
+
+  // Обновляем фильтры при изменении поискового запроса
+  useEffect(() => {
+    if (searchQuery.trim()) {
+      useChatStore.getState().setFilters({ search: searchQuery.trim() });
+    } else {
+      // Убираем поиск из фильтров, если поле пустое
+      const currentFilters = useChatStore.getState().filters;
+      const { search, ...restFilters } = currentFilters;
+      useChatStore.getState().setFilters(restFilters);
+    }
+  }, [searchQuery]);
 
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['chats', filters],
     queryFn: () => apiClient.getChats(filters),
     refetchInterval: 30000, // Refetch every 30 seconds
   });
+
+  // Закрываем dropdown при клике вне его
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (tagFilterRef.current && !tagFilterRef.current.contains(event.target as Node)) {
+        setShowTagFilter(false);
+      }
+    };
+
+    if (showTagFilter) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showTagFilter]);
 
   useEffect(() => {
     if (data) {
@@ -33,30 +65,46 @@ const ChatList: React.FC = () => {
     }
   }, [data, error, setChats]);
 
-  // Filter chats by tags
+  // Получаем все доступные теги из чатов
+  const availableTags = useMemo(() => {
+    const tagSet = new Set<string>();
+    chats.forEach((chat) => {
+      if (chat?.metadata?.tags && Array.isArray(chat.metadata.tags)) {
+        chat.metadata.tags.forEach((tag: string) => {
+          if (tag && typeof tag === 'string') {
+            tagSet.add(tag);
+          }
+        });
+      }
+    });
+    return Array.from(tagSet).sort();
+  }, [chats]);
+
+  // Фильтруем чаты по выбранным тегам (клиентская фильтрация)
   const filteredChats = useMemo(() => {
-    if (!tagSearch.trim()) {
-      return chats;
+    let result = chats;
+
+    // Фильтр по тегам
+    if (selectedTags.length > 0) {
+      result = result.filter((chat) => {
+        if (!chat || !(chat.clientUser || chat.client_name)) {
+          return false;
+        }
+
+        // Проверяем, есть ли у чата хотя бы один из выбранных тегов
+        if (chat.metadata && typeof chat.metadata === 'object' && chat.metadata.tags) {
+          const chatTags = Array.isArray(chat.metadata.tags) ? chat.metadata.tags : [];
+          return selectedTags.some((selectedTag) => 
+            chatTags.includes(selectedTag)
+          );
+        }
+
+        return false;
+      });
     }
 
-    const searchLower = tagSearch.toLowerCase().trim();
-    return chats.filter((chat) => {
-      if (!chat || !(chat.clientUser || chat.client_name)) {
-        return false;
-      }
-
-      // Check if chat has tags in metadata
-      if (chat.metadata && typeof chat.metadata === 'object' && chat.metadata.tags) {
-        const tags = Array.isArray(chat.metadata.tags) ? chat.metadata.tags : [];
-        // Check if any tag matches the search query
-        return tags.some((tag: string) => 
-          tag.toLowerCase().includes(searchLower)
-        );
-      }
-
-      return false;
-    });
-  }, [chats, tagSearch]);
+    return result;
+  }, [chats, selectedTags]);
 
   if (isLoading) {
     console.log('⏳ ChatList: Loading...');
@@ -90,11 +138,61 @@ const ChatList: React.FC = () => {
         <div className="chat-list-filters">
           <input
             type="text"
-            placeholder="Поиск по тегам..."
-            value={tagSearch}
-            onChange={(e) => setTagSearch(e.target.value)}
-            className="chat-list-tag-search"
+            placeholder="Поиск по имени или сообщениям..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="chat-list-search"
           />
+          <div className="chat-list-tag-filter-wrapper" ref={tagFilterRef}>
+            <button
+              type="button"
+              className={`chat-list-tag-filter-btn ${selectedTags.length > 0 ? 'active' : ''}`}
+              onClick={() => setShowTagFilter(!showTagFilter)}
+              title={selectedTags.length > 0 ? `Выбрано тегов: ${selectedTags.length}` : 'Фильтр по тегам'}
+            >
+              <span>Теги {selectedTags.length > 0 && `(${selectedTags.length})`}</span>
+            </button>
+            {showTagFilter && (
+              <div className="chat-list-tag-filter-dropdown">
+                {availableTags.length === 0 ? (
+                  <div className="chat-list-tag-filter-empty">Нет доступных тегов</div>
+                ) : (
+                  <>
+                    <div className="chat-list-tag-filter-header">
+                      <span>Выберите теги:</span>
+                      {selectedTags.length > 0 && (
+                        <button
+                          type="button"
+                          className="chat-list-tag-filter-clear"
+                          onClick={() => setSelectedTags([])}
+                        >
+                          Очистить
+                        </button>
+                      )}
+                    </div>
+                    <div className="chat-list-tag-filter-list">
+                      {availableTags.map((tag) => (
+                        <label key={tag} className="chat-list-tag-filter-item">
+                          <input
+                            type="checkbox"
+                            checked={selectedTags.includes(tag)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedTags([...selectedTags, tag]);
+                              } else {
+                                setSelectedTags(selectedTags.filter((t) => t !== tag));
+                              }
+                            }}
+                          />
+                          <span>{tag}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
           <select
             value={filters.status || ''}
             onChange={(e) => {
@@ -114,7 +212,9 @@ const ChatList: React.FC = () => {
       <div className="chat-list-items">
         {filteredChats.length === 0 ? (
           <div className="chat-list-empty">
-            {tagSearch.trim() ? 'Чаты с такими тегами не найдены' : 'Нет чатов'}
+            {selectedTags.length > 0 || searchQuery.trim() 
+              ? 'Чаты не найдены' 
+              : 'Нет чатов'}
           </div>
         ) : (
           filteredChats
