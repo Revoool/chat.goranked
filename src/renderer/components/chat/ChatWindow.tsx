@@ -44,7 +44,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId }) => {
 
   // Try to get chat from store first
   // Мемоизируем поиск чата, чтобы избежать лишних ререндеров
-  const chatFromStore = useMemo(() => {
+  const chatFromStore = React.useMemo(() => {
     return chats.find(c => c.id === chatId);
   }, [chats, chatId]);
 
@@ -205,7 +205,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId }) => {
   // Use chat from store if API data not loaded yet
   // Normalize assigned_manager field
   // Мемоизируем, чтобы избежать лишних ререндеров
-  const displayChat = useMemo(() => {
+  const displayChat = React.useMemo(() => {
     if (chatData) {
       return {
         ...chatData,
