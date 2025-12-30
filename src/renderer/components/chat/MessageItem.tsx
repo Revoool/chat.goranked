@@ -128,9 +128,11 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, onUpdate, searchQuer
   };
 
   // Мемоизируем результат подсветки, чтобы избежать лишних ререндеров
+  // Используем message.body напрямую, чтобы избежать лишних пересчетов
   const highlightedText = React.useMemo(() => {
-    return highlightText(messageText, searchQuery);
-  }, [messageText, searchQuery]);
+    const text = message.body || '';
+    return highlightText(text, searchQuery);
+  }, [message.body, searchQuery]);
 
   // Close context menu when clicking outside
   useEffect(() => {

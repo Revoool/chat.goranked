@@ -39,7 +39,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId }) => {
   const [showPriorityModal, setShowPriorityModal] = useState(false);
   const [showClientOrdersModal, setShowClientOrdersModal] = useState(false);
   const [showNoteModal, setShowNoteModal] = useState(false);
-  const { updateChat, chats, toggleClientCard, isClientCardOpen } = useChatStore();
+  const { updateChat, chats, toggleClientCard, isClientCardOpen, searchQuery } = useChatStore();
   const queryClient = useQueryClient();
 
   console.log('💬 ChatWindow rendered for chatId:', chatId);
@@ -204,11 +204,16 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId }) => {
 
   // Use chat from store if API data not loaded yet
   // Normalize assigned_manager field
-  const normalizedChat = chatData ? {
-    ...chatData,
-    assignedManager: chatData.assigned_manager || chatData.assignedManager,
-  } : null;
-  const displayChat = normalizedChat || chatFromStore;
+  // Мемоизируем, чтобы избежать лишних ререндеров
+  const displayChat = useMemo(() => {
+    if (chatData) {
+      return {
+        ...chatData,
+        assignedManager: chatData.assigned_manager || chatData.assignedManager,
+      };
+    }
+    return chatFromStore;
+  }, [chatData, chatFromStore]);
   
   if (chatLoading || messagesLoading) {
     return <div className="chat-window-loading">Завантаження...</div>;
@@ -349,7 +354,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId }) => {
         messages={messagesData?.data || messagesData || []} 
         chatId={chatId}
         onUpdate={() => refetch()}
-        searchQuery={useChatStore((state) => state.searchQuery)}
+        searchQuery={searchQuery}
       />
 
       <MessageInput
