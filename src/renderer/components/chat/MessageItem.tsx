@@ -60,18 +60,30 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, onUpdate, searchQuer
 
   // Функция для подсветки найденного текста (находит все совпадения)
   const highlightText = (text: string, query: string): React.ReactNode => {
-    if (!query || !query.trim()) {
+    // Защита от пустых значений
+    if (!text || typeof text !== 'string') {
+      return text || '';
+    }
+    
+    if (!query || typeof query !== 'string' || !query.trim()) {
       return text;
     }
 
     const queryTrimmed = query.trim();
+    if (queryTrimmed.length === 0) {
+      return text;
+    }
+
     const queryLower = queryTrimmed.toLowerCase();
     const textLower = text.toLowerCase();
     const parts: Array<string | { text: string; isMatch: boolean }> = [];
     let lastIndex = 0;
     let index = textLower.indexOf(queryLower, lastIndex);
+    let iterations = 0;
+    const maxIterations = 1000; // Защита от бесконечного цикла
 
-    while (index !== -1) {
+    while (index !== -1 && iterations < maxIterations) {
+      iterations++;
       // Добавляем текст до совпадения
       if (index > lastIndex) {
         parts.push(text.substring(lastIndex, index));
@@ -88,8 +100,13 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, onUpdate, searchQuer
     }
 
     // Если совпадений не найдено, возвращаем исходный текст
-    if (parts.length === 0 || (parts.length === 1 && typeof parts[0] === 'string')) {
+    if (parts.length === 0) {
       return text;
+    }
+    
+    // Если только один элемент и это строка (без совпадений), возвращаем её
+    if (parts.length === 1 && typeof parts[0] === 'string') {
+      return parts[0];
     }
 
     // Рендерим части с подсветкой
