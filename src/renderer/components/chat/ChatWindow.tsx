@@ -42,11 +42,11 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId }) => {
   const { updateChat, chats, toggleClientCard, isClientCardOpen, searchQuery } = useChatStore();
   const queryClient = useQueryClient();
 
-  console.log('💬 ChatWindow rendered for chatId:', chatId);
-  
   // Try to get chat from store first
-  const chatFromStore = chats.find(c => c.id === chatId);
-  console.log('💬 Chat from store:', chatFromStore);
+  // Мемоизируем поиск чата, чтобы избежать лишних ререндеров
+  const chatFromStore = useMemo(() => {
+    return chats.find(c => c.id === chatId);
+  }, [chats, chatId]);
 
   const { data: chatData, isLoading: chatLoading, error: chatError } = useQuery({
     queryKey: ['chat', chatId],
