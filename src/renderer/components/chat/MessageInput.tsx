@@ -50,6 +50,36 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSend, disabled, chatId })
     };
   }, [sendMessageKey]);
 
+  // Function to focus textarea
+  const focusTextarea = React.useCallback(() => {
+    if (textareaRef.current) {
+      textareaRef.current.focus();
+    }
+  }, []);
+
+  // Restore focus after message is sent (when text becomes empty)
+  useEffect(() => {
+    if (!text && !disabled && textareaRef.current) {
+      // Use microtask to ensure this runs after React's state updates
+      Promise.resolve().then(() => {
+        if (textareaRef.current) {
+          textareaRef.current.focus();
+        }
+      });
+    }
+  }, [text, disabled]);
+
+  // Ensure focus when component mounts or chatId changes
+  useEffect(() => {
+    if (!disabled && textareaRef.current) {
+      // Small delay to ensure DOM is ready
+      const timeoutId = setTimeout(() => {
+        focusTextarea();
+      }, 0);
+      return () => clearTimeout(timeoutId);
+    }
+  }, [chatId, disabled, focusTextarea]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (text.trim() || attachments.length > 0) {
@@ -79,16 +109,8 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSend, disabled, chatId })
       setSelectedAiSuggestion(null);
       if (textareaRef.current) {
         textareaRef.current.style.height = 'auto';
-        // Return focus to textarea after sending message
-        // Use requestAnimationFrame to ensure focus happens after React updates
-        requestAnimationFrame(() => {
-          setTimeout(() => {
-            if (textareaRef.current) {
-              textareaRef.current.focus();
-            }
-          }, 10);
-        });
       }
+      // Focus will be restored by useEffect when text becomes empty
     }
   };
 
@@ -370,6 +392,13 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSend, disabled, chatId })
           onMouseDown={(e) => {
             // Prevent button from taking focus
             e.preventDefault();
+          }}
+          onClick={() => {
+            // Ensure textarea keeps focus immediately after click
+            // Focus will be maintained by useEffect when text becomes empty
+            if (textareaRef.current) {
+              textareaRef.current.focus();
+            }
           }}
         >
           Відправити
