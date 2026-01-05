@@ -4,6 +4,7 @@ import { apiClient } from '../../api/client';
 import { useAuthStore } from '../../store/authStore';
 import { useQueryClient } from '@tanstack/react-query';
 import { IconPin, IconCircleDot, IconPencil, IconPaperclip, IconCheck, IconSparkles } from '../../icons';
+import ImageModal from './modals/ImageModal';
 import '../../styles/MessageItem.css';
 
 interface MessageItemProps {
@@ -21,6 +22,7 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, onUpdate, searchQuer
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(message.body || '');
   const [isUpdating, setIsUpdating] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<{ url: string; name: string } | null>(null);
   const editTextareaRef = useRef<HTMLTextAreaElement>(null);
   const contextMenuRef = useRef<HTMLDivElement>(null);
   const messageRef = useRef<HTMLDivElement>(null);
@@ -359,7 +361,13 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, onUpdate, searchQuer
                     return (
                       <div key={file.id} className="message-attachment">
                         {file.mime_type.startsWith('image/') ? (
-                          <img src={fileUrl} alt={file.file_name || 'Attachment'} crossOrigin="anonymous" />
+                          <img 
+                            src={fileUrl} 
+                            alt={file.file_name || 'Attachment'} 
+                            crossOrigin="anonymous"
+                            onClick={() => setSelectedImage({ url: fileUrl, name: file.file_name || 'Image' })}
+                            style={{ cursor: 'pointer' }}
+                          />
                         ) : (
                           <a href={fileUrl} target="_blank" rel="noopener noreferrer" download={file.file_name || 'file'}>
                             <IconPaperclip size={16} style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: '4px' }} />
@@ -428,6 +436,13 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, onUpdate, searchQuer
             Позначити як непрочитане
           </button>
         </div>
+      )}
+      {selectedImage && (
+        <ImageModal
+          imageUrl={selectedImage.url}
+          imageName={selectedImage.name}
+          onClose={() => setSelectedImage(null)}
+        />
       )}
     </div>
   );

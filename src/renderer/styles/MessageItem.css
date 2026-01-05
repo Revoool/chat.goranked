@@ -178,6 +178,12 @@
   border-radius: 8px;
   cursor: pointer;
   display: block;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.message-attachment img:hover {
+  transform: scale(1.02);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .message-attachment a {

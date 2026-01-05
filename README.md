@@ -101,7 +101,6 @@ git push origin --tags
 # Или соберите релиз локально:
 npm run build:win:installer  # для Windows
 npm run build:mac            # для macOS
-npm run build:linux          # для Linux
 ```
 
 ### Автоматический релиз через GitHub Actions
