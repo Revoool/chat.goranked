@@ -65,6 +65,16 @@ class WebSocketClient {
       throw new Error('Invalid authentication token');
     }
 
+    // Close existing connection if it exists and is not already closed
+    if (this.ws && this.ws.readyState !== WebSocket.CLOSED) {
+      try {
+        this.ws.close(1000, 'Reconnecting');
+      } catch (e) {
+        // Ignore errors when closing
+      }
+      this.ws = null;
+    }
+
     this.isConnecting = true;
 
     try {
@@ -94,12 +104,33 @@ class WebSocketClient {
       this.ws.onerror = (error) => {
         console.error('WebSocket error:', error);
         this.isConnecting = false;
+        // Don't log to console if connection was closed before establishment
+        // This is a common scenario and not necessarily an error
+        if (this.ws && this.ws.readyState === WebSocket.CLOSED) {
+          // Connection was closed before it could be established
+          // This might happen during rapid reconnections or network issues
+          console.warn('WebSocket connection closed before establishment');
+        }
       };
 
-      this.ws.onclose = () => {
-        console.log('WebSocket closed');
+      this.ws.onclose = (event) => {
+        // Only log if it wasn't a normal closure
+        if (event.code !== 1000 && event.code !== 1001) {
+          console.log('WebSocket closed:', {
+            code: event.code,
+            reason: event.reason || 'No reason provided',
+            wasClean: event.wasClean
+          });
+        }
         this.isConnecting = false;
-        this.attemptReconnect(token);
+        
+        // Only attempt reconnect if it wasn't a manual disconnect
+        // and we haven't exceeded max attempts
+        if (this.reconnectAttempts < this.maxReconnectAttempts) {
+          this.attemptReconnect(token);
+        } else if (this.reconnectAttempts === this.maxReconnectAttempts) {
+          console.error('Max WebSocket reconnection attempts reached. Please refresh the page.');
+        }
       };
     } catch (error) {
       console.error('Error connecting WebSocket:', error);
@@ -113,12 +144,20 @@ class WebSocketClient {
       return;
     }
 
+    // Don't reconnect if we're already connecting
+    if (this.isConnecting) {
+      return;
+    }
+
     this.reconnectAttempts++;
     const delay = this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1);
 
     setTimeout(() => {
-      console.log(`Reconnecting... (attempt ${this.reconnectAttempts})`);
-      this.connect(token);
+      // Check again before attempting to reconnect
+      if (!this.isConnecting && (!this.ws || this.ws.readyState === WebSocket.CLOSED)) {
+        console.log(`Reconnecting... (attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
+        this.connect(token);
+      }
     }, delay);
   }
 

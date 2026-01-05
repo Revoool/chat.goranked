@@ -23,6 +23,46 @@
   color: var(--text-secondary);
 }
 
+.attachment-preview-image {
+  position: relative;
+  display: inline-block;
+  max-width: 200px;
+  max-height: 200px;
+}
+
+.attachment-preview-image img {
+  max-width: 100%;
+  max-height: 200px;
+  border-radius: 6px;
+  display: block;
+  object-fit: contain;
+}
+
+.attachment-preview-remove {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: var(--error);
+  border: 2px solid var(--graphite-medium);
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  z-index: 1;
+}
+
+.attachment-preview-remove:hover {
+  background: #d32f2f;
+  transform: scale(1.1);
+}
+
 .attachment-preview button {
   background: transparent;
   border: none;

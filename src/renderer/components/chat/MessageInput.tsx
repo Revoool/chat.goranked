@@ -69,6 +69,13 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSend, disabled, chatId })
     }
   }, [text, disabled]);
 
+  // Clear text and attachments when chatId changes (fixes bug #1)
+  useEffect(() => {
+    setText('');
+    setAttachments([]);
+    setSelectedAiSuggestion(null);
+  }, [chatId]);
+
   // Ensure focus when component mounts or chatId changes
   useEffect(() => {
     if (!disabled && textareaRef.current) {
@@ -214,12 +221,41 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSend, disabled, chatId })
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files) {
-      // TODO: Upload files and get attachment IDs
-      // For now, just add file info
+      // Add file info with preview for images
       Array.from(files).forEach((file) => {
-        setAttachments((prev) => [...prev, { filename: file.name, file }]);
+        const attachment: any = { filename: file.name, file };
+        
+        // Add attachment immediately
+        setAttachments((prev) => {
+          // Check if file already exists
+          if (!prev.some(att => att.filename === file.name && att.file === file)) {
+            return [...prev, attachment];
+          }
+          return prev;
+        });
+        
+        // Create preview for images
+        if (file.type.startsWith('image/')) {
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            const preview = event.target?.result as string;
+            setAttachments((prev) => {
+              return prev.map((att) => 
+                att.filename === file.name && att.file === file 
+                  ? { ...att, preview }
+                  : att
+              );
+            });
+          };
+          reader.onerror = () => {
+            console.warn('Failed to read image file for preview');
+          };
+          reader.readAsDataURL(file);
+        }
       });
     }
+    // Reset input to allow selecting the same file again
+    e.target.value = '';
   };
 
   return (
@@ -236,13 +272,29 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSend, disabled, chatId })
         <div className="message-input-attachments">
           {attachments.map((att, idx) => (
             <div key={idx} className="attachment-preview">
-              <span>{att.filename}</span>
-              <button
-                type="button"
-                onClick={() => setAttachments((prev) => prev.filter((_, i) => i !== idx))}
-              >
-                ×
-              </button>
+              {att.preview && att.file?.type?.startsWith('image/') ? (
+                <div className="attachment-preview-image">
+                  <img src={att.preview} alt={att.filename} />
+                  <button
+                    type="button"
+                    className="attachment-preview-remove"
+                    onClick={() => setAttachments((prev) => prev.filter((_, i) => i !== idx))}
+                    title="Удалить"
+                  >
+                    ×
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <span>{att.filename}</span>
+                  <button
+                    type="button"
+                    onClick={() => setAttachments((prev) => prev.filter((_, i) => i !== idx))}
+                  >
+                    ×
+                  </button>
+                </>
+              )}
             </div>
           ))}
         </div>

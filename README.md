@@ -71,6 +71,46 @@ npm run build
 - ⏳ Уведомления ОС
 - ⏳ Настройки приложения
 
+## Создание релиза
+
+Для создания нового релиза выполните следующие команды:
+
+```bash
+# 1. Обновите версию в package.json (вручную или через npm version)
+# Например, для patch версии:
+npm version patch
+
+# Или для minor версии:
+npm version minor
+
+# Или для major версии:
+npm version major
+
+# 2. Создайте коммит с изменениями
+git add .
+git commit -m "chore: bump version to X.X.X"
+
+# 3. Создайте тег для релиза
+git tag v$(node -p "require('./package.json').version")
+
+# 4. Отправьте изменения и тег в репозиторий
+git push origin main
+git push origin --tags
+
+# 5. GitHub Actions автоматически соберет релиз при пуше тега
+# Или соберите релиз локально:
+npm run build:win:installer  # для Windows
+npm run build:mac            # для macOS
+npm run build:linux          # для Linux
+```
+
+### Автоматический релиз через GitHub Actions
+
+При создании тега (например, `v1.0.79`) GitHub Actions автоматически:
+- Соберет приложение для всех платформ
+- Создаст GitHub Release
+- Загрузит артефакты сборки
+
 ## Обновление приложения
 
 Приложение поддерживает автоматическое обновление через GitHub Releases. 
