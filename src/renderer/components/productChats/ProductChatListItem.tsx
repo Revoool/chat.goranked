@@ -25,10 +25,9 @@ const ProductChatListItem: React.FC<ProductChatListItemProps> = ({ thread, onCli
     return date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
   };
 
-  const productName = thread.name || 'Unknown';
+  const productName = thread.product?.name || `Замовлення #${thread.id}`;
   const gameName = thread.game?.name || 'Unknown';
-  const sellerName = thread.seller?.name || 'Unknown';
-  const buyerName = thread.buyer?.name || 'Unknown';
+  const clientName = thread.user?.name || 'Unknown';
 
   return (
     <div
@@ -53,7 +52,7 @@ const ProductChatListItem: React.FC<ProductChatListItemProps> = ({ thread, onCli
               <div className="chat-item-name">{productName}</div>
             </div>
             <div className="chat-item-meta-row">
-              <div className="chat-item-source">{buyerName}</div>
+              <div className="chat-item-source">{clientName}</div>
               <div className="chat-item-manager">• {gameName}</div>
             </div>
           </div>
@@ -70,18 +69,13 @@ const ProductChatListItem: React.FC<ProductChatListItemProps> = ({ thread, onCli
         </div>
       </div>
 
-      <div className="chat-item-footer">
-        <div className="chat-item-footer-left">
-          <div className="chat-item-status" style={{ backgroundColor: 'var(--graphite-light)' }}>
-            Продавець: {sellerName}
+      {thread.last_message && (
+        <div className="chat-item-footer">
+          <div className="chat-item-last-message">
+            {thread.last_message.body}
           </div>
-          {thread.inquiry_messages_count > 0 && (
-            <div className="chat-item-status" style={{ backgroundColor: 'var(--graphite-light)', marginLeft: '8px' }}>
-              {thread.inquiry_messages_count} повідомлень
-            </div>
-          )}
         </div>
-      </div>
+      )}
     </div>
   );
 };

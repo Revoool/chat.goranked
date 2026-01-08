@@ -331,34 +331,43 @@ export interface OrderChatMessagesResponse {
   thread: OrderChatThread;
 }
 
-// ==================== PRODUCT CHAT TYPES ====================
+// ==================== PRODUCT ORDERS CHAT TYPES ====================
 
 export interface ProductChatThread {
-  id: string; // Format: "productId_buyerId"
-  product_id: number;
-  buyer_id: number;
-  name: string;
+  id: number; // ID заказа маркетплейса (OrdersProducts.id)
+  order_id: number; // Для совместимости
+  product?: {
+    id: number;
+    name: string;
+    user_id?: number;
+  };
+  user?: {
+    id: number;
+    name: string;
+    email: string;
+  };
   game?: {
     id: number;
     name: string;
-    icon?: string;
+    alter_name?: string;
   };
-  seller?: {
-    id: number;
-    name: string;
-    email: string;
-    avatar?: string;
-  };
-  buyer?: {
-    id: number;
-    name: string;
-    email: string;
-    avatar?: string;
-  };
-  inquiry_messages_count: number;
+  messages_count: number;
   unread_count: number;
+  last_message?: {
+    id: number;
+    from_id: number;
+    to_id: number;
+    body: string;
+    type: string;
+    created_at: string;
+    author?: {
+      id: number;
+      name: string;
+      email: string;
+    };
+  };
   updated_at?: string;
-  last_message_timestamp?: number;
+  created_at?: string;
 }
 
 export interface ProductChatMessage {
@@ -387,10 +396,13 @@ export interface ProductChatMessage {
 }
 
 export interface ProductChatThreadResponse {
-  conversations: ProductChatThread[];
-  total: number;
-  per_page: number;
-  current_page: number;
+  data: ProductChatThread[];
+  meta: {
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
+  };
 }
 
 export interface ProductChatMessagesResponse {
