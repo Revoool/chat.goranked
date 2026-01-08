@@ -226,7 +226,7 @@ const ProductChatWindow: React.FC<ProductChatWindowProps> = ({ orderId }) => {
       </div>
 
       <div className="chat-window-messages">
-        <MessageList messages={formattedMessages} searchQuery={searchQuery} />
+        <MessageList messages={formattedMessages} chatId={orderId} searchQuery={searchQuery} />
         <div ref={messagesEndRef} />
       </div>
 
