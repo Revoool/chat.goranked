@@ -19,6 +19,7 @@ const OrderChatWindow: React.FC<OrderChatWindowProps> = ({ orderId }) => {
   const [messageText, setMessageText] = useState('');
   const [sendAsAdmin, setSendAsAdmin] = useState(true);
   const [isTyping, setIsTyping] = useState(false);
+  const [showAiSuggestions, setShowAiSuggestions] = useState(false);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
