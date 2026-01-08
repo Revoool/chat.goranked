@@ -1659,8 +1659,9 @@ class ApiClient {
           product: order.product ? {
             ...order.product,
             name: productName,
+            user: order.seller || order.product?.user || null, // Данные продавца
           } : null,
-          user: order.client,
+          user: order.client, // Данные покупателя
           game: order.product?.game || { name: order.game_name },
           messages_count: messages.length,
           unread_count: 0,

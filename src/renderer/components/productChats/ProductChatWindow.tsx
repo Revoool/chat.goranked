@@ -24,16 +24,20 @@ const ProductChatWindow: React.FC<ProductChatWindowProps> = ({ orderId }) => {
   const { data: messagesData, isLoading: messagesLoading, error: messagesError, refetch } = useQuery({
     queryKey: ['product-chat-messages', orderId],
     queryFn: async () => {
-      // Автоматически помечаем как прочитанные при загрузке
-      const data = await apiClient.getProductChatMessages(orderId, { mark_seen: true });
-      // Также вызываем markSeen для гарантии
-      await apiClient.markProductChatSeen(orderId).catch(err => {
-        console.warn('Failed to mark product order chat as seen:', err);
-      });
+      // Загружаем данные
+      const data = await apiClient.getProductChatMessages(orderId, { mark_seen: false });
+      // Помечаем как прочитанные после успешной загрузки
+      if (data && data.data && data.data.length > 0) {
+        await apiClient.markProductChatSeen(orderId).catch(err => {
+          console.warn('Failed to mark product order chat as seen:', err);
+        });
+      }
       return data;
     },
     enabled: !!orderId,
     refetchInterval: 5000, // Refetch every 5 seconds
+    staleTime: 0, // Всегда считать данные устаревшими для немедленного обновления
+    gcTime: 0, // Не кешировать данные, чтобы при переключении чата всегда загружались свежие данные
   });
 
   const thread = messagesData?.thread;
@@ -197,8 +201,25 @@ const ProductChatWindow: React.FC<ProductChatWindowProps> = ({ orderId }) => {
 
   // Преобразуем сообщения для MessageList
   const formattedMessages = messages.map((msg: any) => {
-    // Определяем, от кого сообщение (админ/продавец или покупатель)
-    const isFromManager = msg.from_id === (sendAsAdmin ? currentUser?.id : thread?.product?.user_id);
+    // Определяем, от кого сообщение:
+    // - Покупатель: from_id === thread.user.id
+    // - Продавец: from_id === thread.product.user_id
+    // - Админ: все остальные (from_id !== thread.user.id && from_id !== thread.product.user_id)
+    const isFromBuyer = thread?.user?.id && msg.from_id === thread.user.id;
+    const isFromSeller = thread?.product?.user_id && msg.from_id === thread.product.user_id;
+    const isFromManager = !isFromBuyer; // Админ или продавец = менеджер (не покупатель)
+    
+    // Получаем данные пользователя из msg.from или создаем из доступных данных
+    let userData = msg.from;
+    if (!userData && msg.from_id) {
+      // Если нет данных пользователя, создаем базовые
+      userData = {
+        id: msg.from_id,
+        name: msg.email || (isFromBuyer ? thread?.user?.name : (isFromSeller ? thread?.product?.user?.name : 'Админ')) || 'Unknown',
+        email: msg.email || '',
+        avatar: msg.avatar || (isFromBuyer ? thread?.user?.avatar : (isFromSeller ? thread?.product?.user?.avatar : null)),
+      };
+    }
     
     return {
       id: msg.id,
@@ -210,12 +231,7 @@ const ProductChatWindow: React.FC<ProductChatWindowProps> = ({ orderId }) => {
       seen: msg.seen || false,
       created_at: msg.created_at,
       updated_at: msg.updated_at || msg.created_at,
-      user: msg.from || (msg.from_id ? {
-        id: msg.from_id,
-        name: msg.email || 'Unknown',
-        email: msg.email || '',
-        avatar: msg.avatar,
-      } : null),
+      user: userData,
       files: msg.files || [],
     };
   });
@@ -224,11 +240,12 @@ const ProductChatWindow: React.FC<ProductChatWindowProps> = ({ orderId }) => {
     <div className="chat-window">
       <div className="chat-window-header">
         <div className="chat-window-header-info">
-          <h3>{typeof thread.product?.name === 'string' ? thread.product.name : (thread.product?.name?.uk || thread.product?.name?.ua || `Замовлення #${orderId}`)}</h3>
+          <h3>Замовлення #{orderId}</h3>
           <div className="chat-window-header-meta">
-            <span>ID: {orderId}</span>
+            <span>{typeof thread.product?.name === 'string' ? thread.product.name : (thread.product?.name?.uk || thread.product?.name?.ua || 'Товар')}</span>
             {thread.game && <span>• {thread.game.name}</span>}
-            {thread.user && <span>• Клієнт: {thread.user.name}</span>}
+            {thread.user && <span>• Покупець: {thread.user.name}</span>}
+            {thread.product?.user && <span>• Продавець: {thread.product.user.name}</span>}
           </div>
         </div>
       </div>

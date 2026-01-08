@@ -58,7 +58,12 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, onUpdate, searchQuer
   };
 
   const authorName = message.user?.name || 'Agent';
-  const authorAvatar = message.user?.avatar;
+  // Обрабатываем avatar - может быть строкой или null/undefined
+  const authorAvatar = message.user?.avatar 
+    ? (typeof message.user.avatar === 'string' && message.user.avatar.trim() !== '' 
+      ? message.user.avatar 
+      : null)
+    : null;
 
   // Функция для подсветки найденного текста (находит все совпадения)
   const highlightText = (text: string, query: string): React.ReactNode => {
@@ -285,16 +290,22 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, onUpdate, searchQuer
         )}
         {!isClient && (
           <div className="message-author">
-            {authorAvatar && (
-              <img 
-                src={authorAvatar} 
-                alt={authorName}
-                className="message-author-avatar"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).style.display = 'none';
-                }}
-              />
-            )}
+            <div className="message-author-avatar-wrapper">
+              {authorAvatar ? (
+                <img 
+                  src={authorAvatar} 
+                  alt={authorName}
+                  className="message-author-avatar"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).style.display = 'none';
+                  }}
+                />
+              ) : (
+                <div className="message-author-avatar-placeholder">
+                  {authorName.charAt(0).toUpperCase()}
+                </div>
+              )}
+            </div>
             <span>{authorName}</span>
           </div>
         )}
@@ -354,7 +365,7 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, onUpdate, searchQuer
                   {message.files.map((file) => {
                     // Security: Use API endpoint for file access instead of direct file_path
                     // This ensures server-side authorization checks
-                    const fileUrl = file.file_path?.startsWith('http') 
+                    const fileUrl = (file.file_path && typeof file.file_path === 'string' && file.file_path.startsWith('http')) 
                       ? file.file_path 
                       : `/api/manager-client-chats/${message.chat_id}/messages/${message.id}/files/${file.id}`;
                     
