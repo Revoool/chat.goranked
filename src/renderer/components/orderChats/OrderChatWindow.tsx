@@ -21,20 +21,24 @@ const OrderChatWindow: React.FC<OrderChatWindowProps> = ({ orderId }) => {
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Загружаем данные чата заказа
+  // Загружаем данные чата заказа маркетплейса
   const { data: messagesData, isLoading: messagesLoading, error: messagesError, refetch } = useQuery({
     queryKey: ['order-chat-messages', orderId],
     queryFn: async () => {
-      // Автоматически помечаем как прочитанные при загрузке
-      const data = await apiClient.getOrderChatMessages(orderId, { mark_seen: true });
-      // Также вызываем markSeen для гарантии
-      await apiClient.markOrderChatSeen(orderId).catch(err => {
-        console.warn('Failed to mark order chat as seen:', err);
-      });
+      // Загружаем данные чата заказа маркетплейса
+      const data = await apiClient.getProductChatMessages(orderId, { mark_seen: false });
+      // Помечаем как прочитанные после успешной загрузки
+      if (data && data.data && data.data.length > 0) {
+        await apiClient.markProductChatSeen(orderId).catch(err => {
+          console.warn('Failed to mark product order chat as seen:', err);
+        });
+      }
       return data;
     },
     enabled: !!orderId,
     refetchInterval: 5000, // Refetch every 5 seconds
+    staleTime: 0, // Всегда считать данные устаревшими для немедленного обновления
+    gcTime: 0, // Не кешировать данные, чтобы при переключении чата всегда загружались свежие данные
   });
 
   const thread = messagesData?.thread;
@@ -43,8 +47,8 @@ const OrderChatWindow: React.FC<OrderChatWindowProps> = ({ orderId }) => {
   // Автоматически помечаем как прочитанные при открытии чата
   useEffect(() => {
     if (orderId) {
-      apiClient.markOrderChatSeen(orderId).catch(err => {
-        console.warn('Failed to mark order chat as seen:', err);
+      apiClient.markProductChatSeen(orderId).catch(err => {
+        console.warn('Failed to mark product order chat as seen:', err);
       });
     }
   }, [orderId]);
@@ -60,27 +64,15 @@ const OrderChatWindow: React.FC<OrderChatWindowProps> = ({ orderId }) => {
   // Отправка сообщения
   const sendMessageMutation = useMutation({
     mutationFn: async (body: string) => {
-      if (sendAsAdmin) {
-        // Отправляем от админа
-        return apiClient.sendOrderChatMessage(orderId, body);
-      } else {
-        // Отправляем от продавца
-        if (!thread?.user?.id) {
-          throw new Error('Client ID not found');
-        }
-        // TODO: получить seller_id из API
-        // Пока используем текущего пользователя как продавца
-        const sellerId = currentUser?.id;
-        if (!sellerId) {
-          throw new Error('Seller ID not found');
-        }
-        return apiClient.sendOrderChatMessageAsSeller(
-          orderId,
-          body,
-          sellerId,
-          thread.user.id
-        );
-      }
+      // Для заказов маркетплейса определяем fromId и toId
+      const fromId = sendAsAdmin 
+        ? (currentUser?.id || 0)
+        : (thread?.product?.user_id || thread?.seller?.id || currentUser?.id || 0);
+      const toId = sendAsAdmin 
+        ? (thread?.user?.id || thread?.product?.user_id || undefined)
+        : (thread?.user?.id || undefined);
+      
+      return apiClient.sendProductChatMessage(orderId, body, fromId, toId);
     },
     onSuccess: () => {
       setMessageText('');
@@ -101,7 +93,7 @@ const OrderChatWindow: React.FC<OrderChatWindowProps> = ({ orderId }) => {
   // Отправка индикатора печати
   const sendTypingIndicator = async (typing: boolean) => {
     try {
-      await apiClient.sendOrderChatTyping(orderId, typing, 'boost');
+      await apiClient.sendProductChatTyping(orderId, typing);
     } catch (error) {
       console.warn('Failed to send typing indicator:', error);
     }

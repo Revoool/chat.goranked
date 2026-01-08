@@ -12,7 +12,7 @@ interface TypingInfo {
 interface ChatState {
   selectedChatId: number | null;
   selectedOrderChatId: number | null; // ID заказа для order chats
-  selectedProductChatId: number | null; // ID заказа маркетплейса для product chats
+  selectedProductChatId: string | number | null; // ID чата по вопросам к товарам (формат "productId_buyerId" или число)
   filters: ChatFilters;
   chats: Chat[];
   activeMenu: MenuItem;
@@ -46,7 +46,7 @@ export const useChatStore = create<ChatState>((set) => ({
   searchQuery: '',
   setSelectedChat: (chatId) => set({ selectedChatId: chatId, selectedOrderChatId: null, selectedProductChatId: null, isClientCardOpen: false }), // Close card when switching chats
   setSelectedOrderChat: (orderId) => set({ selectedOrderChatId: orderId, selectedChatId: null, selectedProductChatId: null, isClientCardOpen: false }), // Close card when switching order chats
-  setSelectedProductChat: (chatId) => set({ selectedProductChatId: chatId, selectedChatId: null, selectedOrderChatId: null, isClientCardOpen: false }), // Close card when switching product chats
+  setSelectedProductChat: (chatId) => set({ selectedProductChatId: chatId, selectedChatId: null, selectedOrderChatId: null, isClientCardOpen: false }), // Close card when switching product inquiry chats
   setFilters: (filters) => set((state) => ({ filters: { ...state.filters, ...filters } })),
   setSearchQuery: (query) => set({ searchQuery: query }),
   setChats: (chats) => {

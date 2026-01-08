@@ -25,9 +25,11 @@ const ProductChatListItem: React.FC<ProductChatListItemProps> = ({ thread, onCli
     return date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
   };
 
-  const productName = thread.product?.name || `Замовлення #${thread.id}`;
+  // Для ProductInquiry чатов
+  const productName = thread.name || (thread.product?.name || `Товар #${thread.product_id || thread.id}`);
   const gameName = thread.game?.name || 'Unknown';
-  const clientName = thread.user?.name || 'Unknown';
+  const buyerName = thread.buyer?.name || 'Unknown';
+  const sellerName = thread.seller?.name || 'Unknown';
 
   return (
     <div
@@ -44,7 +46,7 @@ const ProductChatListItem: React.FC<ProductChatListItemProps> = ({ thread, onCli
               <div className="chat-item-name">{productName}</div>
             </div>
             <div className="chat-item-meta-row">
-              <div className="chat-item-source">{clientName}</div>
+              <div className="chat-item-source">{buyerName}</div>
               <div className="chat-item-manager">• {gameName}</div>
             </div>
           </div>

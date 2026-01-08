@@ -18,12 +18,12 @@ const ProductChatList: React.FC = () => {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [threads, setThreads] = useState<any[]>([]);
 
-  // Загружаем чаты заказов маркетплейса с пагинацией
+  // Загружаем чаты по вопросам к товарам (ProductInquiry) с пагинацией
   const { data, isLoading, error, refetch } = useQuery({
-    queryKey: ['product-chats', searchQuery, currentPage],
-    queryFn: () => apiClient.getProductChatThreads({
-      q: searchQuery || undefined,
-      sort_by: 'unread_count',
+    queryKey: ['product-inquiry-chats', searchQuery, currentPage],
+    queryFn: () => apiClient.getProductInquiryChatThreads({
+      search: searchQuery || undefined,
+      sort_by: 'updated_at',
       sort_dir: 'desc',
       page: currentPage,
       per_page: 20,
@@ -34,15 +34,21 @@ const ProductChatList: React.FC = () => {
   // Обрабатываем загрузку данных с пагинацией
   useEffect(() => {
     if (data) {
-      let threadsArray = data.data || [];
+      let threadsArray = data.conversations || [];
       
       if (!Array.isArray(threadsArray)) {
         threadsArray = [];
       }
       
       // Сохраняем метаданные пагинации
-      if (data.meta) {
-        setPaginationMeta(data.meta);
+      if (data.total !== undefined) {
+        const perPage = 20;
+        setPaginationMeta({
+          current_page: currentPage,
+          last_page: Math.ceil(data.total / perPage),
+          per_page: perPage,
+          total: data.total,
+        });
       }
       
       // Если это первая страница - заменяем, иначе добавляем
@@ -79,16 +85,18 @@ const ProductChatList: React.FC = () => {
     
     const searchLower = searchQuery.toLowerCase().trim();
     return threads.filter((thread) => {
-      const productName = (thread.product?.name || '').toLowerCase();
+      const productName = (thread.name || '').toLowerCase();
       const gameName = (thread.game?.name || '').toLowerCase();
-      const clientName = (thread.user?.name || '').toLowerCase();
-      const orderId = String(thread.id || '');
+      const sellerName = (thread.seller?.name || '').toLowerCase();
+      const buyerName = (thread.buyer?.name || '').toLowerCase();
+      const productId = String(thread.product_id || '');
       
       return (
         productName.includes(searchLower) ||
         gameName.includes(searchLower) ||
-        clientName.includes(searchLower) ||
-        orderId.includes(searchLower)
+        sellerName.includes(searchLower) ||
+        buyerName.includes(searchLower) ||
+        productId.includes(searchLower)
       );
     });
   }, [threads, searchQuery]);
@@ -144,8 +152,8 @@ const ProductChatList: React.FC = () => {
                 key={thread.id}
                 thread={thread}
                 onClick={() => {
-                  console.log('📌 Selecting product order chat:', { id: thread.id, orderId: thread.id });
-                  setSelectedProductChat(thread.id); // orderId для заказа маркетплейса
+                  console.log('📌 Selecting product inquiry chat:', { id: thread.id, productId: thread.product_id, buyerId: thread.buyer_id });
+                  setSelectedProductChat(thread.id); // Format: "productId_buyerId"
                 }}
               />
             ))}

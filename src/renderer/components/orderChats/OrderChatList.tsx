@@ -18,12 +18,12 @@ const OrderChatList: React.FC = () => {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [threads, setThreads] = useState<any[]>([]);
 
-  // Загружаем чаты заказов с пагинацией
+  // Загружаем чаты заказов маркетплейса с пагинацией
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['order-chats', searchQuery, currentPage],
-    queryFn: () => apiClient.getOrderChatThreads({
+    queryFn: () => apiClient.getProductChatThreads({
       q: searchQuery || undefined,
-      sort_by: 'unread_count',
+      sort_by: 'updated_at', // Сортировка по последнему сообщению
       sort_dir: 'desc',
       page: currentPage,
       per_page: 20,
@@ -79,15 +79,17 @@ const OrderChatList: React.FC = () => {
     
     const searchLower = searchQuery.toLowerCase().trim();
     return threads.filter((thread) => {
-      const clientName = (thread.user?.name || thread.client_name || '').toLowerCase();
+      const productName = (thread.product?.name || '').toLowerCase();
       const gameName = (thread.game?.name || '').toLowerCase();
-      const boostName = (thread.boost?.name || '').toLowerCase();
+      const clientName = (thread.user?.name || '').toLowerCase();
+      const sellerName = (thread.seller?.name || '').toLowerCase();
       const orderId = String(thread.id || '');
       
       return (
-        clientName.includes(searchLower) ||
+        productName.includes(searchLower) ||
         gameName.includes(searchLower) ||
-        boostName.includes(searchLower) ||
+        clientName.includes(searchLower) ||
+        sellerName.includes(searchLower) ||
         orderId.includes(searchLower) ||
         (thread.last_message?.body || '').toLowerCase().includes(searchLower)
       );
@@ -125,7 +127,7 @@ const OrderChatList: React.FC = () => {
         <div className="chat-list-filters">
           <input
             type="text"
-            placeholder="Поиск по заказу, клиенту, игре..."
+            placeholder="Поиск по товару, игрі, продавцю..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="chat-list-search"

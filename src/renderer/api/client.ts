@@ -1746,6 +1746,133 @@ class ApiClient {
       throw error;
     }
   }
+
+  // ==================== PRODUCT INQUIRY CHAT METHODS ====================
+
+  // Get product inquiry chat threads (conversations)
+  async getProductInquiryChatThreads(filters?: {
+    q?: string;
+    sort_by?: string;
+    sort_dir?: 'asc' | 'desc';
+    page?: number;
+    per_page?: number;
+  }): Promise<any> {
+    console.log("💬 Requesting product inquiry chat threads", filters);
+    try {
+      const response = await this.client.get("/api/products/inquiry-chats", {
+        params: filters,
+      });
+      return response.data; // Expects { conversations: [], total: number }
+    } catch (error: any) {
+      console.error("❌ Error fetching product inquiry chat threads:", error);
+      throw error;
+    }
+  }
+
+  // Get messages for a product inquiry chat
+  async getProductInquiryChatMessages(
+    productId: number,
+    buyerId: number,
+    options?: {
+      mark_seen?: boolean;
+      since_id?: number;
+      per_page?: number;
+    }
+  ): Promise<any> {
+    console.log("💬 Requesting product inquiry chat messages", productId, buyerId, options);
+    try {
+      const response = await this.client.get(`/api/products/${productId}/inquiry-messages`);
+      const messages = response.data.messages || [];
+      
+      // Фильтруем сообщения только для этого buyerId
+      const filteredMessages = messages.filter((msg: any) => {
+        return (msg.from_id === buyerId || msg.to_id === buyerId);
+      });
+      
+      // Помечаем как прочитанные если нужно
+      if (options?.mark_seen !== false) {
+        await this.markProductInquiryChatSeen(productId).catch(() => {});
+      }
+      
+      // Получаем данные покупателя и продавца из первого сообщения или из ответа API
+      const buyer = response.data.buyer || (filteredMessages[0]?.from_id === buyerId ? filteredMessages[0]?.from : filteredMessages[0]?.to) || null;
+      const seller = response.data.seller || response.data.product?.user || null;
+      
+      return {
+        data: filteredMessages.reverse(),
+        thread: {
+          id: `${productId}_${buyerId}`,
+          product_id: productId,
+          buyer_id: buyerId,
+          product: response.data.product || null,
+          buyer: buyer,
+          seller: seller,
+          messages_count: filteredMessages.length,
+          unread_count: 0,
+        },
+      };
+    } catch (error: any) {
+      console.error("❌ Error fetching product inquiry chat messages:", error);
+      throw error;
+    }
+  }
+
+  // Send message in product inquiry chat
+  async sendProductInquiryChatMessage(
+    productId: number,
+    body: string,
+    toId: number
+  ): Promise<any> {
+    console.log("📤 Sending product inquiry chat message", productId, { toId });
+    try {
+      const formData = new FormData();
+      formData.append('body', body);
+      formData.append('to_id', toId.toString());
+      formData.append('type', 'message');
+      
+      const response = await this.client.post(`/api/products/${productId}/inquiry-message`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return response.data;
+    } catch (error: any) {
+      console.error("❌ Error sending product inquiry chat message:", error);
+      throw error;
+    }
+  }
+
+  // Mark product inquiry chat messages as seen
+  async markProductInquiryChatSeen(
+    productId: number
+  ): Promise<any> {
+    console.log("👁️ Marking product inquiry chat as seen", productId);
+    try {
+      const response = await this.client.post(`/api/products/${productId}/inquiry-seen`);
+      return response.data;
+    } catch (error: any) {
+      console.error("❌ Error marking product inquiry chat as seen:", error);
+      throw error;
+    }
+  }
+
+  // Send typing indicator for product inquiry chat
+  async sendProductInquiryChatTyping(
+    productId: number,
+    isTyping: boolean
+  ): Promise<any> {
+    console.log("⌨️ Sending product inquiry chat typing", productId, isTyping);
+    try {
+      const response = await this.client.post("/api/products/inquiry-typing", {
+        product_id: productId,
+        is_typing: isTyping,
+      });
+      return response.data;
+    } catch (error: any) {
+      console.error("❌ Error sending product inquiry chat typing:", error);
+      throw error;
+    }
+  }
 }
 
 export const apiClient = new ApiClient();

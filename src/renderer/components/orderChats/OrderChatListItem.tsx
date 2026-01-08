@@ -26,9 +26,11 @@ const OrderChatListItem: React.FC<OrderChatListItemProps> = ({ thread, onClick }
     return date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
   };
 
-  const clientName = thread.user?.name || thread.client_name || 'Unknown';
-  const gameName = thread.game?.name || thread.game?.alter_name || 'Unknown';
-  const boostName = thread.boost?.name || '';
+  // Для заказов маркетплейса (OrdersProducts)
+  const productName = thread.product?.name || `Замовлення #${thread.id}`;
+  const gameName = thread.game?.name || 'Unknown';
+  const clientName = thread.user?.name || 'Unknown';
+  const sellerName = thread.seller?.name || 'Unknown';
 
   return (
     <div
@@ -37,12 +39,12 @@ const OrderChatListItem: React.FC<OrderChatListItemProps> = ({ thread, onClick }
     >
       <div className="chat-item-header">
         <div className="chat-item-client">
-          <div className="chat-item-avatar">
-            {clientName.charAt(0).toUpperCase()}
+          <div className="chat-item-avatar" style={{ backgroundColor: 'var(--flame-orange)' }}>
+            {gameName.charAt(0).toUpperCase()}
           </div>
           <div className="chat-item-info">
             <div className="chat-item-name-row">
-              <div className="chat-item-name">Заказ #{thread.id}</div>
+              <div className="chat-item-name">{productName}</div>
               {thread.warning && (
                 <div className="chat-item-sla-warning" title="Предупреждение">
                   <IconAlertCircle size={14} />
@@ -50,8 +52,8 @@ const OrderChatListItem: React.FC<OrderChatListItemProps> = ({ thread, onClick }
               )}
             </div>
             <div className="chat-item-meta-row">
-              <div className="chat-item-source">{clientName}</div>
-              <div className="chat-item-manager">• {gameName}</div>
+              <div className="chat-item-source">ID: {thread.id}</div>
+              <div className="chat-item-manager">• {clientName}</div>
             </div>
           </div>
         </div>
@@ -79,9 +81,9 @@ const OrderChatListItem: React.FC<OrderChatListItemProps> = ({ thread, onClick }
 
       <div className="chat-item-footer">
         <div className="chat-item-footer-left">
-          {boostName && (
+          {gameName && (
             <div className="chat-item-status" style={{ backgroundColor: 'var(--flame-orange)' }}>
-              {boostName}
+              {gameName}
             </div>
           )}
         </div>

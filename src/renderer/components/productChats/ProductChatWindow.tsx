@@ -7,7 +7,7 @@ import MessageList from '../chat/MessageList';
 import '../../styles/ChatWindow.css';
 
 interface ProductChatWindowProps {
-  orderId: number;
+  orderId: string | number; // Может быть строкой вида "productId_buyerId" для ProductInquiry
 }
 
 const ProductChatWindow: React.FC<ProductChatWindowProps> = ({ orderId }) => {
@@ -20,21 +20,30 @@ const ProductChatWindow: React.FC<ProductChatWindowProps> = ({ orderId }) => {
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Загружаем данные чата заказа маркетплейса
+  // Парсим orderId: если это строка вида "productId_buyerId", разбиваем на части
+  const chatId = typeof orderId === 'string' ? orderId : String(orderId);
+  const [productId, buyerId] = chatId.includes('_') 
+    ? chatId.split('_').map(Number)
+    : [Number(chatId), null];
+
+  // Загружаем данные чата по вопросам к товарам (ProductInquiry)
   const { data: messagesData, isLoading: messagesLoading, error: messagesError, refetch } = useQuery({
-    queryKey: ['product-chat-messages', orderId],
+    queryKey: ['product-inquiry-chat-messages', productId, buyerId],
     queryFn: async () => {
-      // Загружаем данные
-      const data = await apiClient.getProductChatMessages(orderId, { mark_seen: false });
+      if (!buyerId) {
+        throw new Error('Buyer ID is required for product inquiry chat');
+      }
+      // Загружаем данные чата по вопросам к товарам
+      const data = await apiClient.getProductInquiryChatMessages(productId, buyerId, { mark_seen: false });
       // Помечаем как прочитанные после успешной загрузки
       if (data && data.data && data.data.length > 0) {
-        await apiClient.markProductChatSeen(orderId).catch(err => {
-          console.warn('Failed to mark product order chat as seen:', err);
+        await apiClient.markProductInquiryChatSeen(productId).catch(err => {
+          console.warn('Failed to mark product inquiry chat as seen:', err);
         });
       }
       return data;
     },
-    enabled: !!orderId,
+    enabled: !!productId && !!buyerId,
     refetchInterval: 5000, // Refetch every 5 seconds
     staleTime: 0, // Всегда считать данные устаревшими для немедленного обновления
     gcTime: 0, // Не кешировать данные, чтобы при переключении чата всегда загружались свежие данные
@@ -45,49 +54,41 @@ const ProductChatWindow: React.FC<ProductChatWindowProps> = ({ orderId }) => {
 
   // Автоматически помечаем как прочитанные при открытии чата
   useEffect(() => {
-    if (orderId) {
-      apiClient.markProductChatSeen(orderId).catch(err => {
-        console.warn('Failed to mark product order chat as seen:', err);
+    if (productId && buyerId) {
+      apiClient.markProductInquiryChatSeen(productId).catch(err => {
+        console.warn('Failed to mark product inquiry chat as seen:', err);
       });
     }
-  }, [orderId]);
+  }, [productId, buyerId]);
 
   // Проверяем, есть ли продавец
   const hasSeller = useMemo(() => {
-    // Для product orders нужно проверить product.user_id
-    return !!(thread?.product?.user_id && thread?.product?.user_id !== thread?.user?.id);
+    // Для product inquiry нужно проверить seller
+    return !!(thread?.seller?.id && thread?.seller?.id !== thread?.buyer?.id);
   }, [thread]);
 
   // Отправка сообщения
   const sendMessageMutation = useMutation({
     mutationFn: async (body: string) => {
-      if (!currentUser?.id || !thread) {
+      if (!currentUser?.id || !thread || !productId) {
         throw new Error('User not authenticated or thread data missing');
       }
 
-      if (sendAsAdmin) {
-        // Отправляем от админа к покупателю
-        return apiClient.sendProductChatMessage(
-          orderId,
-          body,
-          currentUser.id,
-          thread.user?.id
-        );
-      } else {
-        // Отправляем от продавца к покупателю
-        if (!thread.product?.user_id) {
-          throw new Error('Seller ID not found');
-        }
-        if (!thread.user?.id) {
-          throw new Error('Client ID not found');
-        }
-        return apiClient.sendProductChatMessage(
-          orderId,
-          body,
-          thread.product.user_id,
-          thread.user.id
-        );
+      // Определяем toId (кому отправляем)
+      const toId = sendAsAdmin 
+        ? (thread.buyer?.id || buyerId || null)
+        : (thread.buyer?.id || buyerId || null);
+
+      if (!toId) {
+        throw new Error('Recipient ID not found');
       }
+
+      // Отправляем сообщение
+      return apiClient.sendProductInquiryChatMessage(
+        productId,
+        body,
+        toId
+      );
     },
     onSuccess: () => {
       setMessageText('');
@@ -97,7 +98,7 @@ const ProductChatWindow: React.FC<ProductChatWindowProps> = ({ orderId }) => {
         typingTimeoutRef.current = null;
       }
       refetch();
-      queryClient.invalidateQueries({ queryKey: ['product-chats'] });
+      queryClient.invalidateQueries({ queryKey: ['product-inquiry-chats'] });
     },
     onError: (error: any) => {
       console.error('Error sending message:', error);
@@ -107,10 +108,10 @@ const ProductChatWindow: React.FC<ProductChatWindowProps> = ({ orderId }) => {
 
   // Отправка индикатора печати
   const sendTypingIndicator = async (isCurrentlyTyping: boolean) => {
-    if (!currentUser?.id || !orderId) return;
+    if (!currentUser?.id || !productId) return;
 
     try {
-      await apiClient.sendProductChatTyping(orderId, isCurrentlyTyping);
+      await apiClient.sendProductInquiryChatTyping(productId, isCurrentlyTyping);
     } catch (error) {
       console.error('Failed to send typing indicator:', error);
     }
@@ -202,11 +203,11 @@ const ProductChatWindow: React.FC<ProductChatWindowProps> = ({ orderId }) => {
   // Преобразуем сообщения для MessageList
   const formattedMessages = messages.map((msg: any) => {
     // Определяем, от кого сообщение:
-    // - Покупатель: from_id === thread.user.id
-    // - Продавец: from_id === thread.product.user_id
-    // - Админ: все остальные (from_id !== thread.user.id && from_id !== thread.product.user_id)
-    const isFromBuyer = thread?.user?.id && msg.from_id === thread.user.id;
-    const isFromSeller = thread?.product?.user_id && msg.from_id === thread.product.user_id;
+    // - Покупатель: from_id === thread.buyer.id
+    // - Продавец: from_id === thread.seller.id
+    // - Админ: все остальные
+    const isFromBuyer = thread?.buyer?.id && msg.from_id === thread.buyer.id;
+    const isFromSeller = thread?.seller?.id && msg.from_id === thread.seller.id;
     const isFromManager = !isFromBuyer; // Админ или продавец = менеджер (не покупатель)
     
     // Получаем данные пользователя из msg.from или создаем из доступных данных
@@ -215,15 +216,15 @@ const ProductChatWindow: React.FC<ProductChatWindowProps> = ({ orderId }) => {
       // Если нет данных пользователя, создаем базовые
       userData = {
         id: msg.from_id,
-        name: msg.email || (isFromBuyer ? thread?.user?.name : (isFromSeller ? thread?.product?.user?.name : 'Админ')) || 'Unknown',
+        name: msg.email || (isFromBuyer ? thread?.buyer?.name : (isFromSeller ? thread?.seller?.name : 'Админ')) || 'Unknown',
         email: msg.email || '',
-        avatar: msg.avatar || (isFromBuyer ? thread?.user?.avatar : (isFromSeller ? thread?.product?.user?.avatar : null)),
+        avatar: msg.avatar || (isFromBuyer ? thread?.buyer?.avatar : (isFromSeller ? thread?.seller?.avatar : null)),
       };
     }
     
     return {
       id: msg.id,
-      chat_id: orderId,
+      chat_id: chatId,
       from_manager: isFromManager,
       user_id: msg.from_id,
       body: msg.body,
@@ -240,18 +241,17 @@ const ProductChatWindow: React.FC<ProductChatWindowProps> = ({ orderId }) => {
     <div className="chat-window">
       <div className="chat-window-header">
         <div className="chat-window-header-info">
-          <h3>Замовлення #{orderId}</h3>
+          <h3>{thread.product?.name || thread.name || `Товар #${productId}`}</h3>
           <div className="chat-window-header-meta">
-            <span>{typeof thread.product?.name === 'string' ? thread.product.name : (thread.product?.name?.uk || thread.product?.name?.ua || 'Товар')}</span>
-            {thread.game && <span>• {thread.game.name}</span>}
-            {thread.user && <span>• Покупець: {thread.user.name}</span>}
-            {thread.product?.user && <span>• Продавець: {thread.product.user.name}</span>}
+            {thread.game && <span>{thread.game.name}</span>}
+            {thread.buyer && <span>• Покупець: {thread.buyer.name}</span>}
+            {thread.seller && <span>• Продавець: {thread.seller.name}</span>}
           </div>
         </div>
       </div>
 
       <div className="chat-window-messages">
-        <MessageList messages={formattedMessages} chatId={orderId} searchQuery={searchQuery} />
+        <MessageList messages={formattedMessages} chatId={chatId} searchQuery={searchQuery} />
         <div ref={messagesEndRef} />
       </div>
 
