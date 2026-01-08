@@ -77,19 +77,25 @@ const ProductChatWindow: React.FC<ProductChatWindowProps> = ({ orderId }) => {
         throw new Error('User not authenticated or thread data missing');
       }
 
-      // Определяем toId (кому отправляем)
-      const toId = sendAsAdmin 
-        ? (thread.buyer?.id || buyerId || null)
-        : (thread.buyer?.id || buyerId || null);
+      // Определяем fromId и toId
+      const fromId = sendAsAdmin 
+        ? (currentUser?.id || null)
+        : (thread.seller?.id || currentUser?.id || null);
+      const toId = thread.buyer?.id || buyerId || null;
 
       if (!toId) {
         throw new Error('Recipient ID not found');
+      }
+
+      if (!fromId) {
+        throw new Error('Sender ID not found');
       }
 
       // Отправляем сообщение
       return apiClient.sendProductInquiryChatMessage(
         productId,
         body,
+        fromId,
         toId
       );
     },
@@ -274,16 +280,15 @@ const ProductChatWindow: React.FC<ProductChatWindowProps> = ({ orderId }) => {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* AI suggestions для ProductInquiry чатов пока не реализованы на бэкенде */}
-      {/* {showAiSuggestions && productId && buyerId && (
+      {showAiSuggestions && productId && buyerId && (
         <AiSuggestions
-          chatId={productId}
+          chatId={parseInt(String(productId))}
           chatType="product-order"
           onSelect={(suggestion: string, index: number, aiRunId?: number) => {
             setMessageText(suggestion);
             setShowAiSuggestions(false);
             if (aiRunId) {
-              apiClient.saveProductOrderAiFeedback(productId, {
+              apiClient.saveProductOrderAiFeedback(parseInt(String(productId)), {
                 ai_run_id: aiRunId,
                 selected_candidate_index: index + 1,
                 final_sent_content: suggestion,
@@ -293,7 +298,7 @@ const ProductChatWindow: React.FC<ProductChatWindowProps> = ({ orderId }) => {
           }}
           onClose={() => setShowAiSuggestions(false)}
         />
-      )} */}
+      )}
       <div className="chat-window-input-container">
         {hasSeller && (
           <div className="order-chat-sender-toggle">
@@ -311,8 +316,7 @@ const ProductChatWindow: React.FC<ProductChatWindowProps> = ({ orderId }) => {
             </button>
           </div>
         )}
-        {/* AI button для ProductInquiry чатов пока не реализован на бэкенде */}
-        {/* <div className="chat-window-input-actions">
+        <div className="chat-window-input-actions">
           {productId && buyerId && (
             <button
               type="button"
@@ -348,7 +352,7 @@ const ProductChatWindow: React.FC<ProductChatWindowProps> = ({ orderId }) => {
               </svg>
             </button>
           )}
-        </div> */}
+        </div>
         <form
           className="chat-window-input-form"
           onSubmit={(e) => {

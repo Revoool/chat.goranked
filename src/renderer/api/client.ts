@@ -1833,12 +1833,14 @@ class ApiClient {
   async sendProductInquiryChatMessage(
     productId: number,
     body: string,
+    fromId: number,
     toId: number
   ): Promise<any> {
-    console.log("📤 Sending product inquiry chat message", productId, { toId });
+    console.log("📤 Sending product inquiry chat message", productId, { fromId, toId });
     try {
       const formData = new FormData();
       formData.append('body', body);
+      formData.append('from_id', fromId.toString());
       formData.append('to_id', toId.toString());
       formData.append('type', 'message');
       

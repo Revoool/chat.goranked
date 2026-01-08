@@ -1,28 +1,23 @@
 .sidebar {
-  width: 70px;
+  width: 100%;
+  height: 60px;
   background: var(--graphite-medium);
-  border-right: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-color);
   display: flex;
-  flex-direction: column;
-  height: 100vh;
+  flex-direction: row;
+  align-items: center;
+  padding: 0 12px;
+  gap: 8px;
 }
 
 .sidebar-header {
-  padding: 12px;
-  padding-top: 28px; /* Extra padding for Mac window controls */
-  border-bottom: 1px solid var(--border-color);
+  padding: 0;
   display: flex;
   align-items: center;
   justify-content: center;
   -webkit-app-region: drag; /* Allow window dragging from header */
   user-select: none; /* Prevent text selection while dragging */
-}
-
-/* Additional padding for Mac (darwin) */
-@supports (-webkit-app-region: drag) {
-  .sidebar-header {
-    padding-top: 28px;
-  }
+  flex-shrink: 0;
 }
 
 .sidebar-logo {
@@ -35,17 +30,19 @@
 
 .sidebar-nav {
   flex: 1;
-  padding: 12px 0;
+  padding: 0;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
   gap: 8px;
   -webkit-app-region: no-drag; /* Buttons should not be draggable */
+  overflow-x: auto;
+  overflow-y: hidden;
 }
 
 .nav-button-wrapper {
   position: relative;
-  width: 100%;
+  flex-shrink: 0;
   display: flex;
   justify-content: center;
 }
@@ -83,10 +80,10 @@
 
 .nav-item-tooltip {
   position: absolute;
-  left: 100%;
-  top: 50%;
-  transform: translateY(-50%);
-  margin-left: 12px;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-bottom: 8px;
   background: var(--graphite-dark);
   color: var(--text-primary);
   padding: 6px 12px;
@@ -102,21 +99,25 @@
 .nav-item-tooltip::before {
   content: '';
   position: absolute;
-  right: 100%;
-  top: 50%;
-  transform: translateY(-50%);
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
   border: 5px solid transparent;
-  border-right-color: var(--graphite-dark);
+  border-top-color: var(--graphite-dark);
 }
 
 .sidebar-footer {
-  padding: 12px;
-  border-top: 1px solid var(--border-color);
+  padding: 0;
+  border-top: none;
+  border-left: 1px solid var(--border-color);
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   -webkit-app-region: no-drag; /* Footer buttons should not be draggable */
+  flex-shrink: 0;
+  padding-left: 12px;
+  margin-left: auto;
 }
 
 .user-info {

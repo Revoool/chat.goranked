@@ -18,6 +18,8 @@ const ProductChatList: React.FC = () => {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [threads, setThreads] = useState<any[]>([]);
 
+  const { activeMenu } = useChatStore();
+
   // Загружаем чаты по вопросам к товарам (ProductInquiry) с пагинацией
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['product-inquiry-chats', searchQuery, currentPage],
@@ -28,8 +30,16 @@ const ProductChatList: React.FC = () => {
       page: currentPage,
       per_page: 20,
     }),
+    enabled: activeMenu === 'product-chats', // Загружаем только когда активна вкладка
     refetchInterval: 30000, // Refetch every 30 seconds
   });
+
+  // Принудительно обновляем данные при переключении на вкладку
+  useEffect(() => {
+    if (activeMenu === 'product-chats') {
+      refetch();
+    }
+  }, [activeMenu, refetch]);
 
   // Обрабатываем загрузку данных с пагинацией
   useEffect(() => {
