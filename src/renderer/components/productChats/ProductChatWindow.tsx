@@ -274,14 +274,14 @@ const ProductChatWindow: React.FC<ProductChatWindowProps> = ({ orderId }) => {
         <div ref={messagesEndRef} />
       </div>
 
-      {showAiSuggestions && productId && buyerId && (
+      {/* AI suggestions для ProductInquiry чатов пока не реализованы на бэкенде */}
+      {/* {showAiSuggestions && productId && buyerId && (
         <AiSuggestions
           chatId={productId}
           chatType="product-order"
           onSelect={(suggestion: string, index: number, aiRunId?: number) => {
             setMessageText(suggestion);
             setShowAiSuggestions(false);
-            // Можно сохранить feedback, что использовали AI предложение
             if (aiRunId) {
               apiClient.saveProductOrderAiFeedback(productId, {
                 ai_run_id: aiRunId,
@@ -293,7 +293,7 @@ const ProductChatWindow: React.FC<ProductChatWindowProps> = ({ orderId }) => {
           }}
           onClose={() => setShowAiSuggestions(false)}
         />
-      )}
+      )} */}
       <div className="chat-window-input-container">
         {hasSeller && (
           <div className="order-chat-sender-toggle">
@@ -311,7 +311,8 @@ const ProductChatWindow: React.FC<ProductChatWindowProps> = ({ orderId }) => {
             </button>
           </div>
         )}
-        <div className="chat-window-input-actions">
+        {/* AI button для ProductInquiry чатов пока не реализован на бэкенде */}
+        {/* <div className="chat-window-input-actions">
           {productId && buyerId && (
             <button
               type="button"
@@ -347,7 +348,7 @@ const ProductChatWindow: React.FC<ProductChatWindowProps> = ({ orderId }) => {
               </svg>
             </button>
           )}
-        </div>
+        </div> */}
         <form
           className="chat-window-input-form"
           onSubmit={(e) => {

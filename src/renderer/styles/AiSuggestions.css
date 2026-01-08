@@ -20,6 +20,19 @@
 .ai-suggestions-header .ai-icon {
   font-size: 16px;
   color: #8b5cf6; /* Purple color for AI */
+  animation: ai-icon-pulse 2s ease-in-out infinite;
+  display: inline-block;
+}
+
+@keyframes ai-icon-pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.15);
+    opacity: 0.8;
+  }
 }
 
 .ai-suggestions-close {
