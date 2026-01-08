@@ -1,7 +1,6 @@
 .chat-list {
-  width: 320px;
+  width: 100%;
   background: var(--graphite-dark);
-  border-right: 1px solid var(--border-color);
   display: flex;
   flex-direction: column;
   height: 100vh;

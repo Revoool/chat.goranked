@@ -1,0 +1,50 @@
+.resizable-chat-list {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: var(--graphite-dark);
+  border-right: 1px solid var(--border-color);
+  flex-shrink: 0;
+}
+
+.resize-handle {
+  position: absolute;
+  top: 0;
+  right: -4px;
+  width: 8px;
+  height: 100%;
+  cursor: col-resize;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s ease;
+}
+
+.resize-handle:hover {
+  background-color: rgba(255, 106, 0, 0.1);
+}
+
+.resize-handle.resizing {
+  background-color: rgba(255, 106, 0, 0.2);
+}
+
+.resize-handle-line {
+  width: 2px;
+  height: 100%;
+  background: var(--border-color);
+  transition: background-color 0.2s ease;
+}
+
+.resize-handle:hover .resize-handle-line,
+.resize-handle.resizing .resize-handle-line {
+  background: var(--flame-orange);
+  width: 3px;
+}
+
+/* Убираем стандартную ширину из .chat-list, так как теперь она управляется через ResizableChatList */
+.resizable-chat-list > .chat-list {
+  width: 100%;
+  border-right: none;
+}

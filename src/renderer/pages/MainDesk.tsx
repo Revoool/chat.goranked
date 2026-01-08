@@ -11,6 +11,7 @@ import ClientCard from '../components/client/ClientCard';
 import Settings from '../components/settings/Settings';
 import TasksList from '../components/tasks/TasksList';
 import TaskDialog from '../components/tasks/TaskDialog';
+import ResizableChatList from '../components/layout/ResizableChatList';
 import { useChatStore } from '../store/chatStore';
 import { apiClient } from '../api/client';
 import { Task, TasksSubdata } from '../types';
@@ -96,7 +97,9 @@ const MainDesk: React.FC = () => {
           <TasksList onTaskClick={handleTaskClick} />
         ) : activeMenu === 'order-chats' ? (
           <>
-            <OrderChatList />
+            <ResizableChatList storageKey="order-chat-list-width">
+              <OrderChatList />
+            </ResizableChatList>
             <div className="chat-area">
               {selectedOrderChatId ? (
                 <OrderChatWindow orderId={selectedOrderChatId} />
@@ -109,7 +112,9 @@ const MainDesk: React.FC = () => {
           </>
         ) : activeMenu === 'product-chats' ? (
           <>
-            <ProductChatList />
+            <ResizableChatList storageKey="product-chat-list-width">
+              <ProductChatList />
+            </ResizableChatList>
             <div className="chat-area">
               {selectedProductChatId ? (
                 <ProductChatWindow orderId={selectedProductChatId} />
@@ -122,7 +127,9 @@ const MainDesk: React.FC = () => {
           </>
         ) : (
           <>
-            <ChatList />
+            <ResizableChatList storageKey="chat-list-width">
+              <ChatList />
+            </ResizableChatList>
             <div className="chat-area">
               {selectedChatId ? (
                 <>
