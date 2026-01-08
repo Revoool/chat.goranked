@@ -12,28 +12,25 @@ interface ClientCardProps {
 const ClientCard: React.FC<ClientCardProps> = ({ chatId }) => {
   const { setClientCardOpen } = useChatStore();
   
-  // Загружаем основную информацию о чате с кешированием
   const { data: chatData, isLoading: chatLoading } = useQuery({
     queryKey: ['chat', chatId],
     queryFn: () => apiClient.getChat(chatId),
-    staleTime: 30000, // Кешируем на 30 секунд
-    gcTime: 60000, // Храним в кеше 1 минуту
-    retry: 1, // Повторяем только 1 раз при ошибке
+    staleTime: 30000,
+    gcTime: 60000,
+    retry: 1,
   });
 
-  // Загружаем дополнительную информацию о клиенте с кешированием
   const { data: clientInfo, isLoading: clientInfoLoading, error: clientInfoError } = useQuery({
     queryKey: ['client-info', chatId],
     queryFn: () => apiClient.getClientInfo(chatId),
-    enabled: !!chatId, // Загружаем только если есть chatId
-    staleTime: 60000, // Кешируем на 1 минуту
-    gcTime: 120000, // Храним в кеше 2 минуты
-    retry: false, // Не повторяем при ошибке (не критичная информация)
-    refetchOnWindowFocus: false, // Не обновляем при фокусе окна
-    refetchOnMount: false, // Не обновляем при монтировании, если есть кеш
+    enabled: !!chatId,
+    staleTime: 60000,
+    gcTime: 120000,
+    retry: false,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
   });
 
-  // Показываем загрузку только если нет кешированных данных
   if (chatLoading && !chatData) {
     return (
       <div className="client-card">
@@ -42,7 +39,6 @@ const ClientCard: React.FC<ClientCardProps> = ({ chatId }) => {
     );
   }
 
-  // Если нет данных после загрузки, показываем ошибку
   if (!chatData) {
     return (
       <div className="client-card">
@@ -78,7 +74,6 @@ const ClientCard: React.FC<ClientCardProps> = ({ chatId }) => {
               src={clientAvatar} 
               alt={clientName}
               onError={(e) => {
-                // Fallback на инициал, если изображение не загрузилось
                 const target = e.target as HTMLImageElement;
                 target.style.display = 'none';
                 const parent = target.parentElement;
@@ -115,7 +110,6 @@ const ClientCard: React.FC<ClientCardProps> = ({ chatId }) => {
           )}
         </div>
 
-        {/* Додаткова інформація про клієнта */}
         {clientInfoLoading && (
           <div className="client-additional-info">
             <h5>Додаткова інформація</h5>
@@ -171,8 +165,7 @@ const ClientCard: React.FC<ClientCardProps> = ({ chatId }) => {
                 </div>
               )}
             </div>
-
-            {/* Історія відвідувань */}
+              
             {clientInfo.page_visits && clientInfo.page_visits.length > 0 && (
               <div className="page-visits">
                 <h6>Відвідані сторінки:</h6>

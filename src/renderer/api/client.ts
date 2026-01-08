@@ -1662,8 +1662,10 @@ class ApiClient {
           : (order.product.name?.uk || order.product.name?.ua || 'Unknown'))
         : 'Unknown';
       
+      // Сообщения приходят от старых к новым, оставляем как есть (не переворачиваем)
+      // Новые сообщения будут внизу, как в обычном чате
       return {
-        data: formattedMessages.reverse(),
+        data: formattedMessages,
         thread: {
           id: order.id,
           product: order.product ? {
