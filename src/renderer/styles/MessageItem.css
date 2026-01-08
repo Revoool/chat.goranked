@@ -52,6 +52,8 @@
   align-items: center;
   gap: 6px;
   margin-bottom: 4px;
+  color: var(--text-muted);
+  padding: 0 12px;
 }
 
 .message-author-avatar-wrapper {
@@ -72,11 +74,6 @@
   color: white;
   font-size: 10px;
   font-weight: 600;
-}
-
-.message-author {
-  color: var(--text-muted);
-  padding: 0 12px;
 }
 
 .message-author-avatar {
