@@ -24,13 +24,30 @@ const OrderChatWindow: React.FC<OrderChatWindowProps> = ({ orderId }) => {
   // Загружаем данные чата заказа
   const { data: messagesData, isLoading: messagesLoading, error: messagesError, refetch } = useQuery({
     queryKey: ['order-chat-messages', orderId],
-    queryFn: () => apiClient.getOrderChatMessages(orderId, { mark_seen: true }),
+    queryFn: async () => {
+      // Автоматически помечаем как прочитанные при загрузке
+      const data = await apiClient.getOrderChatMessages(orderId, { mark_seen: true });
+      // Также вызываем markSeen для гарантии
+      await apiClient.markOrderChatSeen(orderId).catch(err => {
+        console.warn('Failed to mark order chat as seen:', err);
+      });
+      return data;
+    },
     enabled: !!orderId,
     refetchInterval: 5000, // Refetch every 5 seconds
   });
 
   const thread = messagesData?.thread;
   const messages = messagesData?.data || [];
+
+  // Автоматически помечаем как прочитанные при открытии чата
+  useEffect(() => {
+    if (orderId) {
+      apiClient.markOrderChatSeen(orderId).catch(err => {
+        console.warn('Failed to mark order chat as seen:', err);
+      });
+    }
+  }, [orderId]);
 
   // Проверяем, есть ли продавец
   const hasSeller = useMemo(() => {
