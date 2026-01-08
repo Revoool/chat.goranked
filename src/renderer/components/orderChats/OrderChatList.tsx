@@ -18,6 +18,8 @@ const OrderChatList: React.FC = () => {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [threads, setThreads] = useState<any[]>([]);
 
+  const { activeMenu } = useChatStore();
+
   // Загружаем чаты заказов маркетплейса с пагинацией
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['order-chats', searchQuery, currentPage],
@@ -28,8 +30,16 @@ const OrderChatList: React.FC = () => {
       page: currentPage,
       per_page: 20,
     }),
+    enabled: activeMenu === 'order-chats', // Загружаем только когда активна вкладка
     refetchInterval: 30000, // Refetch every 30 seconds
   });
+
+  // Принудительно обновляем данные при переключении на вкладку
+  useEffect(() => {
+    if (activeMenu === 'order-chats') {
+      refetch();
+    }
+  }, [activeMenu, refetch]);
 
   // Обрабатываем загрузку данных с пагинацией
   useEffect(() => {

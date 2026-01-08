@@ -1885,6 +1885,55 @@ class ApiClient {
       throw error;
     }
   }
+
+  // ==================== AI SUGGESTIONS FOR PRODUCT ORDERS ====================
+
+  // Get AI suggestions for product order chat replies
+  async getProductOrderAiSuggestions(
+    orderId: number,
+    options?: {
+      context_limit?: number;
+      model?: string;
+      force_refresh?: boolean;
+    }
+  ): Promise<any> {
+    console.log("🤖 Requesting AI suggestions for product order chat:", orderId);
+    try {
+      const response = await this.client.get(
+        `/api/product-orders/${orderId}/ai/suggestions`,
+        { params: options }
+      );
+      return response.data;
+    } catch (error: any) {
+      console.error("❌ Error fetching AI suggestions for product order:", error);
+      throw error;
+    }
+  }
+
+  // Save AI feedback for product order chat
+  async saveProductOrderAiFeedback(
+    orderId: number,
+    feedback: {
+      ai_run_id: number;
+      selected_candidate_index?: number | null;
+      final_sent_content: string;
+      final_sent_message_id?: number;
+      notes?: string;
+      was_edited?: boolean;
+    }
+  ): Promise<any> {
+    console.log("💾 Saving AI feedback for product order:", { orderId, feedback });
+    try {
+      const response = await this.client.post(
+        `/api/product-orders/${orderId}/ai/feedback`,
+        feedback
+      );
+      return response.data;
+    } catch (error: any) {
+      console.error("❌ Error saving AI feedback for product order:", error);
+      throw error;
+    }
+  }
 }
 
 export const apiClient = new ApiClient();

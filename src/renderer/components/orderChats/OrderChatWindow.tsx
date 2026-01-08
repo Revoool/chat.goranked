@@ -5,6 +5,7 @@ import { useChatStore } from '../../store/chatStore';
 import { useAuthStore } from '../../store/authStore';
 import { OrderChatMessage, OrderChatThread } from '../../types';
 import MessageList from '../chat/MessageList';
+import AiSuggestions from '../chat/AiSuggestions';
 import '../../styles/ChatWindow.css';
 
 interface OrderChatWindowProps {
@@ -209,6 +210,26 @@ const OrderChatWindow: React.FC<OrderChatWindowProps> = ({ orderId }) => {
         <div ref={messagesEndRef} />
       </div>
 
+      {showAiSuggestions && (
+        <AiSuggestions
+          chatId={orderId}
+          chatType="product-order"
+          onSelect={(suggestion: string, index: number, aiRunId?: number) => {
+            setMessageText(suggestion);
+            setShowAiSuggestions(false);
+            // Можно сохранить feedback, что использовали AI предложение
+            if (aiRunId) {
+              apiClient.saveProductOrderAiFeedback(orderId, {
+                ai_run_id: aiRunId,
+                selected_candidate_index: index + 1,
+                final_sent_content: suggestion,
+                was_edited: false,
+              }).catch(err => console.warn('Failed to save AI feedback:', err));
+            }
+          }}
+          onClose={() => setShowAiSuggestions(false)}
+        />
+      )}
       <div className="chat-window-input-container">
         {hasSeller && (
           <div className="order-chat-sender-toggle">
@@ -228,6 +249,41 @@ const OrderChatWindow: React.FC<OrderChatWindowProps> = ({ orderId }) => {
             </button>
           </div>
         )}
+        <div className="chat-window-input-actions">
+          <button
+            type="button"
+            className={`message-input-ai-btn ${showAiSuggestions ? 'active' : ''}`}
+            onClick={() => setShowAiSuggestions(!showAiSuggestions)}
+            title="AI-предложения ответов"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path
+                d="M12 2L2 7L12 12L22 7L12 2Z"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                fill="none"
+              />
+              <path
+                d="M2 17L12 22L22 17"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                fill="none"
+              />
+              <path
+                d="M2 12L12 17L22 12"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                fill="none"
+              />
+            </svg>
+          </button>
+        </div>
         <form onSubmit={handleSend} className="chat-window-input-form">
           <textarea
             value={messageText}
@@ -247,8 +303,9 @@ const OrderChatWindow: React.FC<OrderChatWindowProps> = ({ orderId }) => {
             type="submit"
             className="chat-window-send-btn"
             disabled={!messageText.trim() || sendMessageMutation.isPending}
+            title={sendAsAdmin ? 'Відправити від Адміна' : 'Відправити від Продавця'}
           >
-            {sendMessageMutation.isPending ? '...' : 'Відправити'}
+            {sendMessageMutation.isPending ? '...' : (sendAsAdmin ? 'Від Адміна' : 'Від Продавця')}
           </button>
         </form>
       </div>

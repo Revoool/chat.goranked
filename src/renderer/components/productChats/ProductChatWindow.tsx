@@ -4,7 +4,9 @@ import { apiClient } from '../../api/client';
 import { useChatStore } from '../../store/chatStore';
 import { useAuthStore } from '../../store/authStore';
 import MessageList from '../chat/MessageList';
+import AiSuggestions from '../chat/AiSuggestions';
 import '../../styles/ChatWindow.css';
+import '../../styles/MessageInput.css';
 
 interface ProductChatWindowProps {
   orderId: string | number; // Может быть строкой вида "productId_buyerId" для ProductInquiry
@@ -17,6 +19,7 @@ const ProductChatWindow: React.FC<ProductChatWindowProps> = ({ orderId }) => {
   const [messageText, setMessageText] = useState('');
   const [sendAsAdmin, setSendAsAdmin] = useState(true);
   const [isTyping, setIsTyping] = useState(false);
+  const [showAiSuggestions, setShowAiSuggestions] = useState(false);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -238,23 +241,59 @@ const ProductChatWindow: React.FC<ProductChatWindowProps> = ({ orderId }) => {
   });
 
   return (
-    <div className="chat-window">
-      <div className="chat-window-header">
-        <div className="chat-window-header-info">
-          <h3>{thread.product?.name || thread.name || `Товар #${productId}`}</h3>
-          <div className="chat-window-header-meta">
-            {thread.game && <span>{thread.game.name}</span>}
-            {thread.buyer && <span>• Покупець: {thread.buyer.name}</span>}
-            {thread.seller && <span>• Продавець: {thread.seller.name}</span>}
+      <div className="chat-window">
+        <div className="chat-window-header">
+          <div className="chat-window-header-info">
+            <h3>{thread.product?.name || thread.name || `Товар #${productId}`}</h3>
+            <div className="chat-window-header-meta">
+              {thread.game && <span>{thread.game.name}</span>}
+              {thread.buyer && <span>• Покупець: {thread.buyer.name}</span>}
+              {thread.seller && <span>• Продавець: {thread.seller.name}</span>}
+            </div>
           </div>
+          {productId && (
+            <div className="chat-window-header-actions">
+              <button
+                type="button"
+                className="chat-window-action-btn"
+                onClick={() => {
+                  const baseUrl = process.env.API_URL || 'https://goranked.gg';
+                  const editUrl = `${baseUrl}/admin/products/${productId}/edit`;
+                  window.open(editUrl, '_blank');
+                }}
+                title="Відкрити редагування товару на сайті"
+              >
+                🔗 Відкрити товар
+              </button>
+            </div>
+          )}
         </div>
-      </div>
 
       <div className="chat-window-messages">
         <MessageList messages={formattedMessages} chatId={chatId} searchQuery={searchQuery} />
         <div ref={messagesEndRef} />
       </div>
 
+      {showAiSuggestions && productId && buyerId && (
+        <AiSuggestions
+          chatId={productId}
+          chatType="product-order"
+          onSelect={(suggestion: string, index: number, aiRunId?: number) => {
+            setMessageText(suggestion);
+            setShowAiSuggestions(false);
+            // Можно сохранить feedback, что использовали AI предложение
+            if (aiRunId) {
+              apiClient.saveProductOrderAiFeedback(productId, {
+                ai_run_id: aiRunId,
+                selected_candidate_index: index + 1,
+                final_sent_content: suggestion,
+                was_edited: false,
+              }).catch(err => console.warn('Failed to save AI feedback:', err));
+            }
+          }}
+          onClose={() => setShowAiSuggestions(false)}
+        />
+      )}
       <div className="chat-window-input-container">
         {hasSeller && (
           <div className="order-chat-sender-toggle">
@@ -272,7 +311,43 @@ const ProductChatWindow: React.FC<ProductChatWindowProps> = ({ orderId }) => {
             </button>
           </div>
         )}
-
+        <div className="chat-window-input-actions">
+          {productId && buyerId && (
+            <button
+              type="button"
+              className={`message-input-ai-btn ${showAiSuggestions ? 'active' : ''}`}
+              onClick={() => setShowAiSuggestions(!showAiSuggestions)}
+              title="AI-предложения ответов"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path
+                  d="M12 2L2 7L12 12L22 7L12 2Z"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  fill="none"
+                />
+                <path
+                  d="M2 17L12 22L22 17"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  fill="none"
+                />
+                <path
+                  d="M2 12L12 17L22 12"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  fill="none"
+                />
+              </svg>
+            </button>
+          )}
+        </div>
         <form
           className="chat-window-input-form"
           onSubmit={(e) => {

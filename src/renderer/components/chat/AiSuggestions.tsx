@@ -8,15 +8,21 @@ interface AiSuggestionsProps {
   chatId: number;
   onSelect: (suggestion: string, suggestionIndex: number, aiRunId?: number) => void;
   onClose?: () => void;
+  chatType?: 'manager-client' | 'product-order'; // Тип чата
 }
 
-const AiSuggestions: React.FC<AiSuggestionsProps> = ({ chatId, onSelect, onClose }) => {
+const AiSuggestions: React.FC<AiSuggestionsProps> = ({ chatId, onSelect, onClose, chatType = 'manager-client' }) => {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [forceRefresh, setForceRefresh] = useState(false);
 
   const { data, isLoading, error, refetch } = useQuery({
-    queryKey: ['ai-suggestions', chatId, forceRefresh],
-    queryFn: () => apiClient.getAiSuggestions(chatId, { force_refresh: forceRefresh }),
+    queryKey: ['ai-suggestions', chatType, chatId, forceRefresh],
+    queryFn: () => {
+      if (chatType === 'product-order') {
+        return apiClient.getProductOrderAiSuggestions(chatId, { force_refresh: forceRefresh });
+      }
+      return apiClient.getAiSuggestions(chatId, { force_refresh: forceRefresh });
+    },
     enabled: !!chatId,
     staleTime: 0, // Не кешируем на фронтенде, чтобы всегда запрашивать свежие данные
     retry: 1,

@@ -26,7 +26,8 @@ const ProductChatListItem: React.FC<ProductChatListItemProps> = ({ thread, onCli
   };
 
   // Для ProductInquiry чатов
-  const productName = thread.name || (thread.product?.name || `Товар #${thread.product_id || thread.id}`);
+  const fullProductName = thread.name || (thread.product?.name || `Товар #${thread.product_id || thread.id}`);
+  const productName = fullProductName.length > 40 ? fullProductName.substring(0, 40) + '...' : fullProductName;
   const gameName = thread.game?.name || 'Unknown';
   const buyerName = thread.buyer?.name || 'Unknown';
   const sellerName = thread.seller?.name || 'Unknown';
@@ -43,10 +44,24 @@ const ProductChatListItem: React.FC<ProductChatListItemProps> = ({ thread, onCli
           </div>
           <div className="chat-item-info">
             <div className="chat-item-name-row">
-              <div className="chat-item-name">{productName}</div>
+              <div 
+                className="chat-item-name" 
+                title={fullProductName !== productName ? fullProductName : undefined}
+                style={{ 
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  maxWidth: '100%'
+                }}
+              >
+                {productName}
+              </div>
             </div>
             <div className="chat-item-meta-row">
               <div className="chat-item-source">{buyerName}</div>
+              {thread.buyer?.email && (
+                <div className="chat-item-manager" title={thread.buyer.email}>• {thread.buyer.email}</div>
+              )}
               <div className="chat-item-manager">• {gameName}</div>
             </div>
           </div>
