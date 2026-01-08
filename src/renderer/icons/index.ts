@@ -6,6 +6,7 @@ export {
   IconCircleCheck,
   IconTags,
   IconShoppingCart,
+  IconPackage,
   IconX,
   IconFlag,
   IconFlag2,

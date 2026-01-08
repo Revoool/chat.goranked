@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { User } from '../../types';
 import { useChatStore, MenuItem } from '../../store/chatStore';
 import { useAuthStore } from '../../store/authStore';
-import { IconInbox, IconUser, IconCheck, IconSettings, IconLogout, IconNotes, IconShoppingCart } from '../../icons';
+import { IconInbox, IconUser, IconCheck, IconSettings, IconLogout, IconNotes, IconShoppingCart, IconPackage } from '../../icons';
 import { hasAccess } from '../../utils/access';
 import logoImage from '../../assets/logo.png';
 import '../../styles/Sidebar.css';
@@ -72,11 +72,17 @@ const Sidebar: React.FC<SidebarProps> = ({ user, onLogout }) => {
       case 'order-chats':
         // Order chats - handled by parent component
         break;
+      case 'product-chats':
+        // Product chats - handled by parent component
+        break;
     }
   };
 
   // Check if user has access to order chats
   const hasOrderChatsAccess = hasAccess('account-orders');
+  
+  // Check if user has access to product chats
+  const hasProductChatsAccess = hasAccess('products-chats');
 
   return (
     <div className="sidebar">
@@ -113,6 +119,14 @@ const Sidebar: React.FC<SidebarProps> = ({ user, onLogout }) => {
             title="Чати замовлень"
             active={activeMenu === 'order-chats'}
             onClick={() => handleMenuClick('order-chats')}
+          />
+        )}
+        {hasProductChatsAccess && (
+          <NavButton
+            icon={<IconPackage size={20} />}
+            title="Чати з покупцями"
+            active={activeMenu === 'product-chats'}
+            onClick={() => handleMenuClick('product-chats')}
           />
         )}
         <NavButton

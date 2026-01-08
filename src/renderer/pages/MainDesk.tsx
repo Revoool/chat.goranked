@@ -5,6 +5,8 @@ import ChatList from '../components/chat/ChatList';
 import ChatWindow from '../components/chat/ChatWindow';
 import OrderChatList from '../components/orderChats/OrderChatList';
 import OrderChatWindow from '../components/orderChats/OrderChatWindow';
+import ProductChatList from '../components/productChats/ProductChatList';
+import ProductChatWindow from '../components/productChats/ProductChatWindow';
 import ClientCard from '../components/client/ClientCard';
 import Settings from '../components/settings/Settings';
 import TasksList from '../components/tasks/TasksList';
@@ -17,7 +19,7 @@ import '../styles/MainDesk.css';
 
 const MainDesk: React.FC = () => {
   const { user, logout } = useAuthStore();
-  const { selectedChatId, selectedOrderChatId, activeMenu, isClientCardOpen } = useChatStore();
+  const { selectedChatId, selectedOrderChatId, selectedProductChatId, activeMenu, isClientCardOpen } = useChatStore();
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [taskDialogOpen, setTaskDialogOpen] = useState(false);
   const queryClient = useQueryClient();
@@ -101,6 +103,19 @@ const MainDesk: React.FC = () => {
               ) : (
                 <div className="empty-chat">
                   <p>Выберите чат заказа для начала работы</p>
+                </div>
+              )}
+            </div>
+          </>
+        ) : activeMenu === 'product-chats' ? (
+          <>
+            <ProductChatList />
+            <div className="chat-area">
+              {selectedProductChatId ? (
+                <ProductChatWindow orderId={selectedProductChatId} />
+              ) : (
+                <div className="empty-chat">
+                  <p>Выберите чат з покупцем для начала работы</p>
                 </div>
               )}
             </div>

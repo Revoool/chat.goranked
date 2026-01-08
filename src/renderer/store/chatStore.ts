@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { Chat, ChatFilters } from '../types';
 
-export type MenuItem = 'inbox' | 'assigned' | 'closed' | 'settings' | 'tasks' | 'order-chats';
+export type MenuItem = 'inbox' | 'assigned' | 'closed' | 'settings' | 'tasks' | 'order-chats' | 'product-chats';
 
 interface TypingInfo {
   isTyping: boolean;
@@ -12,6 +12,7 @@ interface TypingInfo {
 interface ChatState {
   selectedChatId: number | null;
   selectedOrderChatId: number | null; // ID заказа для order chats
+  selectedProductChatId: string | null; // ID продукта для product chats (format: "productId_buyerId")
   filters: ChatFilters;
   chats: Chat[];
   activeMenu: MenuItem;
@@ -20,6 +21,7 @@ interface ChatState {
   searchQuery: string; // Текущий поисковый запрос для подсветки
   setSelectedChat: (chatId: number | null) => void;
   setSelectedOrderChat: (orderId: number | null) => void; // Выбрать чат заказа
+  setSelectedProductChat: (chatId: string | null) => void; // Выбрать чат продукта
   setFilters: (filters: Partial<ChatFilters>) => void;
   setChats: (chats: Chat[]) => void;
   appendChats: (chats: Chat[]) => void; // Добавить чаты к существующим (для пагинации)
@@ -35,14 +37,16 @@ interface ChatState {
 export const useChatStore = create<ChatState>((set) => ({
   selectedChatId: null,
   selectedOrderChatId: null,
+  selectedProductChatId: null,
   filters: {},
   chats: [],
   activeMenu: 'inbox' as MenuItem,
   isClientCardOpen: false,
   typingIndicators: {},
   searchQuery: '',
-  setSelectedChat: (chatId) => set({ selectedChatId: chatId, selectedOrderChatId: null, isClientCardOpen: false }), // Close card when switching chats
-  setSelectedOrderChat: (orderId) => set({ selectedOrderChatId: orderId, selectedChatId: null, isClientCardOpen: false }), // Close card when switching order chats
+  setSelectedChat: (chatId) => set({ selectedChatId: chatId, selectedOrderChatId: null, selectedProductChatId: null, isClientCardOpen: false }), // Close card when switching chats
+  setSelectedOrderChat: (orderId) => set({ selectedOrderChatId: orderId, selectedChatId: null, selectedProductChatId: null, isClientCardOpen: false }), // Close card when switching order chats
+  setSelectedProductChat: (chatId) => set({ selectedProductChatId: chatId, selectedChatId: null, selectedOrderChatId: null, isClientCardOpen: false }), // Close card when switching product chats
   setFilters: (filters) => set((state) => ({ filters: { ...state.filters, ...filters } })),
   setSearchQuery: (query) => set({ searchQuery: query }),
   setChats: (chats) => {

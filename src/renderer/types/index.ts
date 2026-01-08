@@ -330,3 +330,93 @@ export interface OrderChatMessagesResponse {
   data: OrderChatMessage[];
   thread: OrderChatThread;
 }
+
+// ==================== PRODUCT CHAT TYPES ====================
+
+export interface ProductChatThread {
+  id: string; // Format: "productId_buyerId"
+  product_id: number;
+  buyer_id: number;
+  name: string;
+  game?: {
+    id: number;
+    name: string;
+    icon?: string;
+  };
+  seller?: {
+    id: number;
+    name: string;
+    email: string;
+    avatar?: string;
+  };
+  buyer?: {
+    id: number;
+    name: string;
+    email: string;
+    avatar?: string;
+  };
+  inquiry_messages_count: number;
+  unread_count: number;
+  updated_at?: string;
+  last_message_timestamp?: number;
+}
+
+export interface ProductChatMessage {
+  id: number;
+  product_id: number;
+  from_id: number;
+  to_id: number;
+  body: string;
+  type: string;
+  seen?: boolean;
+  created_at: string;
+  updated_at?: string;
+  from?: {
+    id: number;
+    name: string;
+    email: string;
+    avatar?: string;
+  };
+  to?: {
+    id: number;
+    name: string;
+    email: string;
+    avatar?: string;
+  };
+  files?: Attachment[];
+}
+
+export interface ProductChatThreadResponse {
+  conversations: ProductChatThread[];
+  total: number;
+  per_page: number;
+  current_page: number;
+}
+
+export interface ProductChatMessagesResponse {
+  messages: ProductChatMessage[];
+  product: {
+    id: number;
+    name: string;
+    seller_id: number;
+    seller?: {
+      id: number;
+      name: string;
+      email: string;
+      avatar?: string;
+      is_online?: boolean;
+    };
+    buyer?: {
+      id: number;
+      name: string;
+      email: string;
+      avatar?: string;
+      is_online?: boolean;
+    };
+    game?: {
+      id: number;
+      name: string;
+      icon?: string;
+    };
+  };
+}

@@ -1589,6 +1589,139 @@ class ApiClient {
       throw error;
     }
   }
+
+  // ==================== PRODUCT ORDERS CHAT METHODS ====================
+
+  // Get product orders chat threads (conversations)
+  async getProductChatThreads(filters?: {
+    q?: string;
+    sort_by?: string;
+    sort_dir?: 'asc' | 'desc';
+    page?: number;
+    per_page?: number;
+  }): Promise<any> {
+    console.log("💬 Requesting product orders chat threads", filters);
+    try {
+      const response = await this.client.get("/api/product-orders/chats", {
+        params: filters,
+      });
+      return response.data;
+    } catch (error: any) {
+      console.error("❌ Error fetching product orders chat threads:", error);
+      throw error;
+    }
+  }
+
+  // Get messages for a product order chat
+  async getProductChatMessages(
+    orderId: number,
+    options?: {
+      mark_seen?: boolean;
+      since_id?: number;
+      per_page?: number;
+    }
+  ): Promise<any> {
+    console.log("💬 Requesting product order chat messages", orderId, options);
+    try {
+      // Используем существующий API для получения заказа с сообщениями
+      const response = await this.client.get(`/api/products/orders/${orderId}`);
+      const order = response.data.order;
+      const messages = order.messages || [];
+      
+      // Помечаем как прочитанные если нужно
+      if (options?.mark_seen !== false) {
+        await this.markProductChatSeen(orderId).catch(() => {});
+      }
+      
+      return {
+        data: messages.reverse(),
+        thread: order,
+      };
+    } catch (error: any) {
+      console.error("❌ Error fetching product order chat messages:", error);
+      throw error;
+    }
+  }
+
+  // Send message in product order chat (from admin)
+  async sendProductChatMessage(
+    orderId: number,
+    body: string
+  ): Promise<any> {
+    console.log("📤 Sending product order chat message", orderId);
+    try {
+      // Используем существующий API для отправки сообщения
+      const formData = new FormData();
+      formData.append('order_id', orderId.toString());
+      formData.append('body', body);
+      formData.append('type', 'message');
+      
+      const response = await this.client.post("/api/chat/account/message", formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return response.data;
+    } catch (error: any) {
+      console.error("❌ Error sending product order chat message:", error);
+      throw error;
+    }
+  }
+
+  // Mark product order chat messages as seen
+  async markProductChatSeen(
+    orderId: number
+  ): Promise<any> {
+    console.log("👁️ Marking product order chat as seen", orderId);
+    try {
+      // Используем существующий API для пометки как прочитанное
+      const response = await this.client.post(`/api/chat/seen`, null, {
+        params: {
+          type: 'account',
+          id: orderId,
+        },
+      });
+      return response.data;
+    } catch (error: any) {
+      console.error("❌ Error marking product order chat as seen:", error);
+      throw error;
+    }
+  }
+
+  // Send typing indicator for product order chat
+  async sendProductChatTyping(
+    orderId: number,
+    isTyping: boolean
+  ): Promise<any> {
+    console.log("⌨️ Sending product order chat typing", orderId, isTyping);
+    try {
+      const response = await this.client.post("/api/chat/typing", {
+        order_id: orderId,
+        is_typing: isTyping,
+        chat_type: 'account',
+      });
+      return response.data;
+    } catch (error: any) {
+      console.error("❌ Error sending product order chat typing:", error);
+      throw error;
+    }
+  }
+    productId: number,
+    userId: number,
+    isTyping: boolean
+  ): Promise<any> {
+    try {
+      const response = await this.client.post("/api/products/inquiry-typing", {
+        product_id: productId,
+        user_id: userId,
+        is_typing: isTyping,
+      });
+      return response.data;
+    } catch (error: any) {
+      console.error("❌ Error sending typing indicator:", error);
+      throw error;
+    }
+  }
 }
 
 export const apiClient = new ApiClient();
