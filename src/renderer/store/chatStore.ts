@@ -17,7 +17,7 @@ interface ChatState {
   chats: Chat[];
   activeMenu: MenuItem;
   isClientCardOpen: boolean;
-  typingIndicators: Record<number, TypingInfo>; // chatId -> typing info
+  typingIndicators: Record<number | string, TypingInfo>; // chatId -> typing info (supports both number and string)
   searchQuery: string; // Текущий поисковый запрос для подсветки
   setSelectedChat: (chatId: number | null) => void;
   setSelectedOrderChat: (orderId: number | null) => void; // Выбрать чат заказа
@@ -30,7 +30,7 @@ interface ChatState {
   setActiveMenu: (menu: MenuItem) => void;
   toggleClientCard: () => void;
   setClientCardOpen: (isOpen: boolean) => void;
-  setTypingIndicator: (chatId: number, typingInfo: TypingInfo | null) => void;
+  setTypingIndicator: (chatId: number | string, typingInfo: TypingInfo | null) => void;
   setSearchQuery: (query: string) => void;
 }
 
