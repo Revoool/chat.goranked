@@ -1781,25 +1781,25 @@ class ApiClient {
   ): Promise<any> {
     console.log("💬 Requesting product inquiry chat messages", productId, buyerId, options);
     try {
-      const response = await this.client.get(`/api/products/${productId}/inquiry-messages`);
-      const messages = response.data.messages || [];
-      
-      // Фильтруем сообщения только для этого buyerId
-      const filteredMessages = messages.filter((msg: any) => {
-        return (msg.from_id === buyerId || msg.to_id === buyerId);
+      // API endpoint принимает buyer_id как query параметр
+      const response = await this.client.get(`/api/products/${productId}/inquiry-messages`, {
+        params: {
+          buyer_id: buyerId,
+        },
       });
+      const messages = response.data.messages || [];
       
       // Помечаем как прочитанные если нужно
       if (options?.mark_seen !== false) {
         await this.markProductInquiryChatSeen(productId).catch(() => {});
       }
       
-      // Получаем данные покупателя и продавца из первого сообщения или из ответа API
-      const buyer = response.data.buyer || (filteredMessages[0]?.from_id === buyerId ? filteredMessages[0]?.from : filteredMessages[0]?.to) || null;
+      // Получаем данные покупателя и продавца из ответа API
+      const buyer = response.data.buyer || null;
       const seller = response.data.seller || response.data.product?.user || null;
       
       return {
-        data: filteredMessages.reverse(),
+        data: messages.reverse(),
         thread: {
           id: `${productId}_${buyerId}`,
           product_id: productId,
@@ -1807,7 +1807,7 @@ class ApiClient {
           product: response.data.product || null,
           buyer: buyer,
           seller: seller,
-          messages_count: filteredMessages.length,
+          messages_count: messages.length,
           unread_count: 0,
         },
       };
