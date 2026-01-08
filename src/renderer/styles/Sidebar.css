@@ -1,23 +1,28 @@
 .sidebar {
-  width: 100%;
-  height: 60px;
+  width: 70px;
   background: var(--graphite-medium);
-  border-bottom: 1px solid var(--border-color);
+  border-right: 1px solid var(--border-color);
   display: flex;
-  flex-direction: row;
-  align-items: center;
-  padding: 0 12px;
-  gap: 8px;
+  flex-direction: column;
+  height: 100vh;
 }
 
 .sidebar-header {
-  padding: 0;
+  padding: 12px;
+  padding-top: 28px; /* Extra padding for Mac window controls */
+  border-bottom: 1px solid var(--border-color);
   display: flex;
   align-items: center;
   justify-content: center;
   -webkit-app-region: drag; /* Allow window dragging from header */
   user-select: none; /* Prevent text selection while dragging */
-  flex-shrink: 0;
+}
+
+/* Additional padding for Mac (darwin) */
+@supports (-webkit-app-region: drag) {
+  .sidebar-header {
+    padding-top: 28px;
+  }
 }
 
 .sidebar-logo {
@@ -30,19 +35,17 @@
 
 .sidebar-nav {
   flex: 1;
-  padding: 0;
+  padding: 12px 0;
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   align-items: center;
   gap: 8px;
   -webkit-app-region: no-drag; /* Buttons should not be draggable */
-  overflow-x: auto;
-  overflow-y: hidden;
 }
 
 .nav-button-wrapper {
   position: relative;
-  flex-shrink: 0;
+  width: 100%;
   display: flex;
   justify-content: center;
 }
