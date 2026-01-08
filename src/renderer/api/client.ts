@@ -1645,11 +1645,21 @@ class ApiClient {
         await this.markProductChatSeen(orderId).catch(() => {});
       }
       
+      // Обрабатываем product.name если это объект переводов
+      const productName = order.product?.name 
+        ? (typeof order.product.name === 'string' 
+          ? order.product.name 
+          : (order.product.name?.uk || order.product.name?.ua || 'Unknown'))
+        : 'Unknown';
+      
       return {
         data: formattedMessages.reverse(),
         thread: {
           id: order.id,
-          product: order.product,
+          product: order.product ? {
+            ...order.product,
+            name: productName,
+          } : null,
           user: order.client,
           game: order.product?.game || { name: order.game_name },
           messages_count: messages.length,

@@ -224,7 +224,7 @@ const ProductChatWindow: React.FC<ProductChatWindowProps> = ({ orderId }) => {
     <div className="chat-window">
       <div className="chat-window-header">
         <div className="chat-window-header-info">
-          <h3>{thread.product?.name || `Замовлення #${orderId}`}</h3>
+          <h3>{typeof thread.product?.name === 'string' ? thread.product.name : (thread.product?.name?.uk || thread.product?.name?.ua || `Замовлення #${orderId}`)}</h3>
           <div className="chat-window-header-meta">
             <span>ID: {orderId}</span>
             {thread.game && <span>• {thread.game.name}</span>}
