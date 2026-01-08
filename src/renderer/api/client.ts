@@ -1628,14 +1628,33 @@ class ApiClient {
       const order = response.data.order;
       const messages = order.messages || [];
       
+      // Преобразуем сообщения в правильный формат
+      const formattedMessages = messages.map((msg: any) => ({
+        ...msg,
+        to_id: msg.to || msg.to_id, // ChatResource возвращает 'to' вместо 'to_id'
+        from: msg.from_id ? {
+          id: msg.from_id,
+          name: msg.email || 'Unknown',
+          email: msg.email || '',
+          avatar: msg.avatar,
+        } : null,
+      }));
+      
       // Помечаем как прочитанные если нужно
       if (options?.mark_seen !== false) {
         await this.markProductChatSeen(orderId).catch(() => {});
       }
       
       return {
-        data: messages.reverse(),
-        thread: order,
+        data: formattedMessages.reverse(),
+        thread: {
+          id: order.id,
+          product: order.product,
+          user: order.client,
+          game: order.product?.game || { name: order.game_name },
+          messages_count: messages.length,
+          unread_count: 0,
+        },
       };
     } catch (error: any) {
       console.error("❌ Error fetching product order chat messages:", error);
@@ -1643,18 +1662,28 @@ class ApiClient {
     }
   }
 
-  // Send message in product order chat (from admin)
+  // Send message in product order chat (from admin or seller)
   async sendProductChatMessage(
     orderId: number,
-    body: string
+    body: string,
+    fromId?: number,
+    toId?: number
   ): Promise<any> {
-    console.log("📤 Sending product order chat message", orderId);
+    console.log("📤 Sending product order chat message", orderId, { fromId, toId });
     try {
       // Используем существующий API для отправки сообщения
       const formData = new FormData();
       formData.append('order_id', orderId.toString());
       formData.append('body', body);
       formData.append('type', 'message');
+      
+      // Если переданы fromId и toId, используем их
+      if (fromId) {
+        formData.append('from_id', fromId.toString());
+      }
+      if (toId) {
+        formData.append('to_id', toId.toString());
+      }
       
       const response = await this.client.post("/api/chat/account/message", formData, {
         headers: {

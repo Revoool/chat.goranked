@@ -57,24 +57,27 @@ const ProductChatWindow: React.FC<ProductChatWindowProps> = ({ orderId }) => {
   // Отправка сообщения
   const sendMessageMutation = useMutation({
     mutationFn: async (body: string) => {
+      if (!currentUser?.id || !thread) {
+        throw new Error('User not authenticated or thread data missing');
+      }
+
       if (sendAsAdmin) {
-        // Отправляем от админа
-        return apiClient.sendProductChatMessage(orderId, body);
+        // Отправляем от админа к покупателю
+        return apiClient.sendProductChatMessage(
+          orderId,
+          body,
+          currentUser.id,
+          thread.user?.id
+        );
       } else {
-        // Отправляем от продавца
-        if (!thread?.product?.user_id) {
+        // Отправляем от продавца к покупателю
+        if (!thread.product?.user_id) {
           throw new Error('Seller ID not found');
         }
-        if (!thread?.user?.id) {
+        if (!thread.user?.id) {
           throw new Error('Client ID not found');
         }
-        // Используем существующий API для отправки от продавца
-        const formData = new FormData();
-        formData.append('order_id', orderId.toString());
-        formData.append('body', body);
-        // Используем существующий метод для отправки сообщения от продавца
-        // Для product orders используется тот же API endpoint, что и для account orders
-        return apiClient.sendOrderChatMessageAsSeller(
+        return apiClient.sendProductChatMessage(
           orderId,
           body,
           thread.product.user_id,
@@ -193,24 +196,29 @@ const ProductChatWindow: React.FC<ProductChatWindowProps> = ({ orderId }) => {
   }
 
   // Преобразуем сообщения для MessageList
-  const formattedMessages = messages.map((msg: any) => ({
-    id: msg.id,
-    chat_id: orderId,
-    from_manager: msg.from_id === (sendAsAdmin ? currentUser?.id : thread.product?.user_id),
-    user_id: msg.from_id,
-    body: msg.body,
-    type: msg.type || 'text',
-    seen: msg.seen || false,
-    created_at: msg.created_at,
-    updated_at: msg.updated_at,
-    user: msg.from ? {
-      id: msg.from.id,
-      name: msg.from.name,
-      email: msg.from.email,
-      avatar: msg.from.avatar,
-    } : null,
-    files: msg.files || [],
-  }));
+  const formattedMessages = messages.map((msg: any) => {
+    // Определяем, от кого сообщение (админ/продавец или покупатель)
+    const isFromManager = msg.from_id === (sendAsAdmin ? currentUser?.id : thread?.product?.user_id);
+    
+    return {
+      id: msg.id,
+      chat_id: orderId,
+      from_manager: isFromManager,
+      user_id: msg.from_id,
+      body: msg.body,
+      type: msg.type || 'text',
+      seen: msg.seen || false,
+      created_at: msg.created_at,
+      updated_at: msg.updated_at || msg.created_at,
+      user: msg.from || (msg.from_id ? {
+        id: msg.from_id,
+        name: msg.email || 'Unknown',
+        email: msg.email || '',
+        avatar: msg.avatar,
+      } : null),
+      files: msg.files || [],
+    };
+  });
 
   return (
     <div className="chat-window">
