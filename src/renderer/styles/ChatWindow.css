@@ -314,15 +314,8 @@
   background: var(--graphite-medium);
 }
 
-.chat-window-input-actions {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 12px;
-  align-items: center;
-}
-
-/* Используем стили из MessageInput.css для кнопки AI */
-.chat-window-input-actions .message-input-ai-btn {
+/* Кнопка AI в строке ввода */
+.chat-window-input-form .message-input-ai-btn {
   padding: 10px;
   background: var(--graphite-light);
   border: 1px solid var(--border-color);
@@ -338,7 +331,7 @@
   justify-content: center;
 }
 
-.chat-window-input-actions .message-input-ai-btn:hover {
+.chat-window-input-form .message-input-ai-btn:hover {
   background: #8b5cf6;
   border-color: #8b5cf6;
   color: white;
@@ -346,14 +339,14 @@
   box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
 }
 
-.chat-window-input-actions .message-input-ai-btn.active {
+.chat-window-input-form .message-input-ai-btn.active {
   background: #8b5cf6;
   border-color: #8b5cf6;
   color: white;
   animation: ai-pulse 2s ease-in-out infinite;
 }
 
-.chat-window-input-actions .message-input-ai-btn svg {
+.chat-window-input-form .message-input-ai-btn svg {
   width: 18px;
   height: 18px;
 }
@@ -367,31 +360,31 @@
   }
 }
 
-.order-chat-sender-toggle {
+.order-chat-sender-toggle-inline {
   display: flex;
-  gap: 8px;
-  margin-bottom: 12px;
+  gap: 4px;
+  flex-shrink: 0;
 }
 
-.sender-toggle-btn {
-  flex: 1;
-  padding: 8px 16px;
+.sender-toggle-btn-inline {
+  padding: 8px 12px;
   background: var(--graphite-light);
   border: 1px solid var(--border-color);
   border-radius: 6px;
   color: var(--text-secondary);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
+  white-space: nowrap;
 }
 
-.sender-toggle-btn:hover {
+.sender-toggle-btn-inline:hover {
   background: var(--graphite-dark);
   border-color: var(--flame-orange);
 }
 
-.sender-toggle-btn.active {
+.sender-toggle-btn-inline.active {
   background: var(--flame-orange);
   border-color: var(--flame-orange);
   color: white;
@@ -399,7 +392,7 @@
 
 .chat-window-input-form {
   display: flex;
-  gap: 12px;
+  gap: 8px;
   align-items: flex-end;
 }
 

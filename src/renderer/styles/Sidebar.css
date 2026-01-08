@@ -83,10 +83,10 @@
 
 .nav-item-tooltip {
   position: absolute;
-  bottom: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  margin-bottom: 8px;
+  left: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  margin-left: 12px;
   background: var(--graphite-dark);
   color: var(--text-primary);
   padding: 6px 12px;
@@ -102,25 +102,21 @@
 .nav-item-tooltip::before {
   content: '';
   position: absolute;
-  top: 100%;
-  left: 50%;
-  transform: translateX(-50%);
+  right: 100%;
+  top: 50%;
+  transform: translateY(-50%);
   border: 5px solid transparent;
-  border-top-color: var(--graphite-dark);
+  border-right-color: var(--graphite-dark);
 }
 
 .sidebar-footer {
-  padding: 0;
-  border-top: none;
-  border-left: 1px solid var(--border-color);
+  padding: 12px;
+  border-top: 1px solid var(--border-color);
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
   -webkit-app-region: no-drag; /* Footer buttons should not be draggable */
-  flex-shrink: 0;
-  padding-left: 12px;
-  margin-left: auto;
 }
 
 .user-info {

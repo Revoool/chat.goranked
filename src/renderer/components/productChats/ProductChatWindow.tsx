@@ -300,23 +300,33 @@ const ProductChatWindow: React.FC<ProductChatWindowProps> = ({ orderId }) => {
         />
       )}
       <div className="chat-window-input-container">
-        {hasSeller && (
-          <div className="order-chat-sender-toggle">
-            <button
-              className={`sender-toggle-btn ${sendAsAdmin ? 'active' : ''}`}
-              onClick={() => setSendAsAdmin(true)}
-            >
-              Від Адміна
-            </button>
-            <button
-              className={`sender-toggle-btn ${!sendAsAdmin ? 'active' : ''}`}
-              onClick={() => setSendAsAdmin(false)}
-            >
-              Від Продавця
-            </button>
-          </div>
-        )}
-        <div className="chat-window-input-actions">
+        <form
+          className="chat-window-input-form"
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleSendMessage();
+          }}
+        >
+          {hasSeller && (
+            <div className="order-chat-sender-toggle-inline">
+              <button
+                type="button"
+                className={`sender-toggle-btn-inline ${sendAsAdmin ? 'active' : ''}`}
+                onClick={() => setSendAsAdmin(true)}
+                title="Від Адміна"
+              >
+                Адмін
+              </button>
+              <button
+                type="button"
+                className={`sender-toggle-btn-inline ${!sendAsAdmin ? 'active' : ''}`}
+                onClick={() => setSendAsAdmin(false)}
+                title="Від Продавця"
+              >
+                Продавець
+              </button>
+            </div>
+          )}
           {productId && buyerId && (
             <button
               type="button"
@@ -352,14 +362,6 @@ const ProductChatWindow: React.FC<ProductChatWindowProps> = ({ orderId }) => {
               </svg>
             </button>
           )}
-        </div>
-        <form
-          className="chat-window-input-form"
-          onSubmit={(e) => {
-            e.preventDefault();
-            handleSendMessage();
-          }}
-        >
           <textarea
             className="chat-window-textarea"
             value={messageText}

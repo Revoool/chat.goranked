@@ -232,25 +232,27 @@ const OrderChatWindow: React.FC<OrderChatWindowProps> = ({ orderId }) => {
         />
       )}
       <div className="chat-window-input-container">
-        {hasSeller && (
-          <div className="order-chat-sender-toggle">
-            <button
-              type="button"
-              className={`sender-toggle-btn ${sendAsAdmin ? 'active' : ''}`}
-              onClick={() => setSendAsAdmin(true)}
-            >
-              Від Адміна
-            </button>
-            <button
-              type="button"
-              className={`sender-toggle-btn ${!sendAsAdmin ? 'active' : ''}`}
-              onClick={() => setSendAsAdmin(false)}
-            >
-              Від Продавця
-            </button>
-          </div>
-        )}
-        <div className="chat-window-input-actions">
+        <form onSubmit={handleSend} className="chat-window-input-form">
+          {hasSeller && (
+            <div className="order-chat-sender-toggle-inline">
+              <button
+                type="button"
+                className={`sender-toggle-btn-inline ${sendAsAdmin ? 'active' : ''}`}
+                onClick={() => setSendAsAdmin(true)}
+                title="Від Адміна"
+              >
+                Адмін
+              </button>
+              <button
+                type="button"
+                className={`sender-toggle-btn-inline ${!sendAsAdmin ? 'active' : ''}`}
+                onClick={() => setSendAsAdmin(false)}
+                title="Від Продавця"
+              >
+                Продавець
+              </button>
+            </div>
+          )}
           <button
             type="button"
             className={`message-input-ai-btn ${showAiSuggestions ? 'active' : ''}`}
@@ -284,8 +286,6 @@ const OrderChatWindow: React.FC<OrderChatWindowProps> = ({ orderId }) => {
               />
             </svg>
           </button>
-        </div>
-        <form onSubmit={handleSend} className="chat-window-input-form">
           <textarea
             value={messageText}
             onChange={handleInputChange}
@@ -306,7 +306,7 @@ const OrderChatWindow: React.FC<OrderChatWindowProps> = ({ orderId }) => {
             disabled={!messageText.trim() || sendMessageMutation.isPending}
             title={sendAsAdmin ? 'Відправити від Адміна' : 'Відправити від Продавця'}
           >
-            {sendMessageMutation.isPending ? '...' : (sendAsAdmin ? 'Від Адміна' : 'Від Продавця')}
+            {sendMessageMutation.isPending ? '...' : 'Відправити'}
           </button>
         </form>
       </div>
