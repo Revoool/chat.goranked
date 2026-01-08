@@ -1706,22 +1706,6 @@ class ApiClient {
       throw error;
     }
   }
-    productId: number,
-    userId: number,
-    isTyping: boolean
-  ): Promise<any> {
-    try {
-      const response = await this.client.post("/api/products/inquiry-typing", {
-        product_id: productId,
-        user_id: userId,
-        is_typing: isTyping,
-      });
-      return response.data;
-    } catch (error: any) {
-      console.error("❌ Error sending typing indicator:", error);
-      throw error;
-    }
-  }
 }
 
 export const apiClient = new ApiClient();

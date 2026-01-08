@@ -12,7 +12,7 @@ interface TypingInfo {
 interface ChatState {
   selectedChatId: number | null;
   selectedOrderChatId: number | null; // ID заказа для order chats
-  selectedProductChatId: string | null; // ID продукта для product chats (format: "productId_buyerId")
+  selectedProductChatId: number | null; // ID заказа маркетплейса для product chats
   filters: ChatFilters;
   chats: Chat[];
   activeMenu: MenuItem;
@@ -21,7 +21,7 @@ interface ChatState {
   searchQuery: string; // Текущий поисковый запрос для подсветки
   setSelectedChat: (chatId: number | null) => void;
   setSelectedOrderChat: (orderId: number | null) => void; // Выбрать чат заказа
-  setSelectedProductChat: (chatId: string | null) => void; // Выбрать чат продукта
+  setSelectedProductChat: (orderId: number | null) => void; // Выбрать чат заказа маркетплейса
   setFilters: (filters: Partial<ChatFilters>) => void;
   setChats: (chats: Chat[]) => void;
   appendChats: (chats: Chat[]) => void; // Добавить чаты к существующим (для пагинации)

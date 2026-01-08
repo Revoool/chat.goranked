@@ -72,15 +72,14 @@ const ProductChatWindow: React.FC<ProductChatWindowProps> = ({ orderId }) => {
         const formData = new FormData();
         formData.append('order_id', orderId.toString());
         formData.append('body', body);
-        formData.append('from_id', thread.product.user_id.toString());
-        formData.append('to_id', thread.user.id.toString());
-        formData.append('type', 'message');
-        
-        return apiClient.client.post("/api/chat/account/message", formData, {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        }).then(res => res.data);
+        // Используем существующий метод для отправки сообщения от продавца
+        // Для product orders используется тот же API endpoint, что и для account orders
+        return apiClient.sendOrderChatMessageAsSeller(
+          orderId,
+          body,
+          thread.product.user_id,
+          thread.user.id
+        );
       }
     },
     onSuccess: () => {
