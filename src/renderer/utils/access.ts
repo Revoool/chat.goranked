@@ -3,12 +3,38 @@
  */
 
 /**
+ * Get current user role from localStorage
+ * @returns role slug or null
+ */
+function getCurrentUserRole(): string | null {
+  try {
+    const userData = localStorage.getItem('userData');
+    if (userData) {
+      const user = JSON.parse(userData);
+      if (user && user.role) {
+        return user.role;
+      }
+    }
+    return null;
+  } catch (error) {
+    console.error('Error getting user role:', error);
+    return null;
+  }
+}
+
+/**
  * Check if user has access to a page/subject
  * @param subject - Page subject (e.g., 'account-orders')
  * @returns true if user has access
  */
 export function hasAccess(subject: string): boolean {
   try {
+    // Check if user is admin - admins (role_id 3) have access to everything
+    const currentUserRole = getCurrentUserRole();
+    if (currentUserRole === 'admin') {
+      return true;
+    }
+
     const userAbilityPages = JSON.parse(
       localStorage.getItem('userAbilityPages') || '[]'
     );

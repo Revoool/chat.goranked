@@ -69,6 +69,9 @@ const LoginPage: React.FC = () => {
       setToken(token);
       setUser(user);
       
+      // Store user data in localStorage for access checks
+      localStorage.setItem('userData', JSON.stringify(user));
+      
       // Store user ability pages and rules for access control
       if (response.userAbilityPages) {
         localStorage.setItem('userAbilityPages', JSON.stringify(response.userAbilityPages));

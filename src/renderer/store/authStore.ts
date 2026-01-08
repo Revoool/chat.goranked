@@ -26,6 +26,10 @@ export const useAuthStore = create<AuthState>((set) => ({
     } else {
       localStorage.removeItem('token');
     }
+    // Clear user data and permissions from localStorage
+    localStorage.removeItem('userData');
+    localStorage.removeItem('userAbilityPages');
+    localStorage.removeItem('userAbilityRules');
     set({ user: null, token: null, isAuthenticated: false });
   },
 }));
