@@ -364,6 +364,7 @@
   display: flex;
   gap: 4px;
   flex-shrink: 0;
+  align-items: center;
 }
 
 .sender-toggle-btn-inline {
@@ -377,6 +378,10 @@
   cursor: pointer;
   transition: all 0.2s ease;
   white-space: nowrap;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 40px;
 }
 
 .sender-toggle-btn-inline:hover {
@@ -390,10 +395,22 @@
   color: white;
 }
 
+.sender-toggle-btn-inline svg {
+  flex-shrink: 0;
+}
+
 .chat-window-input-form {
   display: flex;
   gap: 8px;
   align-items: flex-end;
+  flex-wrap: nowrap;
+}
+
+.chat-window-input-form .message-input-buttons-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
 }
 
 .chat-window-textarea {
@@ -443,6 +460,18 @@
 .chat-window-send-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.chat-window-send-btn.send-as-admin {
+  background: var(--flame-orange);
+}
+
+.chat-window-send-btn.send-as-seller {
+  background: #10b981;
+}
+
+.chat-window-send-btn.send-as-seller:hover:not(:disabled) {
+  background: #059669;
 }
 
 .chat-window-loading,

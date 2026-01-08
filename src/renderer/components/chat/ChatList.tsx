@@ -93,11 +93,12 @@ const ChatList: React.FC = () => {
   }, [data, error, setChats, appendChats, currentPage]);
 
   // Сбрасываем на первую страницу при изменении фильтров
+  // НЕ очищаем чаты сразу - они будут заменены новыми данными из API
   useEffect(() => {
     setCurrentPage(1);
-    setChats([]);
     setPaginationMeta(null);
-  }, [filters.status, filters.source, filters.manager_id, filters.priority, filters.search, setChats]);
+    // Не очищаем чаты здесь - они будут заменены новыми данными из useQuery
+  }, [filters.status, filters.source, filters.manager_id, filters.priority, filters.search]);
 
   // Получаем все доступные теги из чатов
   const availableTags = useMemo(() => {

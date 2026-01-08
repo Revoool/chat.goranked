@@ -57,22 +57,19 @@ const OrderChatWindow: React.FC<OrderChatWindowProps> = ({ orderId }) => {
 
   // Проверяем, есть ли продавец
   const hasSeller = useMemo(() => {
-    // Для account orders нужно проверить product.user_id
-    // Пока используем простую проверку - если есть booster, значит это boost order
-    // Для account orders нужно будет получать информацию о продукте отдельно
-    return false; // TODO: получить информацию о продавце из API
+    // Проверяем наличие продавца в thread
+    return !!(thread?.product?.user_id || thread?.seller?.id || thread?.product?.user?.id);
   }, [thread]);
 
   // Отправка сообщения
   const sendMessageMutation = useMutation({
     mutationFn: async (body: string) => {
       // Для заказов маркетплейса определяем fromId и toId
+      const sellerId = thread?.product?.user_id || thread?.seller?.id || thread?.product?.user?.id;
       const fromId = sendAsAdmin 
         ? (currentUser?.id || 0)
-        : (thread?.product?.user_id || thread?.seller?.id || currentUser?.id || 0);
-      const toId = sendAsAdmin 
-        ? (thread?.user?.id || thread?.product?.user_id || undefined)
-        : (thread?.user?.id || undefined);
+        : (sellerId || currentUser?.id || 0);
+      const toId = thread?.user?.id || thread?.client?.id || undefined;
       
       return apiClient.sendProductChatMessage(orderId, body, fromId, toId);
     },
@@ -241,7 +238,11 @@ const OrderChatWindow: React.FC<OrderChatWindowProps> = ({ orderId }) => {
                 onClick={() => setSendAsAdmin(true)}
                 title="Від Адміна"
               >
-                Адмін
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ marginRight: '4px' }}>
+                  <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+                  <path d="M2 17L12 22L22 17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+                </svg>
+                Від Адміна
               </button>
               <button
                 type="button"
@@ -249,43 +250,49 @@ const OrderChatWindow: React.FC<OrderChatWindowProps> = ({ orderId }) => {
                 onClick={() => setSendAsAdmin(false)}
                 title="Від Продавця"
               >
-                Продавець
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ marginRight: '4px' }}>
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+                  <circle cx="12" cy="7" r="4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+                </svg>
+                Від Продавця
               </button>
             </div>
           )}
-          <button
-            type="button"
-            className={`message-input-ai-btn ${showAiSuggestions ? 'active' : ''}`}
-            onClick={() => setShowAiSuggestions(!showAiSuggestions)}
-            title="AI-предложения ответов"
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path
-                d="M12 2L2 7L12 12L22 7L12 2Z"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                fill="none"
-              />
-              <path
-                d="M2 17L12 22L22 17"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                fill="none"
-              />
-              <path
-                d="M2 12L12 17L22 12"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                fill="none"
-              />
-            </svg>
-          </button>
+          <div className="message-input-buttons-group">
+            <button
+              type="button"
+              className={`message-input-ai-btn ${showAiSuggestions ? 'active' : ''}`}
+              onClick={() => setShowAiSuggestions(!showAiSuggestions)}
+              title="AI-предложения ответов"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path
+                  d="M12 2L2 7L12 12L22 7L12 2Z"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  fill="none"
+                />
+                <path
+                  d="M2 17L12 22L22 17"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  fill="none"
+                />
+                <path
+                  d="M2 12L12 17L22 12"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  fill="none"
+                />
+              </svg>
+            </button>
+          </div>
           <textarea
             value={messageText}
             onChange={handleInputChange}
@@ -302,7 +309,7 @@ const OrderChatWindow: React.FC<OrderChatWindowProps> = ({ orderId }) => {
           />
           <button
             type="submit"
-            className="chat-window-send-btn"
+            className={`chat-window-send-btn ${sendAsAdmin ? 'send-as-admin' : 'send-as-seller'}`}
             disabled={!messageText.trim() || sendMessageMutation.isPending}
             title={sendAsAdmin ? 'Відправити від Адміна' : 'Відправити від Продавця'}
           >
