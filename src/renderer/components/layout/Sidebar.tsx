@@ -78,11 +78,11 @@ const Sidebar: React.FC<SidebarProps> = ({ user, onLogout }) => {
     }
   };
 
-  // Check if user has access to order chats
+  // Check if user has access to order chats (boost orders)
   const hasOrderChatsAccess = hasAccess('account-orders');
   
-  // Check if user has access to product chats
-  const hasProductChatsAccess = hasAccess('products-chats');
+  // Check if user has access to product chats (marketplace orders - тоже account-orders)
+  const hasProductChatsAccess = hasAccess('account-orders');
 
   return (
     <div className="sidebar">
