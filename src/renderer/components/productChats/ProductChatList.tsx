@@ -22,7 +22,7 @@ const ProductChatList: React.FC = () => {
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['product-inquiry-chats', searchQuery, currentPage],
     queryFn: () => apiClient.getProductInquiryChatThreads({
-      search: searchQuery || undefined,
+      q: searchQuery || undefined,
       sort_by: 'updated_at',
       sort_dir: 'desc',
       page: currentPage,

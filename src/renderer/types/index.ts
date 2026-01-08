@@ -264,6 +264,18 @@ export interface OrderChatThread {
     name: string;
     alter_name?: string;
   };
+  // Для заказов маркетплейса (OrdersProducts)
+  product?: {
+    id: number;
+    name: string;
+    user_id?: number;
+  };
+  seller?: {
+    id: number;
+    name: string;
+    email?: string;
+    avatar?: string;
+  };
   messages_count: number;
   unread_count: number;
   last_message?: {
@@ -334,8 +346,11 @@ export interface OrderChatMessagesResponse {
 // ==================== PRODUCT ORDERS CHAT TYPES ====================
 
 export interface ProductChatThread {
-  id: number; // ID заказа маркетплейса (OrdersProducts.id)
-  order_id: number; // Для совместимости
+  id: number | string; // ID чата (может быть "productId_buyerId" для ProductInquiry или number для OrdersProducts)
+  order_id?: number; // Для совместимости
+  product_id?: number; // ID товара (для ProductInquiry)
+  buyer_id?: number; // ID покупателя (для ProductInquiry)
+  name?: string; // Название товара (для ProductInquiry)
   product?: {
     id: number;
     name: string;
@@ -346,10 +361,24 @@ export interface ProductChatThread {
     name: string;
     email: string;
   };
+  // Для ProductInquiry чатов
+  buyer?: {
+    id: number;
+    name: string;
+    email?: string;
+    avatar?: string;
+  };
+  seller?: {
+    id: number;
+    name: string;
+    email?: string;
+    avatar?: string;
+  };
   game?: {
     id: number;
     name: string;
     alter_name?: string;
+    icon?: string;
   };
   messages_count: number;
   unread_count: number;

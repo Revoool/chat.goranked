@@ -8,7 +8,7 @@ import '../../styles/MessageList.css';
 
 interface MessageListProps {
   messages: Message[];
-  chatId: number;
+  chatId: number | string;
   onUpdate?: () => void;
   searchQuery?: string;
 }
