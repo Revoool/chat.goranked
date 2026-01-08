@@ -918,13 +918,23 @@ class ApiClient {
       throw new Error("Invalid chat ID");
     }
     try {
+      // Используем более короткий таймаут для этого запроса (5 секунд)
       const response = await this.client.get(
-        `/api/manager-client-chats/${chatId}/client-info`
+        `/api/manager-client-chats/${chatId}/client-info`,
+        {
+          timeout: 5000, // 5 секунд таймаут
+        }
       );
       return response.data;
     } catch (error: any) {
+      if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
+        throw new Error("Request timeout - сервер не відповідає");
+      }
       if (error.response?.status === 403) {
         throw new Error("Access denied");
+      }
+      if (error.response?.status === 404) {
+        throw new Error("Client info not found");
       }
       throw error;
     }

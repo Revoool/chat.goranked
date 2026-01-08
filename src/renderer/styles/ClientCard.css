@@ -89,6 +89,28 @@
   color: var(--text-muted);
 }
 
+.client-card-error {
+  padding: 24px;
+  text-align: center;
+  color: var(--error);
+  font-size: 14px;
+}
+
+.client-info-loading {
+  padding: 12px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.client-info-error {
+  padding: 12px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-style: italic;
+}
+
 .client-avatar-large {
   width: 80px;
   height: 80px;

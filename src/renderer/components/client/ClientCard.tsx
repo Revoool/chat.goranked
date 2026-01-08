@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '../../api/client';
 import { useChatStore } from '../../store/chatStore';
@@ -11,37 +11,42 @@ interface ClientCardProps {
 
 const ClientCard: React.FC<ClientCardProps> = ({ chatId }) => {
   const { setClientCardOpen } = useChatStore();
-  const [clientInfo, setClientInfo] = useState<any>(null);
   
-  const { data: chatData } = useQuery({
+  // Загружаем основную информацию о чате с кешированием
+  const { data: chatData, isLoading: chatLoading } = useQuery({
     queryKey: ['chat', chatId],
     queryFn: () => apiClient.getChat(chatId),
+    staleTime: 30000, // Кешируем на 30 секунд
+    gcTime: 60000, // Храним в кеше 1 минуту
+    retry: 1, // Повторяем только 1 раз при ошибке
   });
 
-  // Загружаем дополнительную информацию о клиенте
-  useEffect(() => {
-    const loadClientInfo = async () => {
-      try {
-        const info = await apiClient.getClientInfo(chatId);
-        setClientInfo(info);
-      } catch (error) {
-        console.warn('Failed to load client info:', error);
-        // Не критично, продолжаем без этой информации
-      }
-    };
+  // Загружаем дополнительную информацию о клиенте с кешированием
+  const { data: clientInfo, isLoading: clientInfoLoading, error: clientInfoError } = useQuery({
+    queryKey: ['client-info', chatId],
+    queryFn: () => apiClient.getClientInfo(chatId),
+    enabled: !!chatId, // Загружаем только если есть chatId
+    staleTime: 60000, // Кешируем на 1 минуту
+    gcTime: 120000, // Храним в кеше 2 минуты
+    retry: false, // Не повторяем при ошибке (не критичная информация)
+    refetchOnWindowFocus: false, // Не обновляем при фокусе окна
+    refetchOnMount: false, // Не обновляем при монтировании, если есть кеш
+  });
 
-    if (chatId) {
-      loadClientInfo();
-      // Обновляем информацию каждые 15 секунд
-      const interval = setInterval(loadClientInfo, 15000);
-      return () => clearInterval(interval);
-    }
-  }, [chatId]);
-
-  if (!chatData) {
+  // Показываем загрузку только если нет кешированных данных
+  if (chatLoading && !chatData) {
     return (
       <div className="client-card">
         <div className="client-card-loading">Завантаження...</div>
+      </div>
+    );
+  }
+
+  // Если нет данных после загрузки, показываем ошибку
+  if (!chatData) {
+    return (
+      <div className="client-card">
+        <div className="client-card-error">Не вдалося завантажити інформацію про клієнта</div>
       </div>
     );
   }
@@ -111,7 +116,19 @@ const ClientCard: React.FC<ClientCardProps> = ({ chatId }) => {
         </div>
 
         {/* Додаткова інформація про клієнта */}
-        {clientInfo && (
+        {clientInfoLoading && (
+          <div className="client-additional-info">
+            <h5>Додаткова інформація</h5>
+            <div className="client-info-loading">Завантаження...</div>
+          </div>
+        )}
+        {clientInfoError && (
+          <div className="client-additional-info">
+            <h5>Додаткова інформація</h5>
+            <div className="client-info-error">Не вдалося завантажити додаткову інформацію</div>
+          </div>
+        )}
+        {!clientInfoLoading && !clientInfoError && clientInfo && (
           <div className="client-additional-info">
             <h5>Додаткова інформація</h5>
             <div className="info-grid">
