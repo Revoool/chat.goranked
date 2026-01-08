@@ -37,15 +37,7 @@ const ProductChatListItem: React.FC<ProductChatListItemProps> = ({ thread, onCli
       <div className="chat-item-header">
         <div className="chat-item-client">
           <div className="chat-item-avatar" style={{ backgroundColor: 'var(--flame-orange)' }}>
-            {thread.game?.icon ? (
-              <img 
-                src={`${process.env.API_BASE_URL || ''}/storage/${thread.game.icon}`} 
-                alt={gameName}
-                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-              />
-            ) : (
-              gameName.charAt(0).toUpperCase()
-            )}
+            {gameName.charAt(0).toUpperCase()}
           </div>
           <div className="chat-item-info">
             <div className="chat-item-name-row">
