@@ -3,6 +3,8 @@ import { useAuthStore } from '../store/authStore';
 import Sidebar from '../components/layout/Sidebar';
 import ChatList from '../components/chat/ChatList';
 import ChatWindow from '../components/chat/ChatWindow';
+import OrderChatList from '../components/orderChats/OrderChatList';
+import OrderChatWindow from '../components/orderChats/OrderChatWindow';
 import ClientCard from '../components/client/ClientCard';
 import Settings from '../components/settings/Settings';
 import TasksList from '../components/tasks/TasksList';
@@ -15,7 +17,7 @@ import '../styles/MainDesk.css';
 
 const MainDesk: React.FC = () => {
   const { user, logout } = useAuthStore();
-  const { selectedChatId, activeMenu, isClientCardOpen } = useChatStore();
+  const { selectedChatId, selectedOrderChatId, activeMenu, isClientCardOpen } = useChatStore();
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [taskDialogOpen, setTaskDialogOpen] = useState(false);
   const queryClient = useQueryClient();
@@ -90,6 +92,19 @@ const MainDesk: React.FC = () => {
           <Settings />
         ) : activeMenu === 'tasks' ? (
           <TasksList onTaskClick={handleTaskClick} />
+        ) : activeMenu === 'order-chats' ? (
+          <>
+            <OrderChatList />
+            <div className="chat-area">
+              {selectedOrderChatId ? (
+                <OrderChatWindow orderId={selectedOrderChatId} />
+              ) : (
+                <div className="empty-chat">
+                  <p>Выберите чат заказа для начала работы</p>
+                </div>
+              )}
+            </div>
+          </>
         ) : (
           <>
             <ChatList />

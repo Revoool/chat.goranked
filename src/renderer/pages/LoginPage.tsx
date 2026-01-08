@@ -68,6 +68,15 @@ const LoginPage: React.FC = () => {
 
       setToken(token);
       setUser(user);
+      
+      // Store user ability pages and rules for access control
+      if (response.userAbilityPages) {
+        localStorage.setItem('userAbilityPages', JSON.stringify(response.userAbilityPages));
+      }
+      if (response.userAbilityRules) {
+        localStorage.setItem('userAbilityRules', JSON.stringify(response.userAbilityRules));
+      }
+      
       // Reset 2FA state
       setTmpToken(null);
       setTwoFactorCode('');

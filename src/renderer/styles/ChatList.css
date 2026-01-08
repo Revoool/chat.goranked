@@ -192,3 +192,33 @@
   font-size: 14px;
 }
 
+.chat-list-load-more {
+  padding: 16px;
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  justify-content: center;
+}
+
+.chat-list-load-more-btn {
+  width: 100%;
+  padding: 10px 16px;
+  background: var(--graphite-medium);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.chat-list-load-more-btn:hover:not(:disabled) {
+  background: var(--graphite-light);
+  border-color: var(--flame-orange);
+  color: var(--flame-orange);
+}
+
+.chat-list-load-more-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

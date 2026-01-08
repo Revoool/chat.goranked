@@ -6,12 +6,20 @@ import ChatListItem from './ChatListItem';
 import '../../styles/ChatList.css';
 
 const ChatList: React.FC = () => {
-  const { filters, chats, setChats, setSelectedChat, setSearchQuery: setStoreSearchQuery } = useChatStore();
+  const { filters, chats, setChats, appendChats, setSelectedChat, setSearchQuery: setStoreSearchQuery } = useChatStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [showTagFilter, setShowTagFilter] = useState(false);
   const tagFilterRef = useRef<HTMLDivElement>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [paginationMeta, setPaginationMeta] = useState<{
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
+  } | null>(null);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
 
   // Debounce поискового запроса (500ms задержка) - только для подсветки в сообщениях
   // НЕ обновляем filters, чтобы не вызывать перезагрузку списка чатов
@@ -25,9 +33,14 @@ const ChatList: React.FC = () => {
     return () => clearTimeout(timer);
   }, [searchQuery, setStoreSearchQuery]);
 
+  // Загружаем чаты с пагинацией
   const { data, isLoading, error, refetch } = useQuery({
-    queryKey: ['chats', filters],
-    queryFn: () => apiClient.getChats(filters),
+    queryKey: ['chats', filters, currentPage],
+    queryFn: () => apiClient.getChats({
+      ...filters,
+      page: currentPage,
+      per_page: 20,
+    }),
     refetchInterval: 30000, // Refetch every 30 seconds
   });
 
@@ -48,6 +61,7 @@ const ChatList: React.FC = () => {
     };
   }, [showTagFilter]);
 
+  // Обрабатываем загрузку данных с пагинацией
   useEffect(() => {
     if (data) {
       // Try different possible response structures
@@ -58,13 +72,32 @@ const ChatList: React.FC = () => {
         chatsArray = [];
       }
       
-      setChats(chatsArray);
+      // Сохраняем метаданные пагинации
+      if (data.meta) {
+        setPaginationMeta(data.meta);
+      }
+      
+      // Если это первая страница - заменяем чаты, иначе добавляем
+      if (currentPage === 1) {
+        setChats(chatsArray);
+      } else {
+        appendChats(chatsArray);
+        setIsLoadingMore(false);
+      }
     } else if (error) {
       if (process.env.NODE_ENV === 'development') {
         console.error('ChatList error:', error);
       }
+      setIsLoadingMore(false);
     }
-  }, [data, error, setChats]);
+  }, [data, error, setChats, appendChats, currentPage]);
+
+  // Сбрасываем на первую страницу при изменении фильтров
+  useEffect(() => {
+    setCurrentPage(1);
+    setChats([]);
+    setPaginationMeta(null);
+  }, [filters.status, filters.source, filters.manager_id, filters.priority, filters.search, setChats]);
 
   // Получаем все доступные теги из чатов
   const availableTags = useMemo(() => {
@@ -244,19 +277,42 @@ const ChatList: React.FC = () => {
               : 'Нет чатов'}
           </div>
         ) : (
-          filteredChats
-            .filter((chat) => chat && (chat.clientUser || chat.client_name)) // Filter out invalid chats
-            .map((chat) => (
-              <ChatListItem
-                key={chat.id}
-                chat={chat}
-                onClick={() => {
-                  // Use chat.id (from manager_client_chats table)
-                  console.log('📌 Selecting chat:', { id: chat.id });
-                  setSelectedChat(chat.id);
-                }}
-              />
-            ))
+          <>
+            {filteredChats
+              .filter((chat) => chat && (chat.clientUser || chat.client_name)) // Filter out invalid chats
+              .map((chat) => (
+                <ChatListItem
+                  key={chat.id}
+                  chat={chat}
+                  onClick={() => {
+                    // Use chat.id (from manager_client_chats table)
+                    console.log('📌 Selecting chat:', { id: chat.id });
+                    setSelectedChat(chat.id);
+                  }}
+                />
+              ))}
+            
+            {/* Кнопка "Подгрузить еще" - показываем только если есть еще страницы и нет активных фильтров */}
+            {paginationMeta && 
+             paginationMeta.current_page < paginationMeta.last_page &&
+             !searchQuery.trim() && 
+             selectedTags.length === 0 && (
+              <div className="chat-list-load-more">
+                <button
+                  className="chat-list-load-more-btn"
+                  onClick={() => {
+                    setIsLoadingMore(true);
+                    setCurrentPage((prev) => prev + 1);
+                  }}
+                  disabled={isLoadingMore}
+                >
+                  {isLoadingMore 
+                    ? 'Загрузка...' 
+                    : `Подгрузить еще (${Math.max(0, paginationMeta.total - (paginationMeta.current_page * paginationMeta.per_page))} осталось)`}
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

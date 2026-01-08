@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { User } from '../../types';
-import { useChatStore } from '../../store/chatStore';
+import { useChatStore, MenuItem } from '../../store/chatStore';
 import { useAuthStore } from '../../store/authStore';
-import { IconInbox, IconUser, IconCheck, IconSettings, IconLogout, IconNotes } from '../../icons';
+import { IconInbox, IconUser, IconCheck, IconSettings, IconLogout, IconNotes, IconShoppingCart } from '../../icons';
+import { hasAccess } from '../../utils/access';
 import logoImage from '../../assets/logo.png';
 import '../../styles/Sidebar.css';
 
@@ -10,8 +11,6 @@ interface SidebarProps {
   user: User | null;
   onLogout: () => void;
 }
-
-type MenuItem = 'inbox' | 'assigned' | 'closed' | 'settings' | 'tasks';
 
 interface NavButtonProps {
   icon: React.ReactNode;
@@ -70,8 +69,14 @@ const Sidebar: React.FC<SidebarProps> = ({ user, onLogout }) => {
       case 'settings':
         // Settings page - handled by parent component
         break;
+      case 'order-chats':
+        // Order chats - handled by parent component
+        break;
     }
   };
+
+  // Check if user has access to order chats
+  const hasOrderChatsAccess = hasAccess('account-orders');
 
   return (
     <div className="sidebar">
@@ -102,6 +107,14 @@ const Sidebar: React.FC<SidebarProps> = ({ user, onLogout }) => {
           active={activeMenu === 'closed'}
           onClick={() => handleMenuClick('closed')}
         />
+        {hasOrderChatsAccess && (
+          <NavButton
+            icon={<IconShoppingCart size={20} />}
+            title="Чати замовлень"
+            active={activeMenu === 'order-chats'}
+            onClick={() => handleMenuClick('order-chats')}
+          />
+        )}
         <NavButton
           icon={<IconNotes size={20} />}
           title="Задачі"

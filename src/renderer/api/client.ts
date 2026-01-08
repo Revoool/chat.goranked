@@ -1476,6 +1476,119 @@ class ApiClient {
       throw error;
     }
   }
+
+  // ==================== ORDER CHATS API ====================
+
+  // Get order chat threads (list of orders with chats)
+  async getOrderChatThreads(filters?: {
+    q?: string;
+    sort_by?: string;
+    sort_dir?: 'asc' | 'desc';
+    page?: number;
+    per_page?: number;
+  }): Promise<any> {
+    console.log("📦 Requesting order chat threads", filters);
+    try {
+      const response = await this.client.get("/api/chats", {
+        params: filters,
+      });
+      return response.data;
+    } catch (error: any) {
+      console.error("❌ Error fetching order chat threads:", error);
+      throw error;
+    }
+  }
+
+  // Get messages for an order chat
+  async getOrderChatMessages(
+    orderId: number,
+    options?: {
+      mark_seen?: boolean;
+      since_id?: number;
+      per_page?: number;
+    }
+  ): Promise<any> {
+    console.log("💬 Requesting order chat messages", orderId, options);
+    try {
+      const response = await this.client.get(`/api/chats/${orderId}/messages`, {
+        params: options,
+      });
+      return response.data;
+    } catch (error: any) {
+      console.error("❌ Error fetching order chat messages:", error);
+      throw error;
+    }
+  }
+
+  // Send message in order chat (from admin)
+  async sendOrderChatMessage(
+    orderId: number,
+    body: string
+  ): Promise<any> {
+    console.log("📤 Sending order chat message", orderId);
+    try {
+      const response = await this.client.post(`/api/chats/${orderId}/messages`, {
+        body,
+      });
+      return response.data;
+    } catch (error: any) {
+      console.error("❌ Error sending order chat message:", error);
+      throw error;
+    }
+  }
+
+  // Send message as seller in order chat (for account orders)
+  async sendOrderChatMessageAsSeller(
+    orderId: number,
+    body: string,
+    sellerId: number,
+    clientId: number
+  ): Promise<any> {
+    console.log("📤 Sending order chat message as seller", orderId);
+    try {
+      const response = await this.client.post("/api/chat/account/message", {
+        order_id: orderId,
+        body,
+        from_id: sellerId,
+        to_id: clientId,
+        type: 'message',
+      });
+      return response.data;
+    } catch (error: any) {
+      console.error("❌ Error sending order chat message as seller:", error);
+      throw error;
+    }
+  }
+
+  // Mark order chat messages as seen
+  async markOrderChatSeen(orderId: number): Promise<any> {
+    console.log("👁️ Marking order chat as seen", orderId);
+    try {
+      const response = await this.client.post(`/api/chats/${orderId}/mark-seen`);
+      return response.data;
+    } catch (error: any) {
+      console.error("❌ Error marking order chat as seen:", error);
+      throw error;
+    }
+  }
+
+  // Send typing indicator for order chat
+  async sendOrderChatTyping(
+    orderId: number,
+    isTyping: boolean,
+    chatType: 'account' | 'boost' | 'ticket' = 'boost'
+  ): Promise<any> {
+    try {
+      const response = await this.client.post(`/api/chats/${orderId}/typing`, {
+        is_typing: isTyping,
+        chat_type: chatType,
+      });
+      return response.data;
+    } catch (error: any) {
+      console.error("❌ Error sending typing indicator:", error);
+      throw error;
+    }
+  }
 }
 
 export const apiClient = new ApiClient();

@@ -240,3 +240,93 @@ export interface Role {
   display_name?: string;
 }
 
+// ==================== ORDER CHATS TYPES ====================
+
+export interface OrderChatThread {
+  id: number;
+  order_id: number;
+  user?: {
+    id: number;
+    name: string;
+    email: string;
+  };
+  booster?: {
+    id: number;
+    name: string;
+    email: string;
+  };
+  boost?: {
+    id: number;
+    name: string;
+  };
+  game?: {
+    id: number;
+    name: string;
+    alter_name?: string;
+  };
+  messages_count: number;
+  unread_count: number;
+  last_message?: {
+    id: number;
+    from_id: number;
+    to_id: number;
+    body: string;
+    type: string;
+    created_at: string;
+    author?: {
+      id: number;
+      name: string;
+      email: string;
+    };
+  };
+  warning?: boolean;
+  warning_words?: string;
+  violations_count?: number;
+  client_name?: string;
+  booster_name?: string;
+  updated_at?: string;
+}
+
+export interface OrderChatMessage {
+  id: number;
+  order_id: number;
+  from_id: number;
+  to_id: number;
+  body: string;
+  type: string;
+  seen?: boolean;
+  seen_admin?: boolean;
+  created_at: string;
+  updated_at?: string;
+  from?: {
+    id: number;
+    name: string;
+    email: string;
+  };
+  to?: {
+    id: number;
+    name: string;
+    email: string;
+  };
+  files?: Attachment[];
+  order?: {
+    id: number;
+    user_id: number;
+    booster_id?: number;
+  };
+}
+
+export interface OrderChatThreadResponse {
+  data: OrderChatThread[];
+  meta: {
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
+  };
+}
+
+export interface OrderChatMessagesResponse {
+  data: OrderChatMessage[];
+  thread: OrderChatThread;
+}
