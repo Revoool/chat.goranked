@@ -29,15 +29,26 @@ function getCurrentUserRole(): string | null {
  */
 export function hasAccess(subject: string): boolean {
   try {
-    // Check if user is admin - admins (role_id 3) have access to everything
+    const userAbilityPages = JSON.parse(
+      localStorage.getItem('userAbilityPages') || '[]'
+    );
+    
+    // Check if user is admin - admins have 'admin-access' or 'admin-view' pages
+    // If user has admin pages, give access to everything
+    const hasAdminAccess = userAbilityPages.some((page: any) => {
+      const pageSlug = typeof page === 'string' ? page : (page?.slug || '');
+      return pageSlug === 'admin-access' || pageSlug === 'admin-view';
+    });
+    
+    if (hasAdminAccess) {
+      return true; // Admin has access to everything
+    }
+
+    // Check by role slug as fallback
     const currentUserRole = getCurrentUserRole();
     if (currentUserRole === 'admin') {
       return true;
     }
-
-    const userAbilityPages = JSON.parse(
-      localStorage.getItem('userAbilityPages') || '[]'
-    );
     
     // If no pages defined, allow access (for backward compatibility)
     if (!userAbilityPages || userAbilityPages.length === 0) {

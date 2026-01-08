@@ -79,7 +79,7 @@ const ChatList: React.FC = () => {
       
       // Если это первая страница - заменяем чаты, иначе добавляем
       if (currentPage === 1) {
-        setChats(chatsArray);
+      setChats(chatsArray);
       } else {
         appendChats(chatsArray);
         setIsLoadingMore(false);
@@ -279,17 +279,17 @@ const ChatList: React.FC = () => {
         ) : (
           <>
             {filteredChats
-              .filter((chat) => chat && (chat.clientUser || chat.client_name)) // Filter out invalid chats
-              .map((chat) => (
-                <ChatListItem
-                  key={chat.id}
-                  chat={chat}
-                  onClick={() => {
-                    // Use chat.id (from manager_client_chats table)
-                    console.log('📌 Selecting chat:', { id: chat.id });
-                    setSelectedChat(chat.id);
-                  }}
-                />
+            .filter((chat) => chat && (chat.clientUser || chat.client_name)) // Filter out invalid chats
+            .map((chat) => (
+              <ChatListItem
+                key={chat.id}
+                chat={chat}
+                onClick={() => {
+                  // Use chat.id (from manager_client_chats table)
+                  console.log('📌 Selecting chat:', { id: chat.id });
+                  setSelectedChat(chat.id);
+                }}
+              />
               ))}
             
             {/* Кнопка "Подгрузить еще" - показываем только если есть еще страницы и нет активных фильтров */}
