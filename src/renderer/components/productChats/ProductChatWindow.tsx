@@ -251,7 +251,7 @@ const ProductChatWindow: React.FC<ProductChatWindowProps> = ({ orderId }) => {
     
     return {
       id: msg.id,
-      chat_id: chatId,
+      chat_id: productId, // Используем productId как числовой идентификатор чата
       from_manager: isFromManager,
       user_id: msg.from_id,
       body: msg.body,
