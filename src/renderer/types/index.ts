@@ -3,6 +3,7 @@ export interface User {
   name: string;
   email: string;
   role: string; // Role slug (e.g., 'admin', 'manager', 'agent')
+  role_id?: number; // Role ID (e.g., 3 for admin)
   avatar?: string;
   is_online?: boolean;
   last_seen_at?: string;
