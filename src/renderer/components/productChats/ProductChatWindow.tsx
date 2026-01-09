@@ -257,6 +257,7 @@ const ProductChatWindow: React.FC<ProductChatWindowProps> = ({ orderId }) => {
       body: msg.body,
       type: msg.type || 'text',
       seen: msg.seen || false,
+      delivered: msg.delivered !== undefined ? msg.delivered : true,
       created_at: msg.created_at,
       updated_at: msg.updated_at || msg.created_at,
       user: userData,
