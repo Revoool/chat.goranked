@@ -70,6 +70,13 @@ const ProductChatWindow: React.FC<ProductChatWindowProps> = ({ orderId }) => {
     return !!(thread?.seller?.id && thread?.seller?.id !== thread?.buyer?.id);
   }, [thread]);
 
+  // Если нет продавца и выбрано "от продавца", переключаем на админа
+  useEffect(() => {
+    if (!sellerExists && !sendAsAdmin) {
+      setSendAsAdmin(true);
+    }
+  }, [sellerExists, sendAsAdmin]);
+
   // Отправка сообщения
   const sendMessageMutation = useMutation({
     mutationFn: async (body: string) => {
@@ -78,9 +85,19 @@ const ProductChatWindow: React.FC<ProductChatWindowProps> = ({ orderId }) => {
       }
 
       // Определяем fromId и toId
-      const fromId = sendAsAdmin 
-        ? (currentUser?.id || null)
-        : (thread.seller?.id || currentUser?.id || null);
+      // Если отправляем от админа - используем ID текущего пользователя (админа)
+      // Если отправляем от продавца - используем ID продавца (как в админ-панели)
+      let fromId: number | null = null;
+      if (sendAsAdmin) {
+        fromId = currentUser.id;
+      } else {
+        // От продавца - используем seller_id напрямую
+        if (!thread.seller?.id) {
+          throw new Error('Продавець не знайдений. Неможливо відправити повідомлення від продавця.');
+        }
+        fromId = thread.seller.id;
+      }
+      
       const toId = thread.buyer?.id || buyerId || null;
 
       if (!toId) {
@@ -210,7 +227,8 @@ const ProductChatWindow: React.FC<ProductChatWindowProps> = ({ orderId }) => {
   }
 
   // Преобразуем сообщения для MessageList
-  const formattedMessages = messages.map((msg: any) => {
+  // Переворачиваем массив, чтобы новые сообщения были внизу (как в обычном чате)
+  const formattedMessages = [...messages].reverse().map((msg: any) => {
     // Определяем, от кого сообщение:
     // - Покупатель: from_id === thread.buyer.id
     // - Продавец: from_id === thread.seller.id
@@ -322,9 +340,14 @@ const ProductChatWindow: React.FC<ProductChatWindowProps> = ({ orderId }) => {
             </button>
             <button
               type="button"
-              className={`sender-toggle-btn-inline ${!sendAsAdmin ? 'active' : ''}`}
-              onClick={() => setSendAsAdmin(false)}
-              title="Від Продавця"
+              className={`sender-toggle-btn-inline ${!sendAsAdmin ? 'active' : ''} ${!sellerExists ? 'disabled' : ''}`}
+              onClick={() => {
+                if (sellerExists) {
+                  setSendAsAdmin(false);
+                }
+              }}
+              disabled={!sellerExists}
+              title={sellerExists ? "Від Продавця" : "Продавець не знайдений"}
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ marginRight: '4px' }}>
                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
