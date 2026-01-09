@@ -33,6 +33,8 @@ const App: React.FC = () => {
           try {
             const userData = await apiClient.getMe();
             setUser(userData);
+            // Store user data in localStorage for access checks
+            localStorage.setItem('userData', JSON.stringify(userData));
             // Connect WebSocket
             wsClient.connect(token);
           } catch (error: any) {

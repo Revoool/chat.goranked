@@ -80,11 +80,19 @@ const Sidebar: React.FC<SidebarProps> = ({ user, onLogout }) => {
 
   // Check if user has access to order chats (boost orders)
   // Only admins (role_id === 3) should have access
-  const hasOrderChatsAccess = hasAccess('account-orders') && currentUser?.role_id === 3;
+  const hasOrderChatsAccess = currentUser?.role_id === 3;
   
   // Check if user has access to product chats (marketplace orders - тоже account-orders)
   // Only admins (role_id === 3) should have access
-  const hasProductChatsAccess = hasAccess('account-orders') && currentUser?.role_id === 3;
+  const hasProductChatsAccess = currentUser?.role_id === 3;
+  
+  // Debug logging
+  if (process.env.NODE_ENV === 'development') {
+    console.log('Sidebar - currentUser:', currentUser);
+    console.log('Sidebar - role_id:', currentUser?.role_id);
+    console.log('Sidebar - hasOrderChatsAccess:', hasOrderChatsAccess);
+    console.log('Sidebar - hasProductChatsAccess:', hasProductChatsAccess);
+  }
 
   return (
     <div className="sidebar">

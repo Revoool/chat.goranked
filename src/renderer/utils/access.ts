@@ -29,9 +29,23 @@ function getCurrentUserRole(): string | null {
  */
 export function hasAccess(subject: string): boolean {
   try {
-    const userAbilityPages = JSON.parse(
-      localStorage.getItem('userAbilityPages') || '[]'
-    );
+    const userAbilityPagesStr = localStorage.getItem('userAbilityPages') || '[]';
+    let userAbilityPages: any;
+    
+    try {
+      userAbilityPages = JSON.parse(userAbilityPagesStr);
+    } catch (parseError) {
+      console.error('Error parsing userAbilityPages:', parseError);
+      // If no pages defined, allow access (for backward compatibility)
+      return true;
+    }
+    
+    // Ensure userAbilityPages is an array
+    if (!Array.isArray(userAbilityPages)) {
+      console.warn('userAbilityPages is not an array:', typeof userAbilityPages);
+      // If no pages defined, allow access (for backward compatibility)
+      return true;
+    }
     
     // Check if user is admin - admins have 'admin-access' or 'admin-view' pages
     // If user has admin pages, give access to everything
