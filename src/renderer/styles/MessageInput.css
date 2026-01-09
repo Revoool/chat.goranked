@@ -1,7 +1,12 @@
 .message-input {
-  border-top: 1px solid var(--border-color);
-  background: var(--graphite-medium);
+  border-top: 1px solid var(--glass-border);
+  background: var(--glass-bg-light);
+  backdrop-filter: blur(var(--blur-md)) saturate(180%);
+  -webkit-backdrop-filter: blur(var(--blur-md)) saturate(180%);
   padding: 16px;
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.2);
+  position: relative;
+  z-index: 5;
 }
 
 .message-input-attachments {
@@ -204,20 +209,26 @@
   -ms-user-select: text;
   flex: 1;
   padding: 12px 16px;
-  background: var(--graphite-dark);
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
   color: var(--text-primary);
   font-size: 14px;
   font-family: inherit;
   resize: none;
   max-height: 120px;
   min-height: 44px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: var(--shadow-sm);
 }
 
 .message-input-textarea:focus {
   border-color: var(--flame-orange);
   outline: none;
+  background: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
 }
 
 .message-input-textarea:disabled {
@@ -227,19 +238,24 @@
 
 .message-input-send {
   padding: 12px 24px;
-  background: var(--flame-orange);
+  background: linear-gradient(135deg, var(--flame-orange) 0%, #ff8c5a 100%);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   color: white;
-  border-radius: 8px;
+  border-radius: 12px;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   flex-shrink: 0;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: var(--shadow-sm);
 }
 
 .message-input-send:hover:not(:disabled) {
-  background: #ff5722;
-  transform: translateY(-1px);
+  background: linear-gradient(135deg, #ff5722 0%, var(--flame-orange) 100%);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-glow);
 }
 
 .message-input-send:disabled {
@@ -248,13 +264,7 @@
 }
 
 .message-input-send {
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  will-change: transform, background-color;
-}
-
-.message-input-send:hover:not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(255, 107, 53, 0.3);
+  will-change: transform, background-color, box-shadow;
 }
 
 .message-input-send:active:not(:disabled) {

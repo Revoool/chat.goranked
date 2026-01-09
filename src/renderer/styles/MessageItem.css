@@ -85,20 +85,22 @@
 }
 
 .message-bubble {
-  padding: 10px 14px;
-  border-radius: 12px;
+  padding: 12px 16px;
+  border-radius: 16px;
   word-wrap: break-word;
   overflow-wrap: break-word;
   word-break: break-word;
   min-width: 0;
   max-width: 100%;
-  transition: all 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 
 .message-bubble:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
 }
 
 .message-bubble:hover .message-edit-button {
@@ -137,14 +139,21 @@
 }
 
 .message-item-client .message-bubble {
-  background: var(--graphite-medium);
-  border: 1px solid var(--border-color);
+  background: rgba(45, 45, 45, 0.6);
+  backdrop-filter: blur(12px) saturate(180%);
+  -webkit-backdrop-filter: blur(12px) saturate(180%);
+  border: 1px solid var(--glass-border);
   color: var(--text-primary);
+  box-shadow: var(--shadow-sm);
 }
 
 .message-item-agent .message-bubble {
-  background: var(--flame-orange);
+  background: linear-gradient(135deg, var(--flame-orange) 0%, #ff8c5a 100%);
+  backdrop-filter: blur(12px) saturate(180%);
+  -webkit-backdrop-filter: blur(12px) saturate(180%);
   color: white;
+  box-shadow: var(--shadow-glow);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .message-text {

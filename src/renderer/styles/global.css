@@ -1,17 +1,35 @@
-/* GoRanked Brand Colors */
+/* GoRanked Brand Colors with Apple Glass Theme */
 :root {
   --flame-orange: #FF6B35;
   --champion-gold: #FFB627;
-  --graphite-dark: #1a1a1a;
-  --graphite-medium: #2d2d2d;
-  --graphite-light: #3a3a3a;
+  --graphite-dark: #0a0a0a;
+  --graphite-medium: #1a1a1a;
+  --graphite-light: #252525;
   --text-primary: #ffffff;
   --text-secondary: #b0b0b0;
   --text-muted: #808080;
-  --border-color: #404040;
+  --border-color: rgba(255, 255, 255, 0.1);
   --success: #4caf50;
   --error: #f44336;
   --warning: #ff9800;
+  
+  /* Glass effect colors */
+  --glass-bg: rgba(26, 26, 26, 0.7);
+  --glass-bg-light: rgba(45, 45, 45, 0.6);
+  --glass-border: rgba(255, 255, 255, 0.15);
+  --glass-shadow: rgba(0, 0, 0, 0.3);
+  --glass-shadow-hover: rgba(255, 107, 53, 0.2);
+  
+  /* Blur values */
+  --blur-sm: 8px;
+  --blur-md: 16px;
+  --blur-lg: 24px;
+  
+  /* Shadows */
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.4);
+  --shadow-glow: 0 0 20px rgba(255, 107, 53, 0.3);
 }
 
 * {
@@ -22,11 +40,28 @@
 
 body {
   font-family: 'Open Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  background-color: var(--graphite-dark);
+  background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #0f0f0f 100%);
+  background-attachment: fixed;
   color: var(--text-primary);
   overflow: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  position: relative;
+}
+
+/* Subtle background pattern */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 20% 50%, rgba(255, 107, 53, 0.03) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(255, 182, 39, 0.02) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 0;
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -55,23 +90,30 @@ a:hover {
   text-decoration: underline;
 }
 
-/* Scrollbar styling */
+/* Scrollbar styling with glass effect */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--graphite-dark);
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--graphite-light);
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--graphite-medium);
+  background: rgba(255, 107, 53, 0.5);
+  box-shadow: 0 0 8px rgba(255, 107, 53, 0.3);
 }
 
 /* Animations */
