@@ -26,7 +26,7 @@ const ProductChatList: React.FC = () => {
     queryFn: () => apiClient.getProductInquiryChatThreads({
       q: searchQuery || undefined,
       sort_by: 'updated_at',
-      sort_dir: 'desc',
+      sort_dir: 'asc', // Старые вверху, новые внизу
       page: currentPage,
       per_page: 20,
     }),
