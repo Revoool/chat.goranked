@@ -70,19 +70,6 @@ const ProductChatWindow: React.FC<ProductChatWindowProps> = ({ orderId }) => {
     return !!(thread?.seller?.id && thread?.seller?.id !== thread?.buyer?.id);
   }, [thread]);
 
-  // Показываем переключатель если есть продавец или пользователь - админ
-  const showSenderToggle = useMemo(() => {
-    const isAdmin = currentUser?.role_id === 3;
-    return sellerExists || isAdmin;
-  }, [sellerExists, currentUser]);
-
-  // Если нет продавца, всегда отправляем от админа
-  useEffect(() => {
-    if (!sellerExists) {
-      setSendAsAdmin(true);
-    }
-  }, [sellerExists]);
-
   // Отправка сообщения
   const sendMessageMutation = useMutation({
     mutationFn: async (body: string) => {
@@ -320,36 +307,32 @@ const ProductChatWindow: React.FC<ProductChatWindowProps> = ({ orderId }) => {
             handleSendMessage();
           }}
         >
-          {showSenderToggle && (
-            <div className="order-chat-sender-toggle-inline">
-              <button
-                type="button"
-                className={`sender-toggle-btn-inline ${sendAsAdmin ? 'active' : ''}`}
-                onClick={() => setSendAsAdmin(true)}
-                title="Від Адміна"
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ marginRight: '4px' }}>
-                  <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-                  <path d="M2 17L12 22L22 17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-                </svg>
-                Від Адміна
-              </button>
-              {sellerExists && (
-                <button
-                  type="button"
-                  className={`sender-toggle-btn-inline ${!sendAsAdmin ? 'active' : ''}`}
-                  onClick={() => setSendAsAdmin(false)}
-                  title="Від Продавця"
-                >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ marginRight: '4px' }}>
-                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-                    <circle cx="12" cy="7" r="4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-                  </svg>
-                  Від Продавця
-                </button>
-              )}
-            </div>
-          )}
+          <div className="order-chat-sender-toggle-inline">
+            <button
+              type="button"
+              className={`sender-toggle-btn-inline ${sendAsAdmin ? 'active' : ''}`}
+              onClick={() => setSendAsAdmin(true)}
+              title="Від Адміна"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ marginRight: '4px' }}>
+                <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+                <path d="M2 17L12 22L22 17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+              </svg>
+              Від Адміна
+            </button>
+            <button
+              type="button"
+              className={`sender-toggle-btn-inline ${!sendAsAdmin ? 'active' : ''}`}
+              onClick={() => setSendAsAdmin(false)}
+              title="Від Продавця"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ marginRight: '4px' }}>
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+                <circle cx="12" cy="7" r="4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+              </svg>
+              Від Продавця
+            </button>
+          </div>
           <div className="message-input-buttons-group">
             {productId && buyerId && (
               <button
