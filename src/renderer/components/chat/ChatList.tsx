@@ -307,7 +307,10 @@ const ChatList: React.FC = () => {
                 rowComponent={({ index, style }: RowComponentProps) => {
                   const validChats = filteredChats.filter((chat) => chat && (chat.clientUser || chat.client_name));
                   const chat = validChats[index];
-                  if (!chat) return null;
+                  if (!chat) {
+                    // Возвращаем пустой div вместо null, так как rowComponent должен возвращать ReactElement
+                    return <div style={style} />;
+                  }
                   return (
                     <div style={style}>
                       <ChatListItem
