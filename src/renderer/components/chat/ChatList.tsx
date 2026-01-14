@@ -304,6 +304,7 @@ const ChatList: React.FC = () => {
                 style={{ width: '100%', height: listHeight }}
                 defaultHeight={listHeight} // Начальная высота для SSR
                 overscanCount={5} // Рендерим 5 дополнительных элементов сверху и снизу для плавной прокрутки
+                rowProps={{}} // Пустой объект, так как rowProps обязателен в react-window v2
                 rowComponent={({ index, style }: RowComponentProps) => {
                   const validChats = filteredChats.filter((chat) => chat && (chat.clientUser || chat.client_name));
                   const chat = validChats[index];
