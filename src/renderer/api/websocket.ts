@@ -296,9 +296,33 @@ class WebSocketClient {
       return;
     }
     
+    // Оптимизация: обновляем только необходимые кеши, избегаем полной инвалидации
+    // Используем setQueryData для оптимистичного обновления вместо invalidateQueries
     if (this.queryClient) {
-      this.queryClient.invalidateQueries({ queryKey: ['messages', chatId] });
-      this.queryClient.invalidateQueries({ queryKey: ['chat', chatId] });
+      // Обновляем кеш сообщений оптимистично
+      this.queryClient.setQueryData(['messages', chatId], (oldData: any) => {
+        const currentMessages = oldData?.data || oldData || [];
+        if (!Array.isArray(currentMessages)) return oldData;
+        
+        // Проверяем, нет ли уже такого сообщения
+        if (currentMessages.some((m: any) => m.id === message.id)) {
+          return oldData;
+        }
+        
+        return oldData?.data ? { ...oldData, data: [...currentMessages, message] } : [...currentMessages, message];
+      });
+      
+      // Обновляем кеш чата оптимистично
+      this.queryClient.setQueryData(['chat', chatId], (oldChat: any) => {
+        if (!oldChat) return oldChat;
+        return {
+          ...oldChat,
+          last_message_at: message.created_at,
+          last_message: message,
+        };
+      });
+      
+      // Инвалидируем только список чатов (это необходимо для обновления UI списка)
       this.queryClient.invalidateQueries({ queryKey: ['chats'] });
     }
 
@@ -350,12 +374,12 @@ class WebSocketClient {
     const { updateChat } = useChatStore.getState();
     updateChat(chatId, chat);
     
-    // Update React Query cache immediately for instant UI update (ChatWindow uses React Query)
+    // Оптимизация: используем setQueryData вместо invalidateQueries для избежания лишних запросов
     if (this.queryClient) {
       // Update individual chat cache
       this.queryClient.setQueryData(['chat', chatId], chat);
       
-      // Update chats list cache
+      // Update chats list cache оптимистично
       this.queryClient.setQueryData(['chats'], (oldChats: any[] | undefined) => {
         if (!Array.isArray(oldChats)) return oldChats;
         return oldChats.map((c) => {
@@ -370,9 +394,8 @@ class WebSocketClient {
         });
       });
       
-      // Also invalidate queries to ensure consistency with server
-      this.queryClient.invalidateQueries({ queryKey: ['chat', chatId] });
-      this.queryClient.invalidateQueries({ queryKey: ['chats'] });
+      // Убрали invalidateQueries - используем только оптимистичное обновление
+      // Это значительно снижает нагрузку на GPU и CPU
     }
   }
 

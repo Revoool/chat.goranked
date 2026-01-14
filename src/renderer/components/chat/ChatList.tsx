@@ -1,8 +1,9 @@
-import React, { useEffect, useState, useMemo, useRef } from 'react';
+import React, { useEffect, useState, useMemo, useRef, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useChatStore } from '../../store/chatStore';
 import { apiClient } from '../../api/client';
 import ChatListItem from './ChatListItem';
+import { FixedSizeList } from 'react-window';
 import '../../styles/ChatList.css';
 
 const ChatList: React.FC = () => {
@@ -20,6 +21,22 @@ const ChatList: React.FC = () => {
     total: number;
   } | null>(null);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const listContainerRef = useRef<HTMLDivElement>(null);
+  const [listHeight, setListHeight] = useState(600); // Дефолтная высота
+
+  // Вычисляем высоту списка для виртуализации
+  useEffect(() => {
+    const updateHeight = () => {
+      if (listContainerRef.current) {
+        const rect = listContainerRef.current.getBoundingClientRect();
+        setListHeight(rect.height || 600);
+      }
+    };
+    
+    updateHeight();
+    window.addEventListener('resize', updateHeight);
+    return () => window.removeEventListener('resize', updateHeight);
+  }, []);
 
   // Debounce поискового запроса (500ms задержка) - только для подсветки в сообщениях
   // НЕ обновляем filters, чтобы не вызывать перезагрузку списка чатов
@@ -41,7 +58,7 @@ const ChatList: React.FC = () => {
       page: currentPage,
       per_page: 20,
     }),
-    refetchInterval: 30000, // Refetch every 30 seconds
+    refetchInterval: 60000, // Refetch every 60 seconds (reduced from 30s to save resources)
   });
 
   // Закрываем dropdown при клике вне его
@@ -270,7 +287,7 @@ const ChatList: React.FC = () => {
         </div>
       </div>
 
-      <div className="chat-list-items">
+      <div className="chat-list-items" ref={listContainerRef}>
         {filteredChats.length === 0 ? (
           <div className="chat-list-empty">
             {selectedTags.length > 0 || searchQuery.trim() 
@@ -279,19 +296,49 @@ const ChatList: React.FC = () => {
           </div>
         ) : (
           <>
-            {filteredChats
-            .filter((chat) => chat && (chat.clientUser || chat.client_name)) // Filter out invalid chats
-            .map((chat) => (
-              <ChatListItem
-                key={chat.id}
-                chat={chat}
-                onClick={() => {
-                  // Use chat.id (from manager_client_chats table)
-                  console.log('📌 Selecting chat:', { id: chat.id });
-                  setSelectedChat(chat.id);
+            {/* Виртуализация для больших списков чатов - рендерим только видимые элементы */}
+            {filteredChats.length > 50 ? (
+              <FixedSizeList
+                height={listHeight}
+                itemCount={filteredChats.filter((chat) => chat && (chat.clientUser || chat.client_name)).length}
+                itemSize={100} // Примерная высота одного элемента чата
+                width="100%"
+                overscanCount={5} // Рендерим 5 дополнительных элементов сверху и снизу для плавной прокрутки
+              >
+                {({ index, style }) => {
+                  const validChats = filteredChats.filter((chat) => chat && (chat.clientUser || chat.client_name));
+                  const chat = validChats[index];
+                  if (!chat) return null;
+                  return (
+                    <div style={style}>
+                      <ChatListItem
+                        chat={chat}
+                        onClick={() => {
+                          console.log('📌 Selecting chat:', { id: chat.id });
+                          setSelectedChat(chat.id);
+                        }}
+                      />
+                    </div>
+                  );
                 }}
-              />
-              ))}
+              </FixedSizeList>
+            ) : (
+              // Для небольших списков используем обычный рендеринг
+              <>
+                {filteredChats
+                  .filter((chat) => chat && (chat.clientUser || chat.client_name))
+                  .map((chat) => (
+                    <ChatListItem
+                      key={chat.id}
+                      chat={chat}
+                      onClick={() => {
+                        console.log('📌 Selecting chat:', { id: chat.id });
+                        setSelectedChat(chat.id);
+                      }}
+                    />
+                  ))}
+              </>
+            )}
             
             {/* Кнопка "Подгрузить еще" - показываем только если есть еще страницы и нет активных фильтров */}
             {paginationMeta && 

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { Chat } from '../../types';
 import { useChatStore } from '../../store/chatStore';
 import { apiClient } from '../../api/client';
@@ -21,7 +21,8 @@ const ChatListItem: React.FC<ChatListItemProps> = ({ chat, onClick }) => {
   const itemRef = useRef<HTMLDivElement>(null);
   const isSelected = selectedChatId === chat.id;
 
-  const formatTime = (dateString: string) => {
+  // Мемоизируем formatTime чтобы избежать пересоздания функции
+  const formatTime = useCallback((dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
     const diff = now.getTime() - date.getTime();
@@ -31,7 +32,7 @@ const ChatListItem: React.FC<ChatListItemProps> = ({ chat, onClick }) => {
     if (minutes < 60) return `${minutes}м`;
     if (minutes < 1440) return `${Math.floor(minutes / 60)}ч`;
     return date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
-  };
+  }, []);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -125,15 +126,17 @@ const ChatListItem: React.FC<ChatListItemProps> = ({ chat, onClick }) => {
     return null;
   }
 
-  // Use clientUser relation or fallback to client_name
-  // Check for client_nickname in metadata (renamed by manager)
-  const client = chat.clientUser;
-  const clientNickname = chat.metadata?.client_nickname;
-  const clientName = clientNickname || client?.name || chat.client_name || 'Unknown';
-  const clientAvatar = chat.client_avatar || client?.avatar;
-  const source = chat.source || 'unknown';
-
-  const hasSlaViolation = chat.active_sla_violation || chat.sla_attention;
+  // Мемоизируем вычисляемые значения
+  const { clientName, clientAvatar, source, hasSlaViolation } = useMemo(() => {
+    const client = chat.clientUser;
+    const clientNickname = chat.metadata?.client_nickname;
+    return {
+      clientName: clientNickname || client?.name || chat.client_name || 'Unknown',
+      clientAvatar: chat.client_avatar || client?.avatar,
+      source: chat.source || 'unknown',
+      hasSlaViolation: chat.active_sla_violation || chat.sla_attention,
+    };
+  }, [chat.clientUser, chat.metadata?.client_nickname, chat.client_name, chat.client_avatar, chat.source, chat.active_sla_violation, chat.sla_attention]);
 
   // Calculate context menu position
   const handleContextMenu = (e: React.MouseEvent) => {
@@ -290,5 +293,19 @@ const ChatListItem: React.FC<ChatListItemProps> = ({ chat, onClick }) => {
   );
 };
 
-export default ChatListItem;
+// Мемоизируем компонент для предотвращения лишних ререндеров
+export default React.memo(ChatListItem, (prevProps, nextProps) => {
+  // Кастомная функция сравнения для оптимизации
+  return (
+    prevProps.chat.id === nextProps.chat.id &&
+    prevProps.chat.unread_count === nextProps.chat.unread_count &&
+    prevProps.chat.last_message_at === nextProps.chat.last_message_at &&
+    prevProps.chat.status === nextProps.chat.status &&
+    prevProps.chat.priority === nextProps.chat.priority &&
+    prevProps.chat.last_message?.id === nextProps.chat.last_message?.id &&
+    prevProps.chat.last_message?.body === nextProps.chat.last_message?.body &&
+    JSON.stringify(prevProps.chat.metadata) === JSON.stringify(nextProps.chat.metadata) &&
+    prevProps.chat.active_sla_violation === nextProps.chat.active_sla_violation
+  );
+});
 

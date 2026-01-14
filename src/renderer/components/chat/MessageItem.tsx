@@ -459,5 +459,18 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, onUpdate, searchQuer
   );
 };
 
-export default MessageItem;
+// Мемоизируем компонент для предотвращения лишних ререндеров
+export default React.memo(MessageItem, (prevProps, nextProps) => {
+  // Кастомная функция сравнения для оптимизации
+  return (
+    prevProps.message.id === nextProps.message.id &&
+    prevProps.message.body === nextProps.message.body &&
+    prevProps.message.pinned === nextProps.message.pinned &&
+    prevProps.message.unread === nextProps.message.unread &&
+    prevProps.message.created_at === nextProps.message.created_at &&
+    prevProps.searchQuery === nextProps.searchQuery &&
+    JSON.stringify(prevProps.message.metadata) === JSON.stringify(nextProps.message.metadata) &&
+    JSON.stringify(prevProps.message.files) === JSON.stringify(nextProps.message.files)
+  );
+});
 

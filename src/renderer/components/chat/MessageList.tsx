@@ -21,7 +21,7 @@ const MessageList: React.FC<MessageListProps> = ({ messages, chatId, onUpdate, s
   const typingIndicators = useChatStore((state) => state.typingIndicators);
   const typingInfo = typingIndicators[chatId];
 
-  // Scroll to bottom when messages change or typing indicator appears
+  // Оптимизированный scroll - убрали лишние requestAnimationFrame для снижения нагрузки на GPU
   useEffect(() => {
     const scrollToBottom = () => {
       const container = messageListRef.current;
@@ -29,17 +29,15 @@ const MessageList: React.FC<MessageListProps> = ({ messages, chatId, onUpdate, s
       
       if (!container || !endMarker) return;
 
-      // Use requestAnimationFrame for smooth scrolling
-      requestAnimationFrame(() => {
-        endMarker.scrollIntoView({ behavior: 'smooth', block: 'end' });
-        container.scrollTop = container.scrollHeight;
-      });
+      // Используем прямой scroll вместо requestAnimationFrame для лучшей производительности
+      // requestAnimationFrame может вызывать проблемы с GPU при частых вызовах
+      container.scrollTop = container.scrollHeight;
     };
 
     if (!messages || messages.length === 0) {
       // Scroll even if no messages but typing indicator is shown
       if (typingInfo?.isTyping) {
-        setTimeout(scrollToBottom, 100);
+        setTimeout(scrollToBottom, 50);
       }
       return;
     }
@@ -55,7 +53,7 @@ const MessageList: React.FC<MessageListProps> = ({ messages, chatId, onUpdate, s
     // For initial load, wait a bit longer to ensure all content is rendered
     if (isInitialLoad.current && messages.length > 0) {
       isInitialLoad.current = false;
-      setTimeout(scrollToBottom, 100);
+      setTimeout(scrollToBottom, 50);
     } else if (hasNewMessages || typingInfo?.isTyping) {
       // For new messages or typing indicator, scroll immediately
       scrollToBottom();
