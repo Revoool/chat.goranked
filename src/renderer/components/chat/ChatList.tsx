@@ -299,10 +299,10 @@ const ChatList: React.FC = () => {
             {/* Виртуализация для больших списков чатов - рендерим только видимые элементы */}
             {filteredChats.length > 50 ? (
               <List
-                height={listHeight}
                 rowCount={filteredChats.filter((chat) => chat && (chat.clientUser || chat.client_name)).length}
                 rowHeight={100} // Примерная высота одного элемента чата
-                style={{ width: '100%' }}
+                style={{ width: '100%', height: listHeight }}
+                defaultHeight={listHeight} // Начальная высота для SSR
                 overscanCount={5} // Рендерим 5 дополнительных элементов сверху и снизу для плавной прокрутки
                 rowComponent={({ index, style }: RowComponentProps) => {
                   const validChats = filteredChats.filter((chat) => chat && (chat.clientUser || chat.client_name));
