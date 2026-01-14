@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useChatStore } from '../../store/chatStore';
 import { apiClient } from '../../api/client';
 import ChatListItem from './ChatListItem';
-import { FixedSizeList } from 'react-window';
+import { List, ListChildComponentProps } from 'react-window';
 import '../../styles/ChatList.css';
 
 const ChatList: React.FC = () => {
@@ -298,14 +298,14 @@ const ChatList: React.FC = () => {
           <>
             {/* Виртуализация для больших списков чатов - рендерим только видимые элементы */}
             {filteredChats.length > 50 ? (
-              <FixedSizeList
+              <List
                 height={listHeight}
                 itemCount={filteredChats.filter((chat) => chat && (chat.clientUser || chat.client_name)).length}
                 itemSize={100} // Примерная высота одного элемента чата
                 width="100%"
                 overscanCount={5} // Рендерим 5 дополнительных элементов сверху и снизу для плавной прокрутки
               >
-                {({ index, style }) => {
+                {({ index, style }: ListChildComponentProps) => {
                   const validChats = filteredChats.filter((chat) => chat && (chat.clientUser || chat.client_name));
                   const chat = validChats[index];
                   if (!chat) return null;
@@ -321,7 +321,7 @@ const ChatList: React.FC = () => {
                     </div>
                   );
                 }}
-              </FixedSizeList>
+              </List>
             ) : (
               // Для небольших списков используем обычный рендеринг
               <>
