@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useChatStore } from '../../store/chatStore';
 import { apiClient } from '../../api/client';
 import ChatListItem from './ChatListItem';
-import { List, ListChildComponentProps } from 'react-window';
+import { List, RowComponentProps } from 'react-window';
 import '../../styles/ChatList.css';
 
 const ChatList: React.FC = () => {
@@ -300,12 +300,11 @@ const ChatList: React.FC = () => {
             {filteredChats.length > 50 ? (
               <List
                 height={listHeight}
-                itemCount={filteredChats.filter((chat) => chat && (chat.clientUser || chat.client_name)).length}
-                itemSize={100} // Примерная высота одного элемента чата
-                width="100%"
+                rowCount={filteredChats.filter((chat) => chat && (chat.clientUser || chat.client_name)).length}
+                rowHeight={100} // Примерная высота одного элемента чата
+                style={{ width: '100%' }}
                 overscanCount={5} // Рендерим 5 дополнительных элементов сверху и снизу для плавной прокрутки
-              >
-                {({ index, style }: ListChildComponentProps) => {
+                rowComponent={({ index, style }: RowComponentProps) => {
                   const validChats = filteredChats.filter((chat) => chat && (chat.clientUser || chat.client_name));
                   const chat = validChats[index];
                   if (!chat) return null;
@@ -321,7 +320,7 @@ const ChatList: React.FC = () => {
                     </div>
                   );
                 }}
-              </List>
+              />
             ) : (
               // Для небольших списков используем обычный рендеринг
               <>
