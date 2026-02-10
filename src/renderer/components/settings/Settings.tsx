@@ -511,7 +511,7 @@ const Settings: React.FC = () => {
             </div>
             <div className="settings-field">
               <label>Назва</label>
-              <div className="settings-value">GoRanked Chat Desk</div>
+              <div className="settings-value">Goranked Chat Desk</div>
             </div>
             <div className="settings-field">
               <label>Оновлення</label>

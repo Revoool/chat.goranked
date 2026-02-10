@@ -179,7 +179,7 @@ function createTray() {
     },
   ]);
   
-  tray.setToolTip('GoRanked Chat Desk');
+  tray.setToolTip('Goranked Chat Desk');
   tray.setContextMenu(contextMenu);
   
   tray.on('click', () => {
@@ -617,7 +617,7 @@ ipcMain.handle('check-for-updates', async () => {
           const releaseData = await new Promise<any>((resolve, reject) => {
             https.get(url, {
               headers: {
-                'User-Agent': 'GoRanked-Chat-Desk',
+                'User-Agent': 'Goranked-Chat-Desk',
                 'Accept': 'application/vnd.github.v3+json',
               },
             }, (res) => {

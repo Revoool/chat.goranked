@@ -1,9 +1,9 @@
 {
   "name": "goranked-chat-desk",
   "version": "2.0.14",
-  "description": "GoRanked Chat Desk - Desktop application for support operators",
+  "description": "Goranked Chat Desk - Desktop application for support operators",
   "main": "dist/main.js",
-  "author": "GoRanked",
+  "author": "Goranked",
   "license": "ISC",
   "scripts": {
     "dev": "npm run build:main && npm run build:preload && concurrently \"npm run dev:webpack\" \"npm run dev:electron\"",
@@ -27,7 +27,7 @@
   },
   "build": {
     "appId": "com.goranked.chatdesk",
-    "productName": "GoRanked Chat Desk",
+    "productName": "Goranked Chat Desk",
     "icon": "build/icon.png",
     "directories": {
       "output": "release"
@@ -50,7 +50,7 @@
         }
       ],
       "category": "public.app-category.business",
-      "artifactName": "GoRanked-Chat-Desk-${version}-${arch}.${ext}",
+      "artifactName": "Goranked-Chat-Desk-${version}-${arch}.${ext}",
       "forceCodeSigning": false,
       "gatekeeperAssess": false,
       "hardenedRuntime": false
@@ -64,7 +64,7 @@
           ]
         }
       ],
-      "artifactName": "GoRanked-Chat-Desk-Setup-${version}.${ext}",
+      "artifactName": "Goranked-Chat-Desk-Setup-${version}.${ext}",
       "forceCodeSigning": false
     },
     "files": [
@@ -108,7 +108,7 @@
       "allowElevation": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "GoRanked Chat Desk",
+      "shortcutName": "Goranked Chat Desk",
       "deleteAppDataOnUninstall": false,
       "runAfterFinish": true,
       "menuCategory": false,
