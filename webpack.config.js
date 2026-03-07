@@ -1,3 +1,4 @@
+require('dotenv').config();
 const path = require('path');
 const webpack = require('webpack');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
@@ -71,6 +72,12 @@ module.exports = (env, argv) => {
         // Security: Disable MOCK_MODE in production builds
         'process.env.MOCK_MODE': JSON.stringify(
           isProduction ? 'false' : (process.env.MOCK_MODE || 'false')
+        ),
+        // Releases history: custom server or GitHub
+        'process.env.RELEASES_JSON_URL': JSON.stringify(
+          process.env.UPDATE_URL
+            ? `${process.env.UPDATE_URL.replace(/\/$/, '')}/releases.json`
+            : 'https://api.github.com/repos/Revoool/chat.goranked/releases?per_page=50'
         ),
         'global': 'globalThis',
       }),

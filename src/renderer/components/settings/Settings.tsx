@@ -3,6 +3,7 @@ import { useAuthStore } from "../../store/authStore";
 import "../../styles/Settings.css";
 
 interface SettingsState {
+  theme: "dark" | "light";
   language: "ru" | "uk" | "en";
   sendMessageKey: "enter" | "ctrl-enter";
   notifications: {
@@ -41,25 +42,34 @@ const Settings: React.FC = () => {
   const [showUpdateHistory, setShowUpdateHistory] = useState(false);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
 
-  // Fetch release history from GitHub
+  // Fetch release history from custom server (releases.json) or GitHub API
   const fetchUpdateHistory = async () => {
     setIsLoadingHistory(true);
+    const url = process.env.RELEASES_JSON_URL ||
+      'https://api.github.com/repos/Revoool/chat.goranked/releases?per_page=50';
     try {
-      const response = await fetch('https://api.github.com/repos/Revoool/chat.goranked/releases?per_page=50');
+      const response = await fetch(url);
       if (!response.ok) {
         throw new Error('Failed to fetch releases');
       }
-      const releases = await response.json();
-      const history: UpdateHistoryItem[] = releases.map((release: any) => ({
-        version: release.tag_name.replace('v', ''),
-        releaseDate: release.published_at,
-        changelog: release.body || '',
-        installedAt: release.published_at, // Use published date as installed date
-      }));
+      const data = await response.json();
+      const isGitHub = url.includes('github.com');
+      const history: UpdateHistoryItem[] = isGitHub
+        ? (data as any[]).map((r: any) => ({
+            version: (r.tag_name || '').replace(/^v/, ''),
+            releaseDate: r.published_at,
+            changelog: r.body || '',
+            installedAt: r.published_at || '',
+          }))
+        : (Array.isArray(data) ? data : []).map((r: any) => ({
+            version: (r.version || '').replace(/^v/, ''),
+            releaseDate: r.releaseDate || r.published_at,
+            changelog: r.changelog || r.body || '',
+            installedAt: r.releaseDate || r.published_at || r.installedAt || '',
+          }));
       setUpdateHistory(history);
     } catch (error) {
       console.error('Failed to fetch update history:', error);
-      // Fallback to localStorage if GitHub API fails
       const savedHistory = localStorage.getItem('updateHistory');
       if (savedHistory) {
         try {
@@ -74,7 +84,7 @@ const Settings: React.FC = () => {
   };
 
   useEffect(() => {
-    // Fetch update history from GitHub when component mounts or when showing history
+    // Fetch update history when component mounts or when showing history
     if (showUpdateHistory && updateHistory.length === 0) {
       fetchUpdateHistory();
     }
@@ -265,6 +275,8 @@ const Settings: React.FC = () => {
   };
 
   const [settings, setSettings] = useState<SettingsState>({
+    theme:
+      (localStorage.getItem("settings.theme") as "dark" | "light") || "dark",
     language:
       (localStorage.getItem("settings.language") as "ru" | "uk" | "en") || "ru",
     sendMessageKey:
@@ -287,7 +299,13 @@ const Settings: React.FC = () => {
   });
 
   useEffect(() => {
+    // Apply theme to document
+    document.documentElement.setAttribute("data-theme", settings.theme);
+  }, [settings.theme]);
+
+  useEffect(() => {
     // Save settings to localStorage whenever they change
+    localStorage.setItem("settings.theme", settings.theme);
     localStorage.setItem("settings.language", settings.language);
     localStorage.setItem("settings.sendMessageKey", settings.sendMessageKey);
     localStorage.setItem(
@@ -353,6 +371,42 @@ const Settings: React.FC = () => {
             <div className="settings-field">
               <label>Роль</label>
               <div className="settings-value">{user?.role || "agent"}</div>
+            </div>
+          </div>
+        </section>
+
+        {/* Theme Section */}
+        <section className="settings-section">
+          <h3 className="settings-section-title">Тема інтерфейсу</h3>
+          <div className="settings-section-content">
+            <div className="settings-field">
+              <label>Світла / Темна</label>
+              <div className="settings-radio-group">
+                <label className="settings-radio">
+                  <input
+                    type="radio"
+                    name="theme"
+                    value="dark"
+                    checked={settings.theme === "dark"}
+                    onChange={(e) =>
+                      updateSettings({ theme: e.target.value as "dark" })
+                    }
+                  />
+                  <span>Темна</span>
+                </label>
+                <label className="settings-radio">
+                  <input
+                    type="radio"
+                    name="theme"
+                    value="light"
+                    checked={settings.theme === "light"}
+                    onChange={(e) =>
+                      updateSettings({ theme: e.target.value as "light" })
+                    }
+                  />
+                  <span>Світла</span>
+                </label>
+              </div>
             </div>
           </div>
         </section>

@@ -1,120 +1,143 @@
 # Goranked Chat Desk
 
-Десктопное приложение для операторов поддержки Goranked.
+Десктопне застосування для операторів підтримки Goranked.
 
-## Технологии
+## Технології
 
-- **Electron** - десктопная обертка
-- **React + TypeScript** - UI фреймворк
-- **TanStack Query** - управление запросами и кешем
-- **Zustand** - управление состоянием
-- **WebSocket** - real-time обновления
-- **Keytar** - безопасное хранение токенов в OS Keychain
+- **Electron** — десктопна обгортка
+- **React + TypeScript** — UI фреймворк
+- **TanStack Query** — управління запитами та кешем
+- **Zustand** — управління станом
+- **WebSocket** — real-time оновлення
+- **Electron safeStorage** — безпечне зберігання токенів
 
-## Установка зависимостей
+## Встановлення залежностей
 
 ```bash
 npm install
 ```
 
-## Разработка
-
-Запуск в режиме разработки:
+## Розробка
 
 ```bash
 npm run dev
 ```
 
-Это запустит:
-- Webpack dev server на порту 3000
-- Electron приложение
+Запускає Webpack dev server на порту 3000 та Electron.
 
-## Сборка
+---
 
-### Windows
-```bash
-npm run build:win
-```
+## Інструкція: як зібрати та випустити нову версію
 
-### macOS
-```bash
-npm run build:mac
-```
+### Передумови
 
-### Универсальная сборка
-```bash
-npm run build
-```
-## Тестовый вход (для разработки)
+- **Node.js 18+**
+- **Docker** (для збірки на Linux)
+- Файл `.env` з `REVERB_APP_KEY` (для production build)
 
-В режиме разработки доступен мок-режим для тестирования без реального API:
-
-**Для реального API:**
-Используйте реальные учетные данные от Goranked (email и пароль оператора/менеджера).
-
-## Функциональность
-
-### Реализовано (MVP)
-- ✅ Авторизация с безопасным хранением токена
-- ✅ Список чатов с фильтрами
-- ✅ Окно диалога с сообщениями
-- ✅ Отправка сообщений
-- ✅ WebSocket для real-time обновлений
-- ✅ Темная тема по брендбуку
-- ✅ Карточка клиента
-
-### В разработке
-- ⏳ Загрузка файлов
-- ⏳ Быстрые ответы (canned responses)
-- ⏳ Назначение чатов
-- ⏳ Управление статусами и тегами
-- ⏳ Уведомления ОС
-- ⏳ Настройки приложения
-
-## Создание релиза
-
-Для создания нового релиза выполните следующие команды:
+### Крок 1: Оновити версію
 
 ```bash
-# 1. Обновите версию в package.json (вручную или через npm version)
-# Например, для patch версии:
+cd /var/www/master/data/www/chatapp
+
+# patch = 2.0.17 → 2.0.18 (баги, дрібні зміни)
 npm version patch
 
-# Или для minor версии:
+# minor = 2.0.17 → 2.1.0 (нова функціональність)
 npm version minor
 
-# Или для major версии:
+# major = 2.0.17 → 3.0.0 (breaking changes)
 npm version major
-
-# 2. Создайте коммит с изменениями
-git add .
-git commit -m "chore: bump version to X.X.X"
-
-# 3. Создайте тег для релиза
-git tag v$(node -p "require('./package.json').version")
-
-# 4. Отправьте изменения и тег в репозиторий
-git push origin main
-git push origin --tags
-
-# 5. GitHub Actions автоматически соберет релиз при пуше тега
-# Или соберите релиз локально:
-npm run build:win:installer  # для Windows
-npm run build:mac            # для macOS
 ```
 
-### Автоматический релиз через GitHub Actions
+### Крок 2: Зібрати та задеплоїти
 
-При создании тега (например, `v1.0.79`) GitHub Actions автоматически:
-- Соберет приложение для всех платформ
-- Создаст GitHub Release
-- Загрузит артефакты сборки
+#### Варіант A: Linux (рекомендовано — на сервері)
 
-## Обновление приложения
+```bash
+cd /var/www/master/data/www/chatapp
+./scripts/build-and-deploy.sh
+```
 
-Приложение поддерживает автоматическое обновление через GitHub Releases. 
+Скрипт:
+1. Збирає через Docker (electronuserland/builder:wine)
+2. Копіює файли в `goranked.gg/public/chat-desk/releases/`
+3. Оновлює `releases.json`
 
-## Лицензия
+#### Варіант B: Windows
+
+```bash
+cd chatapp
+scripts\build-and-deploy.bat
+```
+
+#### Варіант C: Вручну (покроково)
+
+```bash
+# 1. Збірка (обов'язково з UPDATE_URL!)
+export $(grep -v '^#' .env | xargs)  # Linux: завантажити .env
+UPDATE_URL=https://goranked.gg/chat-desk/releases npm run build
+
+# 2. Збірка Windows-інсталятора
+# Linux (потрібен Docker):
+docker run --rm -v "$(pwd)":/project \
+  -e UPDATE_URL=https://goranked.gg/chat-desk/releases \
+  -e REVERB_APP_KEY=... -e API_URL=https://goranked.gg \
+  -e CSC_IDENTITY_AUTO_DISCOVERY=false \
+  electronuserland/builder:wine \
+  /bin/bash -c "cd /project && npm run build && npx electron-builder --win --x64 --publish never"
+
+# Windows:
+set UPDATE_URL=https://goranked.gg/chat-desk/releases
+npm run build:win:installer
+
+# 3. Деплой
+npm run deploy
+```
+
+### Крок 3: Changelog (опційно)
+
+```bash
+CHANGELOG="Виправлено баг X, додано Y" npm run deploy
+```
+
+### Що потрапляє на сервер
+
+У `goranked.gg/public/chat-desk/releases/`:
+
+| Файл | Призначення |
+|------|-------------|
+| `latest.yml` | Метадані для electron-updater |
+| `Goranked-Chat-Desk-Setup-X.X.X.exe` | Інсталятор Windows |
+| `*.blockmap` | Delta-оновлення |
+| `releases.json` | Історія версій (оновлюється deploy) |
+
+### Після деплою
+
+Співробітники отримають оновлення:
+- при наступному запуску програми
+- або при натисканні «Перевірити оновлення» в налаштуваннях
+
+---
+
+## Розробка
+
+### Тестовий вхід
+
+Для реального API — email і пароль оператора/менеджера Goranked.
+
+### Функціональність
+
+- ✅ Авторизація, безпечне зберігання токена
+- ✅ Список чатів, фільтри
+- ✅ Діалог, відправка повідомлень
+- ✅ WebSocket real-time
+- ✅ Світла/темна тема
+- ✅ Картка клієнта
+
+---
+
+## Ліцензія
 
 ISC
 

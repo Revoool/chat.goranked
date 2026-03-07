@@ -1,12 +1,10 @@
-import { app, BrowserWindow, ipcMain, nativeTheme, dialog, Menu, globalShortcut, Tray, shell } from 'electron';
+import { app, BrowserWindow, ipcMain, nativeTheme, dialog, Menu, globalShortcut, Tray, shell, safeStorage } from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
-import * as keytar from 'keytar';
 import { autoUpdater, UpdateInfo, ProgressInfo } from 'electron-updater';
 import * as https from 'https';
 
-const SERVICE_NAME = 'goranked-chat-desk';
-const ACCOUNT_NAME = 'auth-token';
+const TOKEN_FILE = 'auth-token.enc';
 
 let mainWindow: BrowserWindow | null = null;
 let tray: Tray | null = null;
@@ -544,27 +542,39 @@ app.on('window-all-closed', () => {
   // Приложение будет закрыто только через меню трея или через Quit в меню приложения
 });
 
+// Secure token storage using Electron safeStorage (no native modules, works cross-platform)
+function getTokenPath(): string {
+  return path.join(app.getPath('userData'), TOKEN_FILE);
+}
+
 ipcMain.handle('store-token', async (_event, token: string) => {
   try {
     if (!token || token.trim() === '') {
       throw new Error('Token is empty');
     }
-    await keytar.setPassword(SERVICE_NAME, ACCOUNT_NAME, token);
+    if (app.isPackaged && safeStorage.isEncryptionAvailable()) {
+      const encrypted = safeStorage.encryptString(token);
+      fs.writeFileSync(getTokenPath(), encrypted);
+    } else {
+      fs.writeFileSync(getTokenPath(), token, 'utf8');
+    }
     return { success: true };
   } catch (error: any) {
     console.error('Error storing token:', error);
-    return { 
-      success: false, 
-      error: error?.message || String(error),
-      allowFallback: true
-    };
+    return { success: false, error: error?.message || String(error), allowFallback: true };
   }
 });
 
 ipcMain.handle('get-token', async () => {
   try {
-    const token = await keytar.getPassword(SERVICE_NAME, ACCOUNT_NAME);
-    return { success: true, token: token || null };
+    const tokenPath = getTokenPath();
+    if (!fs.existsSync(tokenPath)) return { success: true, token: null };
+    const data = fs.readFileSync(tokenPath);
+    if (app.isPackaged && safeStorage.isEncryptionAvailable()) {
+      const token = safeStorage.decryptString(data);
+      return { success: true, token };
+    }
+    return { success: true, token: data.toString('utf8') };
   } catch (error) {
     console.error('Error getting token:', error);
     return { success: false, error: String(error), token: null };
@@ -573,7 +583,8 @@ ipcMain.handle('get-token', async () => {
 
 ipcMain.handle('delete-token', async () => {
   try {
-    await keytar.deletePassword(SERVICE_NAME, ACCOUNT_NAME);
+    const tokenPath = getTokenPath();
+    if (fs.existsSync(tokenPath)) fs.unlinkSync(tokenPath);
     return { success: true };
   } catch (error) {
     console.error('Error deleting token:', error);
@@ -608,36 +619,66 @@ ipcMain.handle('check-for-updates', async () => {
         
         let changelog = '';
         try {
-          const githubOwner = process.env.GITHUB_OWNER || 'Revoool';
-          const githubRepo = process.env.GITHUB_REPO || 'chat.goranked';
+          const updateUrl = process.env.UPDATE_URL;
           const version = result.updateInfo.version;
-          const tag = `v${version}`;
-          
-          const url = `https://api.github.com/repos/${githubOwner}/${githubRepo}/releases/tags/${tag}`;
-          const releaseData = await new Promise<any>((resolve, reject) => {
-            https.get(url, {
-              headers: {
-                'User-Agent': 'Goranked-Chat-Desk',
-                'Accept': 'application/vnd.github.v3+json',
-              },
-            }, (res) => {
-              let data = '';
-              res.on('data', (chunk) => { data += chunk; });
-              res.on('end', () => {
-                if (res.statusCode === 200) {
-                  try {
-                    resolve(JSON.parse(data));
-                  } catch (e) {
-                    reject(e);
+
+          if (updateUrl) {
+            // Custom update server: fetch from releases.json
+            const releasesUrl = `${updateUrl.replace(/\/$/, '')}/releases.json`;
+            const releaseData = await new Promise<any>((resolve, reject) => {
+              https.get(releasesUrl, {
+                headers: { 'User-Agent': 'Goranked-Chat-Desk' },
+              }, (res) => {
+                let data = '';
+                res.on('data', (chunk) => { data += chunk; });
+                res.on('end', () => {
+                  if (res.statusCode === 200) {
+                    try {
+                      const arr = JSON.parse(data);
+                      const release = Array.isArray(arr)
+                        ? arr.find((r: any) => r.version === version || r.version === `v${version}`)
+                        : null;
+                      resolve(release || {});
+                    } catch (e) {
+                      reject(e);
+                    }
+                  } else {
+                    reject(new Error(`HTTP ${res.statusCode}`));
                   }
-                } else {
-                  reject(new Error(`HTTP ${res.statusCode}`));
-                }
-              });
-            }).on('error', reject);
-          });
-          
-          changelog = releaseData.body || releaseData.name || '';
+                });
+              }).on('error', reject);
+            });
+            changelog = releaseData?.changelog || releaseData?.body || '';
+          } else {
+            // GitHub fallback (legacy)
+            const githubOwner = process.env.GITHUB_OWNER || 'Revoool';
+            const githubRepo = process.env.GITHUB_REPO || 'chat.goranked';
+            const tag = `v${version}`;
+            const url = `https://api.github.com/repos/${githubOwner}/${githubRepo}/releases/tags/${tag}`;
+            const releaseData = await new Promise<any>((resolve, reject) => {
+              https.get(url, {
+                headers: {
+                  'User-Agent': 'Goranked-Chat-Desk',
+                  'Accept': 'application/vnd.github.v3+json',
+                },
+              }, (res) => {
+                let data = '';
+                res.on('data', (chunk) => { data += chunk; });
+                res.on('end', () => {
+                  if (res.statusCode === 200) {
+                    try {
+                      resolve(JSON.parse(data));
+                    } catch (e) {
+                      reject(e);
+                    }
+                  } else {
+                    reject(new Error(`HTTP ${res.statusCode}`));
+                  }
+                });
+              }).on('error', reject);
+            });
+            changelog = releaseData.body || releaseData.name || '';
+          }
         } catch (err) {
           console.log('  - Could not fetch changelog:', err);
         }

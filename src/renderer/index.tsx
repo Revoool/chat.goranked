@@ -5,6 +5,10 @@ import { HashRouter } from 'react-router-dom';
 import App from './App';
 import './styles/global.css';
 
+// Apply saved theme before first paint
+const savedTheme = localStorage.getItem('settings.theme') as 'dark' | 'light' | null;
+document.documentElement.setAttribute('data-theme', savedTheme === 'light' ? 'light' : 'dark');
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {

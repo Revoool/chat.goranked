@@ -1,4 +1,5 @@
 const path = require('path');
+const webpack = require('webpack');
 
 module.exports = {
   entry: './src/main/main.ts',
@@ -24,12 +25,15 @@ module.exports = {
       },
     ],
   },
-  externals: {
-    'keytar': 'commonjs keytar',
-  },
+  externals: {},
   node: {
     __dirname: false,
     __filename: false,
   },
+  plugins: [
+    new webpack.DefinePlugin({
+      'process.env.UPDATE_URL': JSON.stringify(process.env.UPDATE_URL || ''),
+    }),
+  ],
 };
 
