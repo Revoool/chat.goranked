@@ -19,6 +19,7 @@ export CSC_IDENTITY_AUTO_DISCOVERY=false
 
 if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "win32" ]]; then
   # Windows
+  npm run build:icons
   npm run clean:release
   npm run build
   npx electron-builder --win --x64 --publish never
@@ -33,7 +34,7 @@ else
       -e API_URL \
       -e CSC_IDENTITY_AUTO_DISCOVERY \
       electronuserland/builder:wine \
-      /bin/bash -c "cd /project && npm run build && npx electron-builder --win --x64 --publish never"
+      /bin/bash -c "cd /project && npm run build:icons && npm run build && npx electron-builder --win --x64 --publish never"
   else
     echo "Docker not found. Install Docker or run build on Windows."
     exit 1

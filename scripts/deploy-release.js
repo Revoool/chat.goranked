@@ -31,13 +31,15 @@ function main() {
   }
 
   const files = fs.readdirSync(RELEASE_DIR);
-  const winFiles = files.filter(f =>
-    f.endsWith('.exe') || f.endsWith('.blockmap') || f === 'latest.yml'
+  const allReleaseFiles = files.filter(f =>
+    f.endsWith('.exe') || f.endsWith('.dmg') || f.endsWith('.blockmap') ||
+    f === 'latest.yml' || f === 'latest-mac.yml' || f.endsWith('-mac.zip')
   );
 
-  if (winFiles.length === 0) {
-    console.error('❌ No Windows release files found in release/');
-    console.error('   Expected: *.exe, *.blockmap, latest.yml');
+  if (allReleaseFiles.length === 0) {
+    console.error('❌ No release files found in release/');
+    console.error('   Expected Windows: *.exe, *.blockmap, latest.yml');
+    console.error('   Expected Mac: *.dmg, *-mac.zip, latest-mac.yml');
     process.exit(1);
   }
 
@@ -46,7 +48,7 @@ function main() {
   }
 
   console.log(`📦 Deploying v${version} to ${DEST_BASE}`);
-  for (const f of winFiles) {
+  for (const f of allReleaseFiles) {
     const src = path.join(RELEASE_DIR, f);
     const dst = path.join(DEST_BASE, f);
     fs.copyFileSync(src, dst);

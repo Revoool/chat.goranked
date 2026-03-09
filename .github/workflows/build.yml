@@ -42,12 +42,13 @@ jobs:
           echo "Current directory: $(pwd)"
           echo "Node version: $(node --version)"
           echo "NPM version: $(npm --version)"
-          echo "Checking electron-builder installation..."
-          npx electron-builder --version || npm list electron-builder || echo "electron-builder not found, will install"
-          echo "Building macOS app (without publish, files will be uploaded via workflow)..."
-          npm run build && npx electron-builder --mac --x64 --arm64 --publish never
+          echo "Building macOS app..."
+          npm run build:icons
+          npm run build
+          npx electron-builder --mac --x64 --arm64 --publish never
         env:
           NODE_ENV: production
+          UPDATE_URL: https://goranked.gg/chat-desk/releases
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REVERB_HOST: ${{ secrets.REVERB_HOST || 'goranked.gg' }}
           REVERB_PORT: ${{ secrets.REVERB_PORT || '443' }}
@@ -88,7 +89,11 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: macos-build
-          path: release/mac/*.dmg
+          path: |
+            release/mac/*.dmg
+            release/*-mac.zip
+            release/latest-mac.yml
+            release/*.blockmap
           if-no-files-found: warn
       
       - name: Check if release exists
@@ -238,13 +243,15 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = "Stop"
+          $env:UPDATE_URL = "https://goranked.gg/chat-desk/releases"
           Write-Host "Current directory: $(Get-Location)"
           Write-Host "Node version: $(node --version)"
           Write-Host "NPM version: $(npm --version)"
-          Write-Host "Building Windows app (this will run all build steps)..."
+          Write-Host "Building Windows app..."
           npm run build:win:installer 2>&1
         env:
           NODE_ENV: production
+          UPDATE_URL: https://goranked.gg/chat-desk/releases
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CSC_IDENTITY_AUTO_DISCOVERY: false
           REVERB_HOST: ${{ secrets.REVERB_HOST || 'goranked.gg' }}
@@ -276,7 +283,10 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: windows-build
-          path: release/*.exe
+          path: |
+            release/*.exe
+            release/*.blockmap
+            release/latest.yml
           if-no-files-found: warn
       
       - name: Check if release exists (Windows)
@@ -373,3 +383,72 @@ jobs:
         continue-on-error: false
         if: always()
 
+  deploy:
+    runs-on: ubuntu-latest
+    needs: [build-mac, build-windows]
+    steps:
+      - name: Check deploy config
+        id: check_deploy
+        run: |
+          if [ -n "${{ secrets.DEPLOY_HOST }}" ]; then
+            echo "deploy=true" >> $GITHUB_OUTPUT
+          else
+            echo "deploy=false" >> $GITHUB_OUTPUT
+            echo "Skipping deploy: DEPLOY_HOST not set. Add secrets to enable auto-deploy to goranked.gg"
+          fi
+      - uses: actions/checkout@v4
+        if: steps.check_deploy.outputs.deploy == 'true'
+        with:
+          fetch-depth: 0
+
+      - name: Download Windows artifacts
+        if: steps.check_deploy.outputs.deploy == 'true'
+        uses: actions/download-artifact@v4
+        with:
+          name: windows-build
+          path: windows-artifact
+
+      - name: Download Mac artifacts
+        if: steps.check_deploy.outputs.deploy == 'true'
+        uses: actions/download-artifact@v4
+        with:
+          name: macos-build
+          path: macos-artifact
+
+      - name: Merge and prepare release
+        if: steps.check_deploy.outputs.deploy == 'true'
+        run: |
+          mkdir -p release
+          # Windows: exe, blockmap, latest.yml (paths preserved in artifact)
+          cp windows-artifact/release/*.exe release/ 2>/dev/null || true
+          cp windows-artifact/release/*.blockmap release/ 2>/dev/null || true
+          cp windows-artifact/release/latest.yml release/ 2>/dev/null || true
+          # Mac: dmg, zip, latest-mac.yml, blockmap
+          cp macos-artifact/release/mac/*.dmg release/ 2>/dev/null || true
+          cp macos-artifact/release/*.zip release/ 2>/dev/null || true
+          cp macos-artifact/release/latest-mac.yml release/ 2>/dev/null || true
+          cp macos-artifact/release/*.blockmap release/ 2>/dev/null || true
+          echo "Release folder contents:"
+          ls -la release/
+
+      - name: Update releases.json
+        if: steps.check_deploy.outputs.deploy == 'true'
+        run: |
+          mkdir -p deploy-out
+          RELEASE_DEST=$(pwd)/deploy-out node scripts/deploy-release.js
+
+      - name: Setup SSH
+        if: steps.check_deploy.outputs.deploy == 'true'
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H ${{ secrets.DEPLOY_HOST }} >> ~/.ssh/known_hosts 2>/dev/null || true
+
+      - name: Deploy to goranked.gg
+        if: steps.check_deploy.outputs.deploy == 'true'
+        run: |
+          DEPLOY_PATH="${{ secrets.DEPLOY_PATH || '/var/www/master/data/www/goranked.gg/public/chat-desk/releases' }}"
+          rsync -avz -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
+            deploy-out/ ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:$DEPLOY_PATH/
+          echo "✅ Deployed to ${{ secrets.DEPLOY_HOST }}:$DEPLOY_PATH"

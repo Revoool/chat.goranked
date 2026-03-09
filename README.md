@@ -71,7 +71,18 @@ cd chatapp
 scripts\build-and-deploy.bat
 ```
 
-#### Варіант C: Вручну (покроково)
+#### Варіант C: macOS (тільки на Mac!)
+
+Збірка Mac-версії можлива лише на macOS (обмеження electron-builder):
+
+```bash
+cd /var/www/master/data/www/chatapp
+./scripts/build-and-deploy-mac.sh
+```
+
+Після деплою файли `.dmg` з’являться на сервері, і посилання для Mac будуть доступні.
+
+#### Варіант D: Вручну (покроково)
 
 ```bash
 # 1. Збірка (обов'язково з UPDATE_URL!)
@@ -107,10 +118,24 @@ CHANGELOG="Виправлено баг X, додано Y" npm run deploy
 
 | Файл | Призначення |
 |------|-------------|
-| `latest.yml` | Метадані для electron-updater |
+| `latest.yml` | Метадані для electron-updater (Windows) |
+| `latest-mac.yml` | Метадані для electron-updater (macOS) |
 | `Goranked-Chat-Desk-Setup-X.X.X.exe` | Інсталятор Windows |
+| `Goranked-Chat-Desk-X.X.X-arm64.dmg` | macOS Apple Silicon (M1/M2/M3) |
+| `Goranked-Chat-Desk-X.X.X-x64.dmg` | macOS Intel |
 | `*.blockmap` | Delta-оновлення |
 | `releases.json` | Історія версій (оновлюється deploy) |
+
+### Посилання для завантаження
+
+**Windows:**
+- https://goranked.gg/chat-desk/releases/Goranked-Chat-Desk-Setup-2.0.18.exe
+
+**macOS** (потрібно зібрати на Mac і задеплоїти):
+- Apple Silicon (M1/M2/M3): https://goranked.gg/chat-desk/releases/Goranked-Chat-Desk-2.0.18-arm64.dmg
+- Intel: https://goranked.gg/chat-desk/releases/Goranked-Chat-Desk-2.0.18-x64.dmg
+
+*(Замініть 2.0.18 на актуальну версію з package.json)*
 
 ### Після деплою
 
