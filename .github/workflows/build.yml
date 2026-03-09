@@ -43,10 +43,8 @@ jobs:
           echo "Current directory: $(pwd)"
           echo "Node version: $(node --version)"
           echo "NPM version: $(npm --version)"
-          echo "Building macOS app..."
-          npm run build:icons
-          npm run build
-          npx electron-builder --mac --x64 --arm64 --publish never
+          echo "Building macOS app (DMG)..."
+          npm run build:mac:installer
         env:
           NODE_ENV: production
           UPDATE_URL: https://goranked.gg/chat-desk/releases
