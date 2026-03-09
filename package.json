@@ -1,6 +1,6 @@
 {
   "name": "goranked-chat-desk",
-  "version": "2.0.21",
+  "version": "2.0.22",
   "description": "Goranked Chat Desk - Desktop application for support operators",
   "main": "dist/main.js",
   "author": "Goranked",
@@ -29,9 +29,7 @@
     "lint": "eslint src --ext .ts,.tsx",
     "cap:sync": "npm run build:web && npx cap sync",
     "cap:ios": "npm run cap:sync && npx cap open ios",
-    "cap:android": "npm run cap:sync && npx cap open android",
-    "gh:clean": "node scripts/clean-gh-actions.js",
-    "gh:clean-and-build": "node scripts/clean-gh-actions.js --trigger"
+    "cap:android": "npm run cap:sync && npx cap open android"
   },
   "build": {
     "appId": "com.goranked.chatdesk",
