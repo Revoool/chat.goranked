@@ -1,5 +1,6 @@
 import axios, { AxiosInstance } from "axios";
 import { Board } from "../types";
+import * as platform from "../utils/platform";
 
 // Security: Validate API URL - ensure HTTPS in production
 const getApiBaseUrl = (): string => {
@@ -50,19 +51,11 @@ class ApiClient {
   }
 
   private async getToken(): Promise<string | null> {
-    if (window.electronAPI) {
-      const result = await window.electronAPI.getToken();
-      return result.success ? result.token : null;
-    }
-    return localStorage.getItem("token");
+    return platform.getToken();
   }
 
   private async deleteToken(): Promise<void> {
-    if (window.electronAPI) {
-      await window.electronAPI.deleteToken();
-    } else {
-      localStorage.removeItem("token");
-    }
+    return platform.deleteToken();
   }
 
   async login(email: string, password: string, role?: string): Promise<any> {

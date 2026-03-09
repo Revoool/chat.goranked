@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useAuthStore } from '../store/authStore';
+import { isMobile } from '../utils/platform';
 import Sidebar from '../components/layout/Sidebar';
 import ChatList from '../components/chat/ChatList';
 import ChatWindow from '../components/chat/ChatWindow';
@@ -87,10 +88,13 @@ const MainDesk: React.FC = () => {
     setSelectedTask(null);
   };
 
+  const hasChatSelected = !!(selectedChatId || selectedOrderChatId || selectedProductChatId);
+  const isChatMenu = activeMenu === 'inbox' || activeMenu === 'order-chats' || activeMenu === 'product-chats';
+
   return (
     <div className="main-desk">
       <Sidebar user={user} onLogout={logout} />
-      <div className="main-content">
+      <div className={`main-content ${isChatMenu && hasChatSelected && isMobile() ? 'chat-open' : ''}`}>
         {activeMenu === 'settings' ? (
           <Settings />
         ) : activeMenu === 'tasks' ? (

@@ -162,6 +162,48 @@ CHANGELOG="Виправлено баг X, додано Y" npm run deploy
 
 ---
 
+---
+
+## Мобільна версія (Capacitor)
+
+Додаток підтримує iOS та Android через Capacitor.
+
+### Збірка для мобільних
+
+```bash
+# 1. Зібрати web-версію
+npm run build:web
+
+# 2. Синхронізувати з нативними проєктами
+npx cap sync
+
+# 3. Відкрити в Xcode (macOS) або Android Studio
+npx cap open ios
+npx cap open android
+```
+
+### Швидкі команди
+
+```bash
+npm run cap:sync    # build:web + cap sync
+npm run cap:ios     # cap:sync + відкрити Xcode
+npm run cap:android # cap:sync + відкрити Android Studio
+```
+
+### Мобільний дизайн
+
+- **Нижня навігація** замість бічної панелі на екранах < 768px
+- **Список чатів / чат** — показується один екран, кнопка «Назад» для повернення
+- **Touch-friendly** — мінімум 44px для кнопок
+- **Safe area** — підтримка вирізів (notch) на iPhone
+
+### Публікація
+
+- **iOS:** потрібен Apple Developer Account ($99/рік)
+- **Android:** Google Play Developer ($25 одноразово)
+
+---
+
 ## Ліцензія
 
 ISC

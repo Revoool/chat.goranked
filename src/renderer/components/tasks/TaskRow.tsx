@@ -273,18 +273,15 @@ const TaskRow: React.FC<TaskRowProps> = ({ task, subdata, onClick, onStatusUpdat
         {task.order_id && task.order_type ? (
           <button
             className="order-chip"
-            onClick={(e) => {
+            onClick={async (e) => {
               e.stopPropagation();
               e.preventDefault();
               const baseUrl = 'https://goranked.gg';
               const url = task.order_type === 'boost' 
                 ? `${baseUrl}/orders/edit/${task.order_id}`
                 : `${baseUrl}/accounts/orders/edit/${task.order_id}`;
-              if (window.electronAPI?.openExternal) {
-                window.electronAPI.openExternal(url);
-              } else {
-                window.open(url, '_blank');
-              }
+              const { openExternal } = await import('../../utils/platform');
+              openExternal(url);
             }}
           >
             {task.order_type === 'boost' ? 'Буст' : 'Маркет'} #{task.order_id}

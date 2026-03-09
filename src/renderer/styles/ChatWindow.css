@@ -5,7 +5,8 @@
   background: var(--glass-bg);
   backdrop-filter: blur(var(--blur-sm)) saturate(150%);
   -webkit-backdrop-filter: blur(var(--blur-sm)) saturate(150%);
-  height: 100vh;
+  height: 100%;
+  min-height: 0;
   min-width: 0;
   overflow: hidden;
   position: relative;

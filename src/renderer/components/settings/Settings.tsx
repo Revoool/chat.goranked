@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useAuthStore } from "../../store/authStore";
+import * as platform from "../../utils/platform";
 import "../../styles/Settings.css";
 
 interface SettingsState {
@@ -89,13 +90,11 @@ const Settings: React.FC = () => {
       fetchUpdateHistory();
     }
 
-    // Get app version
-    if (window.electronAPI) {
-      window.electronAPI.getAppVersion().then((result) => {
-        setAppVersion(result.version);
-      });
-      
-      // Listen for update download progress from IPC
+    // Get app version (Electron, Capacitor, or fallback)
+    platform.getAppVersion().then(setAppVersion);
+    
+    // Listen for update events (Electron only - app stores handle mobile updates)
+    if (platform.isElectron() && window.electronAPI) {
       const cleanupIPC = window.electronAPI.onUpdateDownloadProgress?.((progress: any) => {
         console.log('📥 Update download progress (IPC):', progress);
         setDownloadProgress(progress.percent || 0);
@@ -181,9 +180,6 @@ const Settings: React.FC = () => {
         window.removeEventListener('update-error', handleUpdateError as EventListener);
         window.removeEventListener('update-downloaded', handleUpdateDownloaded as EventListener);
       };
-    } else {
-      // Fallback to package.json version in dev mode
-      setAppVersion(process.env.npm_package_version || "1.0.0");
     }
   }, []);
 
@@ -567,6 +563,7 @@ const Settings: React.FC = () => {
               <label>Назва</label>
               <div className="settings-value">Goranked Chat Desk</div>
             </div>
+            {platform.isElectron() && (
             <div className="settings-field">
               <label>Оновлення</label>
               <div className="settings-update-section">
@@ -699,8 +696,9 @@ const Settings: React.FC = () => {
                 </p>
               </div>
             </div>
+            )}
             
-            {/* Update Modal */}
+            {/* Update Modal (Electron only) */}
             {showUpdateModal && updateInfo && (
               <div className="update-modal-overlay" onClick={() => setShowUpdateModal(false)}>
                 <div className="update-modal" onClick={(e) => e.stopPropagation()}>

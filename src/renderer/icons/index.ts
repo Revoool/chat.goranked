@@ -18,6 +18,7 @@ export {
   IconPaperclip,
   IconCheck,
   IconArrowDown,
+  IconArrowLeft,
   IconArrowRight,
   IconArrowUp,
   IconAlertCircle,

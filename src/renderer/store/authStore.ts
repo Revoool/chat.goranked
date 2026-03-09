@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { User } from '../types';
+import * as platform from '../utils/platform';
 
 interface AuthState {
   user: User | null;
@@ -21,11 +22,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   setToken: (token) => set({ token }),
   setIsLoading: (isLoading) => set({ isLoading }),
   logout: async () => {
-    if (window.electronAPI) {
-      await window.electronAPI.deleteToken();
-    } else {
-      localStorage.removeItem('token');
-    }
+    await platform.deleteToken();
     // Clear user data and permissions from localStorage
     localStorage.removeItem('userData');
     localStorage.removeItem('userAbilityPages');

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { apiClient } from '../api/client';
+import * as platform from '../utils/platform';
 import '../styles/LoginPage.css';
 
 const LoginPage: React.FC = () => {
@@ -49,20 +50,11 @@ const LoginPage: React.FC = () => {
       console.log('Token received:', token ? 'Yes' : 'No');
       console.log('User data:', user);
       
-      // Store token securely
-      if (window.electronAPI) {
-        try {
-          const storeResult = await window.electronAPI.storeToken(token);
-          if (!storeResult.success) {
-            console.warn('Failed to store token in keychain:', storeResult.error);
-            // Fallback to localStorage if keychain fails
-            localStorage.setItem('token', token);
-          }
-        } catch (keychainError) {
-          console.warn('Keychain error, using localStorage:', keychainError);
-          localStorage.setItem('token', token);
-        }
-      } else {
+      // Store token securely (Electron keychain, Capacitor Preferences, or localStorage)
+      try {
+        await platform.setToken(token);
+      } catch (err) {
+        console.warn('Failed to store token, using localStorage:', err);
         localStorage.setItem('token', token);
       }
 
@@ -87,13 +79,21 @@ const LoginPage: React.FC = () => {
       navigate('/');
     } catch (err: any) {
       console.error('Login error:', err);
-      const errorMessage = err.response?.data?.message 
+      let errorMessage = err.response?.data?.message 
         || err.response?.data?.error 
         || err.message 
         || 'Помилка входу. Перевірте email та пароль.';
+      // Для Network Error показуємо деталі для діагностики
+      if (err.message === 'Network Error' || err.code === 'ERR_NETWORK') {
+        const details: string[] = [];
+        if (err.code) details.push(err.code);
+        if (err.config?.baseURL) details.push(`API: ${err.config.baseURL}`);
+        errorMessage = `Помилка мережі. ${details.join(' ')}. Можливі причини: перевірте інтернет, VPN, або CORS на сервері.`;
+      } else if (err.response?.status) {
+        errorMessage += ` (HTTP ${err.response.status})`;
+      }
       setError(errorMessage);
       
-      // Log full error for debugging
       if (err.response) {
         console.error('Response status:', err.response.status);
         console.error('Response data:', err.response.data);

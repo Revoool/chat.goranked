@@ -1,4 +1,6 @@
 // OS Notifications utility
+import * as platform from './platform';
+
 export class NotificationService {
   private permissionGranted = false;
   private sound: HTMLAudioElement | null = null;
@@ -12,17 +14,14 @@ export class NotificationService {
 
   private async initializeSound() {
     try {
-      // Try to get sound path from Electron main process
-      if (window.electronAPI && window.electronAPI.getSoundPath) {
-        const result = await window.electronAPI.getSoundPath();
-        if (result.success && result.path) {
-          this.soundPath = result.path;
+      // Try to get sound path from platform (Electron returns full path)
+      if (platform.isElectron()) {
+        const path = await platform.getSoundPath('best-notification-1-286672.mp3');
+        if (path) {
+          this.soundPath = path;
           this.soundPathResolved = true;
-          console.log('🔊 Sound path resolved from main process:', this.soundPath);
           this.loadSound();
           return;
-        } else {
-          console.warn('⚠️ Failed to get sound path from main process:', result.error);
         }
       }
       
@@ -77,8 +76,8 @@ export class NotificationService {
           message: (this.sound as any)?.error?.message,
         });
         
-        // Only try alternatives if we haven't already gotten path from main process
-        if (!window.electronAPI || !window.electronAPI.getSoundPath) {
+        // Only try alternatives if not using Electron
+        if (!platform.isElectron()) {
           // Try alternative paths
           const alternatives = [
             '/sound/best-notification-1-286672.mp3',

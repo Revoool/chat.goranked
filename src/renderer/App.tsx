@@ -6,6 +6,7 @@ import LoginPage from './pages/LoginPage';
 import MainDesk from './pages/MainDesk';
 import { apiClient } from './api/client';
 import { wsClient } from './api/websocket';
+import * as platform from './utils/platform';
 
 const App: React.FC = () => {
   const { user, setUser, setToken, isLoading, setIsLoading, token } = useAuthStore();
@@ -17,15 +18,8 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const initAuth = async () => {
-      try {
-        // Try to get token from keychain
-        let token: string | null = null;
-        if (window.electronAPI) {
-          const result = await window.electronAPI.getToken();
-          token = result.success ? result.token : null;
-        } else {
-          token = localStorage.getItem('token');
-        }
+        try {
+        const token = await platform.getToken();
 
         if (token) {
           setToken(token);

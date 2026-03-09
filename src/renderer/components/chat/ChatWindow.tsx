@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../../api/client';
 import { useChatStore } from '../../store/chatStore';
+import { isMobile } from '../../utils/platform';
 import { wsClient } from '../../api/websocket';
 import { useAuthStore } from '../../store/authStore';
 import { 
@@ -15,7 +16,8 @@ import {
   IconFlag2,
   IconFlag3,
   IconFlagOff,
-  IconNotes
+  IconNotes,
+  IconArrowLeft
 } from '../../icons';
 import MessageList from './MessageList';
 import MessageInput from './MessageInput';
@@ -39,7 +41,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId }) => {
   const [showPriorityModal, setShowPriorityModal] = useState(false);
   const [showClientOrdersModal, setShowClientOrdersModal] = useState(false);
   const [showNoteModal, setShowNoteModal] = useState(false);
-  const { updateChat, chats, toggleClientCard, isClientCardOpen, searchQuery } = useChatStore();
+  const { updateChat, chats, toggleClientCard, isClientCardOpen, searchQuery, setSelectedChat } = useChatStore();
   const queryClient = useQueryClient();
 
   // Try to get chat from store first
@@ -235,9 +237,22 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId }) => {
   const clientName = clientNickname || client?.name || displayChat?.client_name || 'Unknown';
   const source = displayChat?.source || 'unknown';
 
+  const handleBack = () => {
+    setSelectedChat(null);
+  };
+
   return (
     <div className="chat-window">
       <div className="chat-window-header">
+        {isMobile() && (
+          <button
+            className="chat-back-btn"
+            onClick={handleBack}
+            aria-label="Назад до списку"
+          >
+            <IconArrowLeft size={24} />
+          </button>
+        )}
         <div className="chat-header-info">
           <h3>{clientName}</h3>
           <span className="chat-header-source">{source}</span>

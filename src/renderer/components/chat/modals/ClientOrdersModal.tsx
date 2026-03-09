@@ -62,19 +62,13 @@ const ClientOrdersModal: React.FC<ClientOrdersModalProps> = ({ isOpen, onClose, 
     return type === 'service' ? 'Послуга' : 'Товар';
   };
 
-  const openOrder = (order: Order) => {
-    // Базовый URL для открытия заказов на сайте
+  const openOrder = async (order: Order) => {
     const baseUrl = 'https://goranked.gg';
-    
     const url = order.type === 'service'
       ? `${baseUrl}/orders/edit/${order.id}`
       : `${baseUrl}/products/orders/${order.id}`;
-    
-    if (window.electronAPI?.openExternal) {
-      window.electronAPI.openExternal(url);
-    } else {
-      window.open(url, '_blank');
-    }
+    const { openExternal } = await import('../../../utils/platform');
+    openExternal(url);
   };
 
   if (!isOpen) return null;
