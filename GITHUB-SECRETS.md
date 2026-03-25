@@ -21,6 +21,8 @@
 
 **Автообновление приложения:** в сборке зашит `UPDATE_URL=https://goranked.gg/chat-desk/releases` (generic). На сервер файлы попадают при настроенном деплое (см. ниже).
 
+**Ліміт GitHub Actions Artifacts:** якщо бачите `Artifact storage quota has been hit` — у workflow **не** зберігаємо артефакти в Actions (файли лише в **Releases**). Можна почистити старі артефакти: Repo → **Actions** → **Management** → **Artifacts** → видалити зайве, або у налаштуваннях організації збільшити квоту.
+
 ---
 
 ## Обязательные (для сборки)

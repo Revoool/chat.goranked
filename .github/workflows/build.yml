@@ -84,14 +84,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - uses: actions/upload-artifact@v4
-        with:
-          name: windows-build
-          path: |
-            release/*.exe
-            release/*.blockmap
-            release/latest.yml
-          if-no-files-found: error
+      # Артефакти GitHub Actions не зберігаємо — квота сховища швидко забивається.
+      # Деплой на сервер бере файли з уже опублікованого Release (див. job deploy).
 
   build-mac:
     name: macOS (DMG + ZIP + latest-mac.yml)
@@ -141,21 +135,13 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - uses: actions/upload-artifact@v4
-        with:
-          name: macos-build
-          path: |
-            release/mac/*.dmg
-            release/*.zip
-            release/latest-mac.yml
-            release/*.blockmap
-          if-no-files-found: warn
-
   deploy:
     name: Deploy to goranked.gg (optional)
     needs: [build-windows, build-mac]
     if: success() && startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
 
@@ -171,32 +157,22 @@ jobs:
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
 
-      - name: Download Windows artifacts
+      - name: Download release assets (без Actions Artifacts — з GitHub Release)
         if: steps.deploy.outputs.ok == 'true'
-        uses: actions/download-artifact@v4
-        with:
-          name: windows-build
-          path: _win
-
-      - name: Download macOS artifacts
-        if: steps.deploy.outputs.ok == 'true'
-        uses: actions/download-artifact@v4
-        with:
-          name: macos-build
-          path: _mac
-
-      - name: Merge into release/
-        if: steps.deploy.outputs.ok == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           mkdir -p release
-          shopt -s nullglob
-          for f in _win/release/*.exe _win/*.exe; do [ -f "$f" ] && cp "$f" release/; done
-          for f in _win/release/*.blockmap _win/*.blockmap; do [ -f "$f" ] && cp "$f" release/; done
-          for f in _win/release/latest.yml _win/latest.yml; do [ -f "$f" ] && cp "$f" release/; done
-          for f in _mac/release/mac/*.dmg _mac/mac/*.dmg; do [ -f "$f" ] && cp "$f" release/; done
-          for f in _mac/release/*.zip _mac/*.zip; do [ -f "$f" ] && cp "$f" release/; done
-          for f in _mac/release/latest-mac.yml _mac/latest-mac.yml; do [ -f "$f" ] && cp "$f" release/; done
-          for f in _mac/release/*.blockmap _mac/*.blockmap; do [ -f "$f" ] && cp "$f" release/; done
+          gh release download "${{ github.ref_name }}" \
+            --repo "${{ github.repository }}" \
+            -p "*.exe" \
+            -p "*.blockmap" \
+            -p "latest.yml" \
+            -p "latest-mac.yml" \
+            -p "*.dmg" \
+            -p "*.zip" \
+            -D release \
+            --clobber
           ls -la release/
 
       - name: Build local deploy folder (releases.json)
