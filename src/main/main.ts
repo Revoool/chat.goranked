@@ -208,6 +208,9 @@ function createWindow() {
       webSecurity: true,
     },
     titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'default',
+    ...(process.platform === 'darwin'
+      ? { trafficLightPosition: { x: 14, y: 12 } }
+      : {}),
     frame: true,
     show: false,
   });

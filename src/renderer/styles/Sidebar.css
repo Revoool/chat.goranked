@@ -1,44 +1,50 @@
 .sidebar {
-  width: 70px;
-  background: var(--glass-bg);
-  backdrop-filter: blur(var(--blur-md)) saturate(180%);
-  -webkit-backdrop-filter: blur(var(--blur-md)) saturate(180%);
-  border-right: 1px solid var(--glass-border);
+  width: 72px;
+  flex-shrink: 0;
+  background: var(--v2-bg-rail);
+  backdrop-filter: blur(var(--blur-md)) saturate(160%);
+  -webkit-backdrop-filter: blur(var(--blur-md)) saturate(160%);
+  border-right: 1px solid var(--v2-divider);
   display: flex;
   flex-direction: column;
   height: 100vh;
-  box-shadow: var(--shadow-md);
+  box-shadow: none;
   position: relative;
   z-index: 10;
 }
 
+/* macOS + hiddenInset: зона traffic lights ~76px — зсуваємо rail, щоб логотип не наїжджав на кнопки */
+.electron-macos .sidebar {
+  margin-left: 76px;
+  width: 72px;
+  border-left: 1px solid var(--v2-divider);
+}
+
 .sidebar-header {
-  padding: 12px;
-  padding-top: 28px; /* Extra padding for Mac window controls */
-  border-bottom: 1px solid var(--glass-border);
+  padding: var(--v2-space-3) var(--v2-space-2);
+  padding-top: 22px;
+  border-bottom: 1px solid var(--v2-divider);
   display: flex;
   align-items: center;
   justify-content: center;
-  -webkit-app-region: drag; /* Allow window dragging from header */
-  user-select: none; /* Prevent text selection while dragging */
-  background: rgba(26, 26, 26, 0.3);
-  backdrop-filter: blur(var(--blur-sm));
-  -webkit-backdrop-filter: blur(var(--blur-sm));
+  -webkit-app-region: drag;
+  user-select: none;
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
-/* Additional padding for Mac (darwin) */
-@supports (-webkit-app-region: drag) {
-  .sidebar-header {
-    padding-top: 28px;
-  }
+.electron-macos .sidebar-header {
+  padding-top: 20px;
 }
 
 .sidebar-logo {
-  width: 32px;
-  height: 32px;
+  width: 30px;
+  height: 30px;
   object-fit: contain;
-  -webkit-app-region: drag; /* Logo area is draggable */
-  cursor: move;
+  -webkit-app-region: drag;
+  cursor: default;
+  border-radius: var(--v2-radius-sm);
 }
 
 .sidebar-nav {
@@ -59,19 +65,16 @@
 }
 
 .nav-item {
-  width: 44px;
-  height: 44px;
+  width: 42px;
+  height: 42px;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  will-change: transform, background-color, box-shadow;
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+  background: transparent;
   color: var(--text-secondary);
   border: 1px solid transparent;
-  border-radius: 12px;
+  border-radius: var(--v2-radius-md);
   cursor: pointer;
   -webkit-app-region: no-drag;
   position: relative;
@@ -91,11 +94,11 @@
 }
 
 .nav-item:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--v2-accent-soft);
   color: var(--text-primary);
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-sm);
-  border-color: var(--glass-border);
+  transform: none;
+  box-shadow: none;
+  border-color: transparent;
 }
 
 .nav-item:hover::before {
@@ -103,11 +106,11 @@
 }
 
 .nav-item.active {
-  background: linear-gradient(135deg, var(--flame-orange) 0%, #ff8c5a 100%);
+  background: var(--flame-orange);
   color: white;
-  box-shadow: var(--shadow-glow);
-  border-color: rgba(255, 107, 53, 0.5);
-  transform: scale(1.05);
+  box-shadow: 0 1px 3px rgba(255, 107, 53, 0.35);
+  border-color: rgba(255, 107, 53, 0.35);
+  transform: none;
 }
 
 .nav-item.active::before {
@@ -152,16 +155,14 @@
 }
 
 .sidebar-footer {
-  padding: 12px;
-  border-top: 1px solid var(--glass-border);
+  padding: var(--v2-space-3);
+  border-top: 1px solid var(--v2-divider);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
-  -webkit-app-region: no-drag; /* Footer buttons should not be draggable */
-  background: rgba(26, 26, 26, 0.3);
-  backdrop-filter: blur(var(--blur-sm));
-  -webkit-backdrop-filter: blur(var(--blur-sm));
+  gap: var(--v2-space-3);
+  -webkit-app-region: no-drag;
+  background: transparent;
 }
 
 .user-info {

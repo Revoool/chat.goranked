@@ -3,17 +3,25 @@
   justify-content: center;
   align-items: center;
   height: 100vh;
-  background: linear-gradient(135deg, var(--graphite-dark) 0%, var(--graphite-medium) 100%);
+  background: var(--v2-bg-page);
+}
+
+[data-theme="dark"] .login-page {
+  background: linear-gradient(160deg, var(--v2-bg-page) 0%, #141418 100%);
 }
 
 .login-container {
-  background: var(--graphite-medium);
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
+  background: var(--v2-bg-elevated);
+  border: 1px solid var(--v2-divider);
+  border-radius: var(--v2-radius-lg);
   padding: 48px;
   width: 100%;
   max-width: 400px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--shadow-md);
+}
+
+[data-theme="light"] .login-container {
+  box-shadow: var(--shadow-md), 0 0 0 1px rgba(0, 0, 0, 0.04);
 }
 
 .login-header {

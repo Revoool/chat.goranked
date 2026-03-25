@@ -6,6 +6,12 @@
 const TOKEN_KEY = 'token';
 
 export const isElectron = (): boolean => !!(typeof window !== 'undefined' && (window as any).electronAPI);
+
+/** macOS desktop app (Electron) — для titlebar / відступу під traffic lights */
+export const isMacOSElectron = (): boolean => {
+  if (typeof window === 'undefined' || !isElectron()) return false;
+  return /Mac OS|Macintosh/i.test(navigator.userAgent);
+};
 export const isCapacitor = (): boolean => {
   if (typeof window === 'undefined') return false;
   const cap = (window as any).Capacitor;

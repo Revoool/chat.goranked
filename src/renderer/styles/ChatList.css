@@ -1,8 +1,6 @@
 .chat-list {
   width: 100%;
-  background: var(--glass-bg);
-  backdrop-filter: blur(var(--blur-sm)) saturate(150%);
-  -webkit-backdrop-filter: blur(var(--blur-sm)) saturate(150%);
+  background: transparent;
   display: flex;
   flex-direction: column;
   height: 100vh;
@@ -10,14 +8,12 @@
 }
 
 .chat-list-header {
-  padding: 16px;
-  border-bottom: 1px solid var(--glass-border);
-  background: var(--glass-bg-light);
-  backdrop-filter: blur(var(--blur-md)) saturate(180%);
-  -webkit-backdrop-filter: blur(var(--blur-md)) saturate(180%);
-  -webkit-app-region: drag; /* Allow window dragging from header */
-  user-select: none; /* Prevent text selection while dragging */
-  box-shadow: var(--shadow-sm);
+  padding: var(--v2-space-3) var(--v2-space-4);
+  border-bottom: 1px solid var(--v2-divider);
+  background: var(--v2-bg-elevated);
+  -webkit-app-region: drag;
+  user-select: none;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.04);
   position: relative;
   z-index: 5;
 }
@@ -40,22 +36,19 @@
 .chat-list-search {
   width: 100%;
   padding: 10px 14px;
-  background: rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid var(--glass-border);
-  border-radius: 10px;
+  background: var(--v2-bg-panel);
+  border: 1px solid var(--v2-divider);
+  border-radius: var(--v2-radius-md);
   color: var(--text-primary);
   font-size: 14px;
-  -webkit-app-region: no-drag; /* Input should be clickable */
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  -webkit-app-region: no-drag;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .chat-list-search:focus {
   outline: none;
   border-color: var(--flame-orange);
-  background: rgba(255, 255, 255, 0.12);
-  box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
+  box-shadow: 0 0 0 3px var(--v2-accent-soft);
 }
 
 .chat-list-search::placeholder {

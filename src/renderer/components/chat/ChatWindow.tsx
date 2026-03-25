@@ -295,68 +295,72 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId }) => {
           <span className="chat-header-source">{source}</span>
         </div>
         <div className="chat-header-actions">
-          <IconButton
-            icon={<IconInfoCircle />}
-            onClick={toggleClientCard}
-            title="Інформація про клієнта"
-            active={isClientCardOpen}
-          />
-          <IconButton
-            icon={<IconUserPlus />}
-            onClick={() => setShowAssignModal(true)}
-            title="Призначити"
-          />
-          <IconButton
-            icon={<IconCircleCheck />}
-            onClick={() => setShowStatusModal(true)}
-            title="Статус"
-            active={displayChat?.status === 'in_progress'}
-          />
-          <IconButton
-            icon={<IconTags />}
-            onClick={() => setShowTagsModal(true)}
-            title="Теги"
-          />
-          <IconButton
-            icon={<IconNotes />}
-            onClick={() => setShowNoteModal(true)}
-            title="Нотатки та ім'я клієнта"
-          />
-          <IconButton
-            icon={<IconShoppingCart />}
-            onClick={() => setShowClientOrdersModal(true)}
-            title="Замовлення клієнта"
-          />
-          <IconButton
-            icon={<IconX />}
-            onClick={async () => {
-              if (!displayChat) return;
-              try {
-                if (displayChat.metadata?.no_response_needed) {
-                  await apiClient.unskipChat(chatId);
-                } else {
-                  await apiClient.skipChat(chatId);
+          <div className="chat-header-actions-group chat-header-actions-group--primary">
+            <IconButton
+              icon={<IconInfoCircle />}
+              onClick={toggleClientCard}
+              title="Інформація про клієнта"
+              active={isClientCardOpen}
+            />
+            <IconButton
+              icon={<IconUserPlus />}
+              onClick={() => setShowAssignModal(true)}
+              title="Призначити"
+            />
+            <IconButton
+              icon={<IconCircleCheck />}
+              onClick={() => setShowStatusModal(true)}
+              title="Статус"
+              active={displayChat?.status === 'in_progress'}
+            />
+          </div>
+          <div className="chat-header-actions-group chat-header-actions-group--secondary">
+            <IconButton
+              icon={<IconTags />}
+              onClick={() => setShowTagsModal(true)}
+              title="Теги"
+            />
+            <IconButton
+              icon={<IconNotes />}
+              onClick={() => setShowNoteModal(true)}
+              title="Нотатки та ім'я клієнта"
+            />
+            <IconButton
+              icon={<IconShoppingCart />}
+              onClick={() => setShowClientOrdersModal(true)}
+              title="Замовлення клієнта"
+            />
+            <IconButton
+              icon={<IconX />}
+              onClick={async () => {
+                if (!displayChat) return;
+                try {
+                  if (displayChat.metadata?.no_response_needed) {
+                    await apiClient.unskipChat(chatId);
+                  } else {
+                    await apiClient.skipChat(chatId);
+                  }
+                  queryClient.invalidateQueries({ queryKey: ['chat', chatId] });
+                  queryClient.invalidateQueries({ queryKey: ['chats'] });
+                } catch (error) {
+                  console.error('Failed to skip/unskip chat:', error);
                 }
-                queryClient.invalidateQueries({ queryKey: ['chat', chatId] });
-                queryClient.invalidateQueries({ queryKey: ['chats'] });
-              } catch (error) {
-                console.error('Failed to skip/unskip chat:', error);
+              }}
+              title={displayChat?.metadata?.no_response_needed ? 'Повернути в список' : 'Скинути (не потребує відповіді)'}
+              className={displayChat?.metadata?.no_response_needed ? 'skipped' : ''}
+            />
+            <IconButton
+              icon={
+                displayChat?.priority === 'urgent' ? <IconFlag3 /> :
+                displayChat?.priority === 'high' ? <IconFlag2 /> :
+                displayChat?.priority === 'low' ? <IconFlagOff /> :
+                <IconFlag />
               }
-            }}
-            title={displayChat?.metadata?.no_response_needed ? 'Повернути в список' : 'Скинути (не потребує відповіді)'}
-            className={displayChat?.metadata?.no_response_needed ? 'skipped' : ''}
-          />
-          <IconButton
-            icon={
-              displayChat?.priority === 'urgent' ? <IconFlag3 /> :
-              displayChat?.priority === 'high' ? <IconFlag2 /> :
-              displayChat?.priority === 'low' ? <IconFlagOff /> :
-              <IconFlag />
-            }
-            onClick={() => setShowPriorityModal(true)}
-            title={`Пріоритет: ${displayChat?.priority || 'normal'}`}
-            className={`priority-btn priority-${displayChat?.priority || 'normal'}`}
-          />
+              onClick={() => setShowPriorityModal(true)}
+              title={`Пріоритет: ${displayChat?.priority || 'normal'}`}
+              className={`priority-btn priority-${displayChat?.priority || 'normal'}`}
+            />
+          </div>
         </div>
       </div>
 

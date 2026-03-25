@@ -241,3 +241,14 @@
   color: var(--text-secondary);
 }
 
+[data-theme="light"] .icon-button {
+  background: #ffffff;
+  border-color: var(--v2-divider);
+  color: var(--text-secondary);
+}
+
+[data-theme="light"] .icon-button:hover {
+  transform: none;
+  box-shadow: 0 2px 8px rgba(255, 107, 53, 0.15);
+}
+
