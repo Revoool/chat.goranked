@@ -137,6 +137,9 @@ jobs:
 
   deploy:
     name: Deploy to goranked.gg (optional)
+    # Не валимо весь workflow, якщо з GitHub до сервера немає маршруту (firewall / приватна мережа / SSH лише з білого списку).
+    # Реліз у GitHub Releases уже зібраний; rsync можна зробити вручну з машини, що має SSH до DEPLOY_HOST.
+    continue-on-error: true
     needs: [build-windows, build-mac]
     if: success() && startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
