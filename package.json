@@ -15,7 +15,7 @@
     "build:preload": "webpack --mode production --config webpack.preload.config.js",
     "build:renderer": "webpack --mode production --config webpack.config.js",
     "copy:assets": "node -e \"const fs=require('fs');const path=require('path');const src=path.join('src','renderer','sound');const dst=path.join('dist','sound');if(fs.existsSync(src)){if(!fs.existsSync(dst))fs.mkdirSync(dst,{recursive:true});fs.readdirSync(src).forEach(f=>{const srcPath=path.join(src,f);const dstPath=path.join(dst,f);if(fs.statSync(srcPath).isFile())fs.copyFileSync(srcPath,dstPath);});}\"",
-    "clean:release": "node -e \"const fs=require('fs');const path=require('path');['win-unpacked','mac','mac-unpacked'].forEach(d=>{const p=path.join('release',d);if(fs.existsSync(p)){try{fs.rmSync(p,{recursive:true,force:true});console.log('Cleaned',p);}catch(e){console.log('Could not clean',p,e.message);}});\"",
+    "clean:release": "node -e \"const fs=require('fs');const path=require('path');['win-unpacked','mac','mac-unpacked'].forEach(d=>{const p=path.join('release',d);if(fs.existsSync(p)){try{fs.rmSync(p,{recursive:true,force:true});console.log('Cleaned',p);}catch(e){console.log('Could not clean',p,e.message);}}});\"",
     "build:icons": "png2icons build/icon.png build/icon -icowe",
     "build:win": "npm run build:icons && npm run clean:release && npm run build && set CSC_IDENTITY_AUTO_DISCOVERY=false && electron-builder --win --x64 --publish never --dir",
     "build:win:installer": "npm run build:icons && npm run clean:release && npm run build && set CSC_IDENTITY_AUTO_DISCOVERY=false && electron-builder --win --x64 --publish never",
