@@ -172,6 +172,39 @@
   -ms-user-select: text;
 }
 
+.message-payment-block {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: stretch;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.message-payment-caption {
+  margin-bottom: 0;
+}
+
+.message-payment-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 14px;
+  text-decoration: none;
+  background: rgba(255, 255, 255, 0.95);
+  color: #1a1208 !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.message-payment-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.28);
+}
+
 .message-search-highlight {
   background-color: rgba(255, 235, 59, 0.4);
   color: inherit;

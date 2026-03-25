@@ -383,6 +383,51 @@ class ApiClient {
     }
   }
 
+  async sendPaymentLinkMessage(
+    chatId: number,
+    options: { paymentUrl: string; caption?: string; label?: string }
+  ): Promise<any> {
+    if (!chatId || !Number.isInteger(chatId) || chatId <= 0) {
+      throw new Error("Invalid chat ID");
+    }
+    const url = String(options.paymentUrl || "").trim();
+    if (!url) {
+      throw new Error("Payment URL is required");
+    }
+    if (url.length > 2048) {
+      throw new Error("Payment URL is too long");
+    }
+
+    const formData = new FormData();
+    formData.append("type", "payment_url");
+    formData.append("body", options.caption?.trim() || "");
+    formData.append(
+      "metadata",
+      JSON.stringify({
+        payment_url: url,
+        ...(options.label?.trim() ? { label: options.label.trim() } : {}),
+      })
+    );
+
+    try {
+      const response = await this.client.post(
+        `/api/manager-client-chats/${chatId}/messages`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+      return response.data;
+    } catch (error: any) {
+      if (error.response?.status === 403) {
+        throw new Error("Access denied to this chat");
+      }
+      throw error;
+    }
+  }
+
   async updateMessage(
     chatId: number,
     messageId: number,
@@ -748,7 +793,7 @@ class ApiClient {
       locale ? `for locale: ${locale}` : ""
     );
     try {
-      const params: any = {};
+      const params: any = { scope: "chats" };
       if (locale) {
         params.locale = locale;
       }

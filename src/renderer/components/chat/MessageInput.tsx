@@ -8,11 +8,12 @@ import '../../styles/MessageInput.css';
 
 interface MessageInputProps {
   onSend: (text: string, attachments: any[], metadata?: any) => void;
+  onSendPayment?: (payload: { url: string; label?: string; caption?: string }) => void;
   disabled?: boolean;
   chatId?: number;
 }
 
-const MessageInput: React.FC<MessageInputProps> = ({ onSend, disabled, chatId }) => {
+const MessageInput: React.FC<MessageInputProps> = ({ onSend, onSendPayment, disabled, chatId }) => {
   const [text, setText] = useState('');
   const [attachments, setAttachments] = useState<any[]>([]);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
@@ -22,6 +23,10 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSend, disabled, chatId })
   const [sendMessageKey, setSendMessageKey] = useState<'enter' | 'ctrl-enter'>(
     (localStorage.getItem('settings.sendMessageKey') as 'enter' | 'ctrl-enter') || 'enter'
   );
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [paymentUrl, setPaymentUrl] = useState('');
+  const [paymentLabel, setPaymentLabel] = useState('');
+  const [paymentCaption, setPaymentCaption] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const emojiButtonRef = useRef<HTMLButtonElement>(null);
   const quickRepliesButtonRef = useRef<HTMLButtonElement>(null);
@@ -74,6 +79,10 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSend, disabled, chatId })
     setText('');
     setAttachments([]);
     setSelectedAiSuggestion(null);
+    setShowPaymentModal(false);
+    setPaymentUrl('');
+    setPaymentLabel('');
+    setPaymentCaption('');
   }, [chatId]);
 
   // Ensure focus when component mounts or chatId changes
@@ -179,6 +188,32 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSend, disabled, chatId })
     };
   }, [text, chatId]);
 
+  const submitPaymentLink = () => {
+    if (!onSendPayment) return;
+    const u = paymentUrl.trim();
+    if (!u) return;
+    let parsed: URL;
+    try {
+      parsed = new URL(u);
+    } catch {
+      alert('Некоректна адреса посилання');
+      return;
+    }
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+      alert('Дозволені лише посилання http або https');
+      return;
+    }
+    onSendPayment({
+      url: u,
+      label: paymentLabel.trim() || undefined,
+      caption: paymentCaption.trim() || undefined,
+    });
+    setShowPaymentModal(false);
+    setPaymentUrl('');
+    setPaymentLabel('');
+    setPaymentCaption('');
+  };
+
   const handleQuickReplySelect = (replyText: string) => {
     setText(replyText);
     setShowQuickReplies(false);
@@ -260,6 +295,68 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSend, disabled, chatId })
 
   return (
     <div className="message-input-wrapper">
+      {showPaymentModal && onSendPayment && (
+        <div
+          className="payment-link-modal-overlay"
+          role="presentation"
+          onClick={() => setShowPaymentModal(false)}
+        >
+          <div
+            className="payment-link-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="payment-link-title"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 id="payment-link-title" className="payment-link-modal-title">
+              Посилання на оплату
+            </h3>
+            <p className="payment-link-modal-hint">
+              Клієнт побачить кнопку оплати у віджеті на сайті замість довгого URL.
+            </p>
+            <label className="payment-link-field">
+              <span>Посилання (https://…)</span>
+              <input
+                type="url"
+                value={paymentUrl}
+                onChange={(e) => setPaymentUrl(e.target.value)}
+                placeholder="https://…"
+                autoFocus
+              />
+            </label>
+            <label className="payment-link-field">
+              <span>Текст кнопки (необов&apos;язково)</span>
+              <input
+                type="text"
+                value={paymentLabel}
+                onChange={(e) => setPaymentLabel(e.target.value)}
+                placeholder="Оплатити"
+              />
+            </label>
+            <label className="payment-link-field">
+              <span>Коментар над кнопкою (необов&apos;язково)</span>
+              <textarea
+                value={paymentCaption}
+                onChange={(e) => setPaymentCaption(e.target.value)}
+                rows={2}
+              />
+            </label>
+            <div className="payment-link-modal-actions">
+              <button type="button" className="payment-link-btn-cancel" onClick={() => setShowPaymentModal(false)}>
+                Скасувати
+              </button>
+              <button
+                type="button"
+                className="payment-link-btn-submit"
+                disabled={!paymentUrl.trim()}
+                onClick={submitPaymentLink}
+              >
+                Надіслати
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {showAiSuggestions && chatId && (
         <AiSuggestions
           chatId={chatId}
@@ -349,6 +446,21 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSend, disabled, chatId })
                   </div>
                 )}
               </div>
+              {onSendPayment && (
+                <button
+                  type="button"
+                  className="message-input-payment-btn"
+                  onClick={() => {
+                    setShowPaymentModal(true);
+                    setShowQuickReplies(false);
+                    setShowEmojiPicker(false);
+                    setShowAiSuggestions(false);
+                  }}
+                  title="Посилання на оплату"
+                >
+                  💳
+                </button>
+              )}
               <button
                 type="button"
                 className={`message-input-ai-btn ${showAiSuggestions ? 'active' : ''}`}

@@ -4,6 +4,25 @@
 
 ---
 
+## Релиз через GitHub Actions (Windows + macOS)
+
+Файл: `.github/workflows/build.yml`
+
+**Как выпустить версию менеджерам**
+
+1. В `package.json` увеличить `"version"` (например `2.0.23`) — так же попадёт в `releases.json` при деплое на сайт.
+2. Закоммитить и запушить изменения.
+3. Создать и запушить тег: `git tag v2.0.23 && git push origin v2.0.23`  
+   (номер тега без `v` в имени должен совпадать с `version` в `package.json`.)
+
+После push тега запустятся jobs: **Windows** (NSIS, `latest.yml`), затем **macOS** (DMG, zip, `latest-mac.yml`) — mac идёт после Windows, чтобы один раз создать GitHub Release и без гонок добавить файлы.
+
+**Ручной запуск workflow:** Actions → **Build and Release** → **Run workflow**. В поле **«Use workflow from»** обязательно выберите **тег** (ветка `main` не подойдёт — jobs пропускаются).
+
+**Автообновление приложения:** в сборке зашит `UPDATE_URL=https://goranked.gg/chat-desk/releases` (generic). На сервер файлы попадают при настроенном деплое (см. ниже).
+
+---
+
 ## Обязательные (для сборки)
 
 | Name | Value | Откуда взять |

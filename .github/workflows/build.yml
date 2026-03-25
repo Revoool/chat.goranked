@@ -1,3 +1,15 @@
+# Goranked Chat Desk — Windows + macOS → GitHub Releases (+ опционально rsync на goranked.gg).
+#
+# Как выпустить обновление менеджерам:
+# 1) Поднять "version" в package.json (должен совпадать с тегом, без префикса v)
+# 2) git add package.json && git commit && git push
+# 3) git tag v1.2.3 && git push origin v1.2.3
+#
+# Ручной запуск: Actions → Build and Release → Run workflow → в поле "Use workflow from"
+#    выберите тег (Tags → v…), иначе ref будет main и релиз не соберётся.
+#
+# Секреты: см. GITHUB-SECRETS.md (обязательно REVERB_APP_KEY).
+
 name: Build and Release
 
 on:
@@ -6,448 +18,208 @@ on:
       - 'v*'
   workflow_dispatch:
 
+concurrency:
+  group: chatdesk-release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  NODE_VERSION: '20'
+
 jobs:
-  build-mac:
-    runs-on: macos-latest
-    permissions:
-      contents: write
-    needs: []
-    
+  reject-non-tag-dispatch:
+    name: (workflow_dispatch) потрібен тег
+    if: github.event_name == 'workflow_dispatch' && !startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-      
-      - name: Install dependencies
-        run: |
-          echo "Installing dependencies..."
-          npm ci
-          echo "Dependencies installed successfully"
-          echo "Verifying installation..."
-          npm list --depth=0 || true
-      
-      - name: Check project structure
-        run: |
-          echo "Checking project structure..."
-          ls -la
-          echo "Checking for dist directory..."
-          ls -la dist/ || echo "dist directory not found"
-          echo "Checking for assets..."
-          ls -la assets/ || echo "assets directory not found (will use default icons)"
-      
-      - name: Build for macOS
-        run: |
-          echo "Current directory: $(pwd)"
-          echo "Node version: $(node --version)"
-          echo "NPM version: $(npm --version)"
-          echo "Building macOS app (DMG)..."
-          npm run build:mac:installer
-        env:
-          NODE_ENV: production
-          UPDATE_URL: https://goranked.gg/chat-desk/releases
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          REVERB_HOST: ${{ secrets.REVERB_HOST || 'goranked.gg' }}
-          REVERB_PORT: ${{ secrets.REVERB_PORT || '443' }}
-          REVERB_SCHEME: ${{ secrets.REVERB_SCHEME || 'https' }}
-          REVERB_APP_KEY: ${{ secrets.REVERB_APP_KEY }}
-          API_URL: ${{ secrets.API_URL || 'https://goranked.gg' }}
-      
-      - name: Organize release files
-        run: |
-          echo "=== Listing ALL files in release directory ==="
-          find release -type f 2>/dev/null | sort || echo "Release directory not found"
-          echo ""
-          echo "=== Finding DMG files ==="
-          find release -name "*.dmg" -type f || echo "No DMG files found"
-          echo ""
-          echo "=== Finding ZIP files ==="
-          find release -name "*.zip" -type f || echo "No ZIP files found"
-          echo ""
-          echo "=== Finding ALL YML files ==="
-          find release -name "*.yml" -type f || echo "No YML files found"
-          echo ""
-          echo "=== Finding blockmap files ==="
-          find release -name "*.blockmap" -type f || echo "No blockmap files found"
-          echo ""
-          echo "=== Organizing files ==="
-          mkdir -p release/mac
-          # Move DMG files to mac folder (for manual download)
-          find release -maxdepth 1 -name "*.dmg" -type f -exec mv {} release/mac/ \; 2>/dev/null || true
-          # Keep ZIP, YML and blockmap files in root for electron-updater (don't move them)
-          echo ""
-          echo "=== Mac release folder contents (DMG for manual install) ==="
-          ls -la release/mac/ || echo "Mac folder is empty"
-          echo ""
-          echo "=== Root release folder (ZIP, YML, blockmap for auto-update) ==="
-          find release -maxdepth 1 -type f \( -name "*.zip" -o -name "*.yml" -o -name "*.blockmap" \) || echo "No auto-update files in root"
-      
-      - name: Upload macOS artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: macos-build
-          path: |
-            release/mac/*.dmg
-            release/*-mac.zip
-            release/latest-mac.yml
-            release/*.blockmap
-          if-no-files-found: warn
-      
-      - name: Check if release exists
-        id: check_release
-        run: |
-          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-            "https://api.github.com/repos/${{ github.repository }}/releases/tags/${{ github.ref_name }}")
-          if [ "$HTTP_CODE" = "200" ]; then
-            echo "exists=true" >> $GITHUB_OUTPUT
-            echo "Release exists: true"
-          else
-            echo "exists=false" >> $GITHUB_OUTPUT
-            echo "Release exists: false (HTTP $HTTP_CODE)"
-          fi
-      
-      - name: Create release if not exists (macOS)
-        if: steps.check_release.outputs.exists == 'false'
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: ${{ github.ref_name }}
-          name: Release ${{ github.ref_name }}
-          body: |
-            ## macOS Build
-            - DMG installer for macOS (x64 and arm64)
-            - Auto-update configuration (latest-mac.yml)
-          draft: false
-          prerelease: false
-          generate_release_notes: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      
-      - name: Delete existing macOS release assets only
-        run: |
-          echo "Checking for existing release assets..."
-          RELEASE_ID=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-            "https://api.github.com/repos/${{ github.repository }}/releases/tags/${{ github.ref_name }}" | \
-            python3 -c "import sys, json; data=json.load(sys.stdin); print(data.get('id', ''))" 2>/dev/null)
-          
-          if [ -n "$RELEASE_ID" ] && [ "$RELEASE_ID" != "None" ]; then
-            echo "Found release ID: $RELEASE_ID"
-            echo "Deleting only macOS-related assets to avoid conflicts..."
-            ASSETS=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-              "https://api.github.com/repos/${{ github.repository }}/releases/$RELEASE_ID/assets" | \
-              python3 -c "import sys, json; assets=json.load(sys.stdin); [print(f\"{a['id']}|{a['name']}\") for a in assets]" 2>/dev/null)
-            
-            for asset_info in $ASSETS; do
-              if [ -n "$asset_info" ]; then
-                asset_id=$(echo "$asset_info" | cut -d'|' -f1)
-                asset_name=$(echo "$asset_info" | cut -d'|' -f2)
-                # Delete only macOS-related files (dmg, mac yml, mac blockmap, mac zip)
-                if echo "$asset_name" | grep -qE "\.(dmg|blockmap)$|latest-mac|mac.*\.(yml|zip)$" || echo "$asset_name" | grep -qi "mac"; then
-                  echo "Deleting macOS asset: $asset_name (ID: $asset_id)"
-                  curl -X DELETE -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-                    "https://api.github.com/repos/${{ github.repository }}/releases/assets/$asset_id" || true
-                else
-                  echo "Keeping non-macOS asset: $asset_name"
-                fi
-              fi
-            done
-            echo "macOS assets cleanup completed"
-          else
-            echo "No existing release found"
-          fi
-        continue-on-error: true
-        if: always()
-      
-      - name: Upload to Release (macOS)
-        uses: softprops/action-gh-release@v1
-        with:
-          files: |
-            release/mac/*.dmg
-            release/*.zip
-            release/*.yml
-            release/*.blockmap
-          tag_name: ${{ github.ref_name }}
-          body: |
-            ## macOS Build
-            - DMG installer for macOS (x64 and arm64) - для ручной установки
-            - ZIP архивы для автообновления (x64 и arm64)
-            - Файлы конфигурации автообновления (latest-mac.yml, latest-mac-x64.yml, latest-mac-arm64.yml)
-          draft: false
-          prerelease: false
-          fail_on_unmatched_files: false
-          append_body: true
-          generate_release_notes: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        continue-on-error: false
-        if: always()
-      
-      - name: Make release public (macOS)
-        run: |
-          echo "Making release public for private repository..."
-          RELEASE_ID=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-            "https://api.github.com/repos/${{ github.repository }}/releases/tags/${{ github.ref_name }}" | \
-            python3 -c "import sys, json; data=json.load(sys.stdin); print(data.get('id', ''))" 2>/dev/null)
-          
-          if [ -n "$RELEASE_ID" ] && [ "$RELEASE_ID" != "None" ]; then
-            echo "Release ID: $RELEASE_ID"
-            # Note: GitHub API doesn't allow making releases public in private repos
-            # But we can ensure it's not draft and not prerelease
-            curl -X PATCH \
-              -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-              -H "Accept: application/vnd.github.v3+json" \
-              "https://api.github.com/repos/${{ github.repository }}/releases/$RELEASE_ID" \
-              -d '{"draft": false, "prerelease": false}' || echo "Note: Release visibility is controlled by repository settings"
-            echo "Release updated"
-          else
-            echo "Could not find release ID"
-          fi
-        continue-on-error: true
-        if: always()
+      - run: |
+          echo "::error::У Run workflow виберіть тег (Use workflow from → Tags → v…), не гілку main."
+          exit 1
 
   build-windows:
+    name: Windows (NSIS + latest.yml)
+    if: startsWith(github.ref, 'refs/tags/v')
     runs-on: windows-latest
     permissions:
       contents: write
-    needs: []
-    
+
     steps:
       - uses: actions/checkout@v4
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+
+      - uses: actions/setup-node@v4
         with:
-          node-version: '20'
-      
-      - name: Install dependencies
-        run: |
-          echo "Installing dependencies..."
-          npm ci
-          echo "Dependencies installed successfully"
-          echo "Verifying installation..."
-          npm list --depth=0 || true
-      
-      - name: Check project structure
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - run: npm ci
+
+      - name: Build installer
         shell: pwsh
-        run: |
-          Write-Host "Checking project structure..."
-          Get-ChildItem -Force
-          Write-Host "Checking for dist directory..."
-          if (Test-Path dist) { Get-ChildItem dist } else { Write-Host "dist directory not found" }
-          Write-Host "Checking for assets..."
-          if (Test-Path assets) { Get-ChildItem assets } else { Write-Host "assets directory not found (will use default icons)" }
-      
-      - name: Build for Windows
-        shell: pwsh
-        run: |
-          $ErrorActionPreference = "Stop"
-          $env:UPDATE_URL = "https://goranked.gg/chat-desk/releases"
-          Write-Host "Current directory: $(Get-Location)"
-          Write-Host "Node version: $(node --version)"
-          Write-Host "NPM version: $(npm --version)"
-          Write-Host "Building Windows app..."
-          npm run build:win:installer 2>&1
         env:
           NODE_ENV: production
           UPDATE_URL: https://goranked.gg/chat-desk/releases
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CSC_IDENTITY_AUTO_DISCOVERY: false
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REVERB_HOST: ${{ secrets.REVERB_HOST || 'goranked.gg' }}
           REVERB_PORT: ${{ secrets.REVERB_PORT || '443' }}
           REVERB_SCHEME: ${{ secrets.REVERB_SCHEME || 'https' }}
           REVERB_APP_KEY: ${{ secrets.REVERB_APP_KEY }}
           API_URL: ${{ secrets.API_URL || 'https://goranked.gg' }}
-      
-      - name: Check release files for upload
-        shell: pwsh
-        run: |
-          Write-Host "Release folder contents before upload:"
-          Get-ChildItem -Path release/ | Format-Table Name, Length
-          Write-Host "Checking for latest.yml in root:"
-          if (Test-Path release/latest.yml) {
-            Write-Host "✓ latest.yml found in release/"
-            Get-Content release/latest.yml
-          } else {
-            Write-Host "✗ latest.yml NOT found in release/"
-            Write-Host "Searching for yml files:"
-            Get-ChildItem -Path release/ -Filter "*.yml" -Recurse | Format-Table FullName
-          }
-          Write-Host "Checking for .exe files:"
-          Get-ChildItem -Path release/ -Filter "*.exe" | Format-Table Name, Length
-          Write-Host "Checking for .blockmap files:"
-          Get-ChildItem -Path release/ -Filter "*.blockmap" | Format-Table Name, Length
-      
-      - name: Upload Windows artifacts
-        uses: actions/upload-artifact@v4
+        run: npm run build:win:installer
+
+      - name: Upload to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: Goranked Chat Desk ${{ github.ref_name }}
+          files: |
+            release/*.exe
+            release/*.blockmap
+            release/latest.yml
+          draft: false
+          prerelease: false
+          fail_on_unmatched_files: true
+          make_latest: true
+          generate_release_notes: true
+          append_body: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/upload-artifact@v4
         with:
           name: windows-build
           path: |
             release/*.exe
             release/*.blockmap
             release/latest.yml
-          if-no-files-found: warn
-      
-      - name: Check if release exists (Windows)
-        id: check_release_win
-        shell: pwsh
-        run: |
-          $headers = @{
-            Authorization = "token ${{ secrets.GITHUB_TOKEN }}"
-          }
-          try {
-            $response = Invoke-RestMethod -Uri "https://api.github.com/repos/${{ github.repository }}/releases/tags/${{ github.ref_name }}" -Headers $headers
-            if ($response.tag_name) {
-              Write-Host "Release exists: true"
-              echo "exists=true" >> $env:GITHUB_OUTPUT
-            } else {
-              Write-Host "Release exists: false"
-              echo "exists=false" >> $env:GITHUB_OUTPUT
-            }
-          } catch {
-            if ($_.Exception.Response.StatusCode -eq 404) {
-              Write-Host "Release does not exist (404), will create it"
-              echo "exists=false" >> $env:GITHUB_OUTPUT
-            } else {
-              Write-Host "Error checking release: $($_.Exception.Message)"
-              echo "exists=false" >> $env:GITHUB_OUTPUT
-            }
-          }
-      
-      - name: Create release if not exists (Windows)
-        if: steps.check_release_win.outputs.exists == 'false'
-        uses: softprops/action-gh-release@v1
+          if-no-files-found: error
+
+  build-mac:
+    name: macOS (DMG + ZIP + latest-mac.yml)
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [build-windows]
+    runs-on: macos-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
         with:
-          tag_name: ${{ github.ref_name }}
-          name: Release ${{ github.ref_name }}
-          body: |
-            ## Windows Build
-            - NSIS installer for Windows (x64)
-            - Auto-update configuration (latest.yml)
-          draft: false
-          prerelease: false
-          generate_release_notes: false
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - run: npm ci
+
+      - name: Build macOS
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      
-      - name: Delete existing Windows release assets only
-        shell: pwsh
-        run: |
-          Write-Host "Checking for existing release assets..."
-          $headers = @{
-            Authorization = "token ${{ secrets.GITHUB_TOKEN }}"
-          }
-          try {
-            $release = Invoke-RestMethod -Uri "https://api.github.com/repos/${{ github.repository }}/releases/tags/${{ github.ref_name }}" -Headers $headers
-            if ($release.id) {
-              Write-Host "Found release ID: $($release.id)"
-              Write-Host "Deleting only Windows-related assets to avoid conflicts..."
-              $assets = Invoke-RestMethod -Uri "https://api.github.com/repos/${{ github.repository }}/releases/$($release.id)/assets" -Headers $headers
-              foreach ($asset in $assets) {
-                # Delete only Windows-related files (exe, win yml, win blockmap)
-                if ($asset.name -match "\.(exe|blockmap)$|latest\.yml$|win.*\.(yml|zip)$" -or $asset.name -match "Windows|Setup") {
-                  Write-Host "Deleting Windows asset: $($asset.name) (ID: $($asset.id))"
-                  Invoke-RestMethod -Uri "https://api.github.com/repos/${{ github.repository }}/releases/assets/$($asset.id)" -Method Delete -Headers $headers -ErrorAction SilentlyContinue
-                } else {
-                  Write-Host "Keeping non-Windows asset: $($asset.name)"
-                }
-              }
-              Write-Host "Windows assets cleanup completed"
-            }
-          } catch {
-            Write-Host "No existing release found or error: $($_.Exception.Message)"
-          }
-        continue-on-error: true
-        if: always()
-      
-      - name: Upload to Release (Windows)
-        uses: softprops/action-gh-release@v1
+          NODE_ENV: production
+          UPDATE_URL: https://goranked.gg/chat-desk/releases
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REVERB_HOST: ${{ secrets.REVERB_HOST || 'goranked.gg' }}
+          REVERB_PORT: ${{ secrets.REVERB_PORT || '443' }}
+          REVERB_SCHEME: ${{ secrets.REVERB_SCHEME || 'https' }}
+          REVERB_APP_KEY: ${{ secrets.REVERB_APP_KEY }}
+          API_URL: ${{ secrets.API_URL || 'https://goranked.gg' }}
+        run: npm run build:mac:installer
+
+      - name: Upload to GitHub Release
+        uses: softprops/action-gh-release@v2
         with:
-          files: |
-            release/*.exe
-            release/*.blockmap
-            release/latest.yml
           tag_name: ${{ github.ref_name }}
-          body: |
-            ## Windows Build
-            - NSIS installer for Windows (x64)
-            - Auto-update configuration (latest.yml)
+          name: Goranked Chat Desk ${{ github.ref_name }}
+          files: |
+            release/mac/*.dmg
+            release/*.zip
+            release/latest-mac.yml
+            release/*.blockmap
           draft: false
           prerelease: false
           fail_on_unmatched_files: false
+          allowUpdates: true
           append_body: true
-          generate_release_notes: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        continue-on-error: false
-        if: always()
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos-build
+          path: |
+            release/mac/*.dmg
+            release/*.zip
+            release/latest-mac.yml
+            release/*.blockmap
+          if-no-files-found: warn
 
   deploy:
+    name: Deploy to goranked.gg (optional)
+    needs: [build-windows, build-mac]
+    if: success() && startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
-    needs: [build-mac, build-windows]
     steps:
-      - name: Check deploy config
-        id: check_deploy
-        run: |
-          if [ -n "${{ secrets.DEPLOY_HOST }}" ]; then
-            echo "deploy=true" >> $GITHUB_OUTPUT
-          else
-            echo "deploy=false" >> $GITHUB_OUTPUT
-            echo "Skipping deploy: DEPLOY_HOST not set. Add secrets to enable auto-deploy to goranked.gg"
-          fi
       - uses: actions/checkout@v4
-        if: steps.check_deploy.outputs.deploy == 'true'
-        with:
-          fetch-depth: 0
+
+      - name: Check deploy secrets
+        id: deploy
+        run: |
+          if [ -n "$DEPLOY_HOST" ]; then
+            echo "ok=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+            echo "Skip deploy: задайте secret DEPLOY_HOST (и SSH_PRIVATE_KEY, DEPLOY_USER)."
+          fi
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
 
       - name: Download Windows artifacts
-        if: steps.check_deploy.outputs.deploy == 'true'
+        if: steps.deploy.outputs.ok == 'true'
         uses: actions/download-artifact@v4
         with:
           name: windows-build
-          path: windows-artifact
+          path: _win
 
-      - name: Download Mac artifacts
-        if: steps.check_deploy.outputs.deploy == 'true'
+      - name: Download macOS artifacts
+        if: steps.deploy.outputs.ok == 'true'
         uses: actions/download-artifact@v4
         with:
           name: macos-build
-          path: macos-artifact
+          path: _mac
 
-      - name: Merge and prepare release
-        if: steps.check_deploy.outputs.deploy == 'true'
+      - name: Merge into release/
+        if: steps.deploy.outputs.ok == 'true'
         run: |
           mkdir -p release
-          # Windows: exe, blockmap, latest.yml (paths preserved in artifact)
-          cp windows-artifact/release/*.exe release/ 2>/dev/null || true
-          cp windows-artifact/release/*.blockmap release/ 2>/dev/null || true
-          cp windows-artifact/release/latest.yml release/ 2>/dev/null || true
-          # Mac: dmg, zip, latest-mac.yml, blockmap
-          cp macos-artifact/release/mac/*.dmg release/ 2>/dev/null || true
-          cp macos-artifact/release/*.zip release/ 2>/dev/null || true
-          cp macos-artifact/release/latest-mac.yml release/ 2>/dev/null || true
-          cp macos-artifact/release/*.blockmap release/ 2>/dev/null || true
-          echo "Release folder contents:"
+          shopt -s nullglob
+          for f in _win/release/*.exe _win/*.exe; do [ -f "$f" ] && cp "$f" release/; done
+          for f in _win/release/*.blockmap _win/*.blockmap; do [ -f "$f" ] && cp "$f" release/; done
+          for f in _win/release/latest.yml _win/latest.yml; do [ -f "$f" ] && cp "$f" release/; done
+          for f in _mac/release/mac/*.dmg _mac/mac/*.dmg; do [ -f "$f" ] && cp "$f" release/; done
+          for f in _mac/release/*.zip _mac/*.zip; do [ -f "$f" ] && cp "$f" release/; done
+          for f in _mac/release/latest-mac.yml _mac/latest-mac.yml; do [ -f "$f" ] && cp "$f" release/; done
+          for f in _mac/release/*.blockmap _mac/*.blockmap; do [ -f "$f" ] && cp "$f" release/; done
           ls -la release/
 
-      - name: Update releases.json
-        if: steps.check_deploy.outputs.deploy == 'true'
+      - name: Build local deploy folder (releases.json)
+        if: steps.deploy.outputs.ok == 'true'
+        env:
+          RELEASE_DEST: ${{ github.workspace }}/deploy-out
         run: |
           mkdir -p deploy-out
-          RELEASE_DEST=$(pwd)/deploy-out node scripts/deploy-release.js
+          node scripts/deploy-release.js
 
       - name: Setup SSH
-        if: steps.check_deploy.outputs.deploy == 'true'
+        if: steps.deploy.outputs.ok == 'true'
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
-          ssh-keyscan -H ${{ secrets.DEPLOY_HOST }} >> ~/.ssh/known_hosts 2>/dev/null || true
+          ssh-keyscan -H "${{ secrets.DEPLOY_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null || true
 
-      - name: Deploy to goranked.gg
-        if: steps.check_deploy.outputs.deploy == 'true'
+      - name: Rsync to server
+        if: steps.deploy.outputs.ok == 'true'
+        env:
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH || '/var/www/master/data/www/goranked.gg/public/chat-desk/releases' }}
         run: |
-          DEPLOY_PATH="${{ secrets.DEPLOY_PATH || '/var/www/master/data/www/goranked.gg/public/chat-desk/releases' }}"
-          rsync -avz -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
-            deploy-out/ ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:$DEPLOY_PATH/
-          echo "✅ Deployed to ${{ secrets.DEPLOY_HOST }}:$DEPLOY_PATH"
+          rsync -avz -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=accept-new" \
+            deploy-out/ "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:$DEPLOY_PATH/"
+          echo "Deployed to ${{ secrets.DEPLOY_HOST }}:$DEPLOY_PATH"

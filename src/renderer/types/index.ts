@@ -24,7 +24,7 @@ export interface Message {
   from_manager: boolean; // true if from manager, false if from client
   user_id: number;
   body: string; // API uses 'body' (required)
-  type?: 'text' | 'image' | 'file' | 'video' | 'audio';
+  type?: 'text' | 'image' | 'file' | 'video' | 'audio' | 'payment_url';
   seen: boolean;
   delivered: boolean;
   created_at: string;

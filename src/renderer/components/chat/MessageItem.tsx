@@ -35,7 +35,11 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, onUpdate, searchQuer
   const isClient = !message.from_manager;
   
   // Check if message can be edited (only own manager messages)
-  const canEdit = !isClient && currentUser && message.user_id === currentUser.id && message.type === 'text';
+  const canEdit =
+    !isClient &&
+    currentUser &&
+    message.user_id === currentUser.id &&
+    message.type === 'text';
   
   // Check if message was edited
   const isEdited = message.metadata?.edited === true;
@@ -140,6 +144,15 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, onUpdate, searchQuer
     const text = message.body || '';
     return highlightText(text, searchQuery);
   }, [message.body, searchQuery]);
+
+  const paymentUrl =
+    message.type === 'payment_url' && message.metadata && typeof message.metadata.payment_url === 'string'
+      ? message.metadata.payment_url.trim()
+      : '';
+  const paymentLabel =
+    message.metadata && typeof message.metadata.label === 'string' && message.metadata.label.trim()
+      ? message.metadata.label.trim()
+      : 'Оплатити';
 
   // Close context menu when clicking outside
   useEffect(() => {
@@ -349,17 +362,33 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, onUpdate, searchQuer
                   <IconPencil size={14} />
                 </button>
               )}
-              <div 
-                className="message-text"
-                onCopy={(e) => {
-                  // Allow default copy behavior
-                  e.stopPropagation();
-                }}
-                onPaste={(e) => {
-                  // Allow default paste behavior
-                  e.stopPropagation();
-                }}
-              >{highlightedText}</div>
+              {paymentUrl ? (
+                <div className="message-payment-block">
+                  {message.body && String(message.body).trim() ? (
+                    <div className="message-text message-payment-caption">{highlightedText}</div>
+                  ) : null}
+                  <a
+                    href={paymentUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="message-payment-btn"
+                  >
+                    {paymentLabel}
+                  </a>
+                </div>
+              ) : (
+                <div
+                  className="message-text"
+                  onCopy={(e) => {
+                    e.stopPropagation();
+                  }}
+                  onPaste={(e) => {
+                    e.stopPropagation();
+                  }}
+                >
+                  {highlightedText}
+                </div>
+              )}
               {message.files && message.files.length > 0 && (
                 <div className="message-attachments">
                   {message.files.map((file) => {
@@ -464,6 +493,7 @@ export default React.memo(MessageItem, (prevProps, nextProps) => {
   // Кастомная функция сравнения для оптимизации
   return (
     prevProps.message.id === nextProps.message.id &&
+    prevProps.message.type === nextProps.message.type &&
     prevProps.message.body === nextProps.message.body &&
     prevProps.message.pinned === nextProps.message.pinned &&
     prevProps.message.unread === nextProps.message.unread &&

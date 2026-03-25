@@ -145,6 +145,39 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId }) => {
     },
   });
 
+  const sendPaymentMutation = useMutation({
+    mutationFn: (payload: { url: string; label?: string; caption?: string }) =>
+      apiClient.sendPaymentLinkMessage(chatId, {
+        paymentUrl: payload.url,
+        caption: payload.caption,
+        label: payload.label,
+      }),
+    onSuccess: (responseData) => {
+      const message = responseData.data;
+      if (message && message.id) {
+        queryClient.setQueryData(['messages', chatId], (oldData: any) => {
+          const currentMessages = oldData?.data || oldData || [];
+          if (Array.isArray(currentMessages) && currentMessages.some((m: any) => m.id === message.id)) {
+            return oldData;
+          }
+          const newMessages = [...currentMessages, message];
+          if (oldData?.data) {
+            return { ...oldData, data: newMessages };
+          }
+          return newMessages;
+        });
+      }
+      setTimeout(() => {
+        refetch();
+        queryClient.invalidateQueries({ queryKey: ['chats'] });
+        queryClient.invalidateQueries({ queryKey: ['chat', chatId] });
+      }, 500);
+    },
+    onError: (error: any) => {
+      alert(`Помилка відправки посилання: ${error.response?.data?.message || error.message || 'Невідома помилка'}`);
+    },
+  });
+
   const handleSendMessage = (text: string, attachments: any[] = [], metadata?: any) => {
     console.log('📤 handleSendMessage called:', { text, attachments, textLength: text?.length || 0, metadata });
     
@@ -175,6 +208,10 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId }) => {
       metadata
     });
     sendMessageMutation.mutate({ body, file, metadata });
+  };
+
+  const handleSendPayment = (payload: { url: string; label?: string; caption?: string }) => {
+    sendPaymentMutation.mutate(payload);
   };
 
   useEffect(() => {
@@ -374,7 +411,8 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId }) => {
 
       <MessageInput
         onSend={handleSendMessage}
-        disabled={sendMessageMutation.isPending}
+        onSendPayment={handleSendPayment}
+        disabled={sendMessageMutation.isPending || sendPaymentMutation.isPending}
         chatId={chatId}
       />
 
