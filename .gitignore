@@ -1,12 +1,77 @@
+# Dependencies
 node_modules/
+
+# Build / packager output
 dist/
 release/
-release.zip
-*.zip
-*.log
-.DS_Store
-.env
-.env.example
-.env.local
-*.local
+out/
+build/
+*.tsbuildinfo
 
+# Archives (локальные сборки)
+*.zip
+release.zip
+
+# Environment — секреты; шаблон .env.example без значений коммитим
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# IDE / редакторы
+.idea/
+*.iml
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+*.sublime-project
+*.sublime-workspace
+
+# Тесты и покрытие
+coverage/
+.nyc_output/
+
+# Кэши инструментов
+.cache/
+.turbo/
+.parcel-cache/
+.eslintcache
+.rpt2_cache/
+
+# Локальные ключи и подпись (никогда не коммитить)
+*.pem
+*.p12
+*.jks
+*.keystore
+*.mobileprovision
+
+# Sentry / прочие CLI с токенами
+.sentryclirc
+
+# Служебные артефакты
+*.orig
+.temp/
+tmp/
+
+# Playwright (если появятся e2e)
+test-results/
+playwright-report/
+playwright/.cache/
