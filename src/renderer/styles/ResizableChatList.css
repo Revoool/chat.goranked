@@ -2,7 +2,8 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: 100%;
+  min-height: 0;
   background: var(--v2-bg-elevated);
   border-right: 1px solid var(--v2-divider);
   flex-shrink: 0;

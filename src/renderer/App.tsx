@@ -17,15 +17,6 @@ const App: React.FC = () => {
   }, [queryClient]);
 
   useEffect(() => {
-    if (platform.isMacOSElectron()) {
-      document.documentElement.classList.add('electron-macos');
-    }
-    return () => {
-      document.documentElement.classList.remove('electron-macos');
-    };
-  }, []);
-
-  useEffect(() => {
     const initAuth = async () => {
         try {
         const token = await platform.getToken();

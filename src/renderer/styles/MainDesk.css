@@ -1,6 +1,28 @@
+/* Корінь: колонка — зверху системна смуга під traffic lights (macOS), нижче app layout */
+.main-desk-root {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+  background: var(--v2-bg-page);
+}
+
+/* Повноширинний titlebar: нативні [●][●][●] малює ОС поверх лівої частини; зона drag без окремої колонки */
+.app-titlebar-macos {
+  flex-shrink: 0;
+  height: 38px;
+  min-height: 38px;
+  -webkit-app-region: drag;
+  user-select: none;
+  background: var(--v2-bg-rail);
+  border-bottom: 1px solid var(--v2-divider);
+  z-index: 100;
+}
+
 .main-desk {
   display: flex;
-  height: 100vh;
+  flex: 1;
+  min-height: 0;
   overflow: hidden;
   background: var(--v2-bg-page);
 }
@@ -9,6 +31,7 @@
   display: flex;
   flex: 1;
   min-width: 0;
+  min-height: 0;
   overflow: hidden;
   background: var(--v2-bg-page);
 }

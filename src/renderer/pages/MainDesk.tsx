@@ -17,6 +17,7 @@ import { useChatStore } from '../store/chatStore';
 import { apiClient } from '../api/client';
 import { Task, TasksSubdata } from '../types';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { isMacOSElectron } from '../utils/platform';
 import '../styles/MainDesk.css';
 
 const MainDesk: React.FC = () => {
@@ -92,9 +93,17 @@ const MainDesk: React.FC = () => {
   const isChatMenu = activeMenu === 'inbox' || activeMenu === 'order-chats' || activeMenu === 'product-chats';
 
   return (
-    <div className="main-desk">
-      <Sidebar user={user} onLogout={logout} />
-      <div className={`main-content ${isChatMenu && hasChatSelected && isMobile() ? 'chat-open' : ''}`}>
+    <div className="main-desk-root">
+      {isMacOSElectron() && (
+        <div
+          className="app-titlebar-macos"
+          role="presentation"
+          aria-hidden="true"
+        />
+      )}
+      <div className="main-desk">
+        <Sidebar user={user} onLogout={logout} />
+        <div className={`main-content ${isChatMenu && hasChatSelected && isMobile() ? 'chat-open' : ''}`}>
         {activeMenu === 'settings' ? (
           <Settings />
         ) : activeMenu === 'tasks' ? (
@@ -148,6 +157,7 @@ const MainDesk: React.FC = () => {
             </div>
           </>
         )}
+        </div>
       </div>
 
       {/* Task Dialog */}
