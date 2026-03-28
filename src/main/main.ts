@@ -2,6 +2,7 @@ import { app, BrowserWindow, ipcMain, nativeTheme, dialog, Menu, globalShortcut,
 import * as path from 'path';
 import * as fs from 'fs';
 import { autoUpdater, UpdateInfo, ProgressInfo } from 'electron-updater';
+import { CancellationToken } from 'builder-util-runtime';
 import * as https from 'https';
 
 const TOKEN_FILE = 'auth-token.enc';
@@ -617,7 +618,7 @@ ipcMain.handle('check-for-updates', async () => {
       
       autoUpdater.autoDownload = wasAutoDownload;
       
-      if (result && result.updateInfo) {
+      if (result?.isUpdateAvailable && result.updateInfo) {
         console.log('  - Update available:', result.updateInfo.version);
         
         let changelog = '';
@@ -739,31 +740,58 @@ ipcMain.handle('download-update', async () => {
   if (!app.isPackaged) {
     return { success: false, error: 'Updates are only available in production builds' };
   }
-  
+
+  const wasAutoDownload = autoUpdater.autoDownload;
+  autoUpdater.autoDownload = true;
   try {
-    console.log('📥 Starting update download...');
-    autoUpdater.autoDownload = true;
+    console.log('📥 Manual update download requested');
     const result = await autoUpdater.checkForUpdates();
-    
-    if (result && result.updateInfo) {
-      console.log('  - Download started for version:', result.updateInfo.version);
-      return { 
-        success: true, 
-        message: 'Завантаження оновлення розпочато',
-        updateInfo: result.updateInfo,
+
+    if (!result?.isUpdateAvailable) {
+      return {
+        success: false,
+        error:
+          'На сервері оновлень немає новішої версії за поточну. Часто це означає, що на goranked.gg/chat-desk/releases застарілий latest.yml (порівняйте з GitHub Releases) — потрібно викласти свіжі файли збірки.',
       };
     }
-    
-    return { 
-      success: false, 
-      error: 'Не вдалося розпочати завантаження',
+
+    if (result.downloadPromise) {
+      void result.downloadPromise.catch((e) => {
+        console.error('❌ Background download failed:', e);
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.webContents.send('update-error', {
+            message: (e as Error)?.message || String(e),
+            error: String(e),
+          });
+        }
+      });
+    } else {
+      const cancellationToken = new CancellationToken();
+      void autoUpdater.downloadUpdate(cancellationToken).catch((e) => {
+        console.error('❌ downloadUpdate failed:', e);
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.webContents.send('update-error', {
+            message: (e as Error)?.message || String(e),
+            error: String(e),
+          });
+        }
+      });
+    }
+
+    console.log('  - Download started for version:', result.updateInfo?.version);
+    return {
+      success: true,
+      message: 'Завантаження оновлення розпочато',
+      updateInfo: result.updateInfo,
     };
   } catch (error: any) {
     console.error('❌ Error starting download:', error);
-    return { 
-      success: false, 
+    return {
+      success: false,
       error: error?.message || String(error),
     };
+  } finally {
+    autoUpdater.autoDownload = wasAutoDownload;
   }
 });
 
