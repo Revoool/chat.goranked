@@ -11,9 +11,18 @@ interface MessageListProps {
   chatId: number | string;
   onUpdate?: () => void;
   searchQuery?: string;
+  translationViewMode?: 'original' | 'uk';
+  translationMap?: Record<number, string>;
 }
 
-const MessageList: React.FC<MessageListProps> = ({ messages, chatId, onUpdate, searchQuery = '' }) => {
+const MessageList: React.FC<MessageListProps> = ({
+  messages,
+  chatId,
+  onUpdate,
+  searchQuery = '',
+  translationViewMode = 'original',
+  translationMap,
+}) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messageListRef = useRef<HTMLDivElement>(null);
   const isInitialLoad = useRef(true);
@@ -84,6 +93,17 @@ const MessageList: React.FC<MessageListProps> = ({ messages, chatId, onUpdate, s
     return { pinnedMessages: pinned, regularMessages: regular };
   }, [messages]);
 
+  const resolveDisplay = (msg: Message) => {
+    if (translationViewMode !== 'uk' || !translationMap) {
+      return { displayBody: undefined as string | undefined, transitionKey: `${translationViewMode}-${msg.id}` };
+    }
+    const t = translationMap[msg.id];
+    if (t !== undefined && t !== '') {
+      return { displayBody: t, transitionKey: `${translationViewMode}-${msg.id}` };
+    }
+    return { displayBody: undefined, transitionKey: `${translationViewMode}-${msg.id}` };
+  };
+
   return (
     <div className="message-list" ref={messageListRef}>
       {pinnedMessages.length > 0 && (
@@ -95,15 +115,35 @@ const MessageList: React.FC<MessageListProps> = ({ messages, chatId, onUpdate, s
             </span>
           </div>
           <div className="pinned-messages-list">
-            {pinnedMessages.map((message) => (
-              <MessageItem key={message.id} message={message} onUpdate={onUpdate} searchQuery={searchQuery} />
-            ))}
+            {pinnedMessages.map((message) => {
+              const { displayBody, transitionKey } = resolveDisplay(message);
+              return (
+                <MessageItem
+                  key={message.id}
+                  message={message}
+                  onUpdate={onUpdate}
+                  searchQuery={searchQuery}
+                  displayBody={displayBody}
+                  contentTransitionKey={transitionKey}
+                />
+              );
+            })}
           </div>
         </div>
       )}
-      {regularMessages.map((message) => (
-        <MessageItem key={message.id} message={message} onUpdate={onUpdate} searchQuery={searchQuery} />
-      ))}
+      {regularMessages.map((message) => {
+        const { displayBody, transitionKey } = resolveDisplay(message);
+        return (
+          <MessageItem
+            key={message.id}
+            message={message}
+            onUpdate={onUpdate}
+            searchQuery={searchQuery}
+            displayBody={displayBody}
+            contentTransitionKey={transitionKey}
+          />
+        );
+      })}
       {typingInfo?.isTyping && (
         <TypingIndicator userName={typingInfo.userName} />
       )}

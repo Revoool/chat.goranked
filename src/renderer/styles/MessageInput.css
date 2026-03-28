@@ -432,3 +432,110 @@
   cursor: not-allowed;
 }
 
+.message-input-en-error {
+  margin: 0 var(--v2-space-4) var(--v2-space-2);
+  padding: 8px 12px;
+  font-size: 12px;
+  color: var(--error);
+  background: color-mix(in srgb, var(--error) 12%, transparent);
+  border-radius: 8px;
+  border: 1px solid color-mix(in srgb, var(--error) 35%, transparent);
+}
+
+.message-input-en-preview {
+  margin: 0 var(--v2-space-4) var(--v2-space-2);
+  padding: var(--v2-space-3);
+  border-radius: 10px;
+  border: 1px solid var(--v2-divider);
+  background: var(--v2-bg-elevated);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.message-input-en-preview-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+.message-input-en-preview-text {
+  margin: 0 0 10px 0;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--text-primary);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.message-input-en-preview-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.message-input-en-preview-btn {
+  padding: 7px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--v2-divider);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.message-input-en-preview-btn:hover {
+  border-color: var(--flame-orange);
+  color: var(--text-primary);
+}
+
+.message-input-en-preview-btn--primary {
+  border-color: rgba(255, 107, 53, 0.45);
+  background: rgba(255, 107, 53, 0.1);
+  color: var(--text-primary);
+}
+
+.message-input-translate-en-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+}
+
+.message-input-translate-en-btn:hover:not(:disabled) {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.06);
+  border-color: var(--v2-divider);
+}
+
+.message-input-translate-en-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.message-input-en-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--v2-divider);
+  border-top-color: var(--flame-orange);
+  border-radius: 50%;
+  animation: messageInputEnSpin 0.7s linear infinite;
+}
+
+@keyframes messageInputEnSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+

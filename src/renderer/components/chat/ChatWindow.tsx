@@ -17,8 +17,11 @@ import {
   IconFlag3,
   IconFlagOff,
   IconNotes,
-  IconArrowLeft
+  IconArrowLeft,
+  IconLanguage,
 } from '../../icons';
+import type { Message } from '../../types';
+import { useTranslationStore } from '../../store/translationStore';
 import MessageList from './MessageList';
 import MessageInput from './MessageInput';
 import AssignModal from './modals/AssignModal';
@@ -35,6 +38,9 @@ interface ChatWindowProps {
 }
 
 const ChatWindow: React.FC<ChatWindowProps> = ({ chatId }) => {
+  const [translateLoading, setTranslateLoading] = useState(false);
+  const [translateError, setTranslateError] = useState<string | null>(null);
+  const translateReqRef = useRef(false);
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [showTagsModal, setShowTagsModal] = useState(false);
@@ -61,6 +67,77 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId }) => {
     queryFn: () => apiClient.getMessages(chatId),
     enabled: !!chatId, // Only fetch if chatId exists
   });
+
+  const translationViewMode = useTranslationStore((s) => s.viewModeByChatId[chatId] ?? 'original');
+  const mergeTranslations = useTranslationStore((s) => s.mergeTranslations);
+  const setTranslationViewMode = useTranslationStore((s) => s.setViewMode);
+  const translations = useTranslationStore((s) => s.translations);
+
+  const translationMap = useMemo(() => {
+    const prefix = `${chatId}:`;
+    const m: Record<number, string> = {};
+    for (const [k, v] of Object.entries(translations)) {
+      if (k.startsWith(prefix)) {
+        m[Number(k.slice(prefix.length))] = v;
+      }
+    }
+    return m;
+  }, [translations, chatId]);
+
+  const hasAnyTranslation = Object.keys(translationMap).length > 0;
+
+  const rawMessages = messagesData?.data || messagesData || [];
+
+  const handleLoadTranslations = async () => {
+    if (translateReqRef.current || translateLoading) return;
+    const list: Message[] = Array.isArray(rawMessages) ? rawMessages : [];
+    const store = useTranslationStore.getState();
+    const idsNeeding: number[] = [];
+    for (const m of list) {
+      const t = m.type || 'text';
+      const body = m.body != null ? String(m.body).trim() : '';
+      if (!body) continue;
+      if (t !== 'text' && t !== 'payment_url') continue;
+      if (store.getTranslation(chatId, m.id) === undefined) {
+        idsNeeding.push(m.id);
+      }
+    }
+
+    translateReqRef.current = true;
+    setTranslateError(null);
+
+    if (idsNeeding.length === 0) {
+      setTranslationViewMode(chatId, 'uk');
+      translateReqRef.current = false;
+      return;
+    }
+
+    setTranslateLoading(true);
+    try {
+      const res = await apiClient.translateChatMessages(chatId, idsNeeding);
+      if (res?.success && res.data?.translations) {
+        const mapNum: Record<number, string> = {};
+        for (const [id, text] of Object.entries(res.data.translations)) {
+          mapNum[Number(id)] = String(text);
+        }
+        mergeTranslations(chatId, mapNum);
+        setTranslationViewMode(chatId, 'uk');
+      } else {
+        setTranslateError(res?.error || 'Не вдалося отримати переклад');
+      }
+    } catch (e: unknown) {
+      const err = e as { response?: { data?: { error?: string } }; message?: string };
+      const msg = err?.response?.data?.error || err?.message || 'Помилка перекладу';
+      setTranslateError(typeof msg === 'string' ? msg : 'Помилка перекладу');
+    } finally {
+      setTranslateLoading(false);
+      translateReqRef.current = false;
+    }
+  };
+
+  useEffect(() => {
+    setTranslateError(null);
+  }, [chatId]);
 
   console.log('💬 ChatWindow state:', {
     chatId,
@@ -364,6 +441,44 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId }) => {
         </div>
       </div>
 
+      <div className="chat-translate-bar" aria-label="Переклад діалогу">
+        <button
+          type="button"
+          className="chat-translate-load-btn"
+          onClick={handleLoadTranslations}
+          disabled={translateLoading}
+          title="Завантажити український переклад повідомлень (лише для цього чату)"
+        >
+          {translateLoading ? <span className="chat-translate-spinner" aria-hidden /> : <IconLanguage size={18} stroke={1.5} />}
+          <span className="chat-translate-load-label">Переклад UA</span>
+        </button>
+        {hasAnyTranslation && (
+          <div className="chat-translate-segmented" role="group" aria-label="Режим перегляду">
+            <button
+              type="button"
+              className={`chat-translate-segment-btn${translationViewMode === 'original' ? ' is-active' : ''}`}
+              aria-pressed={translationViewMode === 'original'}
+              onClick={() => setTranslationViewMode(chatId, 'original')}
+            >
+              Оригінал
+            </button>
+            <button
+              type="button"
+              className={`chat-translate-segment-btn${translationViewMode === 'uk' ? ' is-active' : ''}`}
+              aria-pressed={translationViewMode === 'uk'}
+              onClick={() => setTranslationViewMode(chatId, 'uk')}
+            >
+              Переклад
+            </button>
+          </div>
+        )}
+        {translateError && (
+          <span className="chat-translate-error" role="status">
+            {translateError}
+          </span>
+        )}
+      </div>
+
       {/* SLA Violation Warning */}
       {displayChat?.active_sla_violation && (
         <div className="sla-violation-banner">
@@ -406,12 +521,19 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId }) => {
         </div>
       )}
 
-      <MessageList 
-        messages={messagesData?.data || messagesData || []} 
-        chatId={chatId}
-        onUpdate={() => refetch()}
-        searchQuery={searchQuery}
-      />
+      <div className="chat-message-list-host">
+        {translateLoading && (
+          <div className="chat-translate-loading-overlay" aria-busy="true" aria-label="Завантаження перекладу" />
+        )}
+        <MessageList
+          messages={messagesData?.data || messagesData || []}
+          chatId={chatId}
+          onUpdate={() => refetch()}
+          searchQuery={searchQuery}
+          translationViewMode={translationViewMode}
+          translationMap={translationMap}
+        />
+      </div>
 
       <MessageInput
         onSend={handleSendMessage}

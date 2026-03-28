@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import QuickReplies from './QuickReplies';
 import AiSuggestions from './AiSuggestions';
 import EmojiPicker from '../common/EmojiPicker';
-import { IconMoodSmile } from '../../icons';
+import { IconMoodSmile, IconLanguage } from '../../icons';
 import { apiClient } from '../../api/client';
 import '../../styles/MessageInput.css';
 
@@ -27,6 +27,9 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSend, onSendPayment, disa
   const [paymentUrl, setPaymentUrl] = useState('');
   const [paymentLabel, setPaymentLabel] = useState('');
   const [paymentCaption, setPaymentCaption] = useState('');
+  const [draftEnPreview, setDraftEnPreview] = useState<string | null>(null);
+  const [draftEnLoading, setDraftEnLoading] = useState(false);
+  const [draftEnError, setDraftEnError] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const emojiButtonRef = useRef<HTMLButtonElement>(null);
   const quickRepliesButtonRef = useRef<HTMLButtonElement>(null);
@@ -83,6 +86,9 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSend, onSendPayment, disa
     setPaymentUrl('');
     setPaymentLabel('');
     setPaymentCaption('');
+    setDraftEnPreview(null);
+    setDraftEnError(null);
+    setDraftEnLoading(false);
   }, [chatId]);
 
   // Ensure focus when component mounts or chatId changes
@@ -221,6 +227,26 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSend, onSendPayment, disa
       textareaRef.current.focus();
       textareaRef.current.style.height = 'auto';
       textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+    }
+  };
+
+  const handleTranslateToEn = async () => {
+    if (!chatId || !text.trim() || draftEnLoading) return;
+    setDraftEnError(null);
+    setDraftEnLoading(true);
+    try {
+      const res = await apiClient.translateDraft(chatId, text.trim());
+      if (res?.success && res.data?.translated_text) {
+        setDraftEnPreview(res.data.translated_text);
+      } else {
+        setDraftEnError(res?.error || 'Не вдалося перекласти');
+      }
+    } catch (e: unknown) {
+      const err = e as { response?: { data?: { error?: string } }; message?: string };
+      const msg = err?.response?.data?.error || err?.message || 'Помилка перекладу';
+      setDraftEnError(typeof msg === 'string' ? msg : 'Помилка перекладу');
+    } finally {
+      setDraftEnLoading(false);
     }
   };
 
@@ -364,6 +390,45 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSend, onSendPayment, disa
           onClose={() => setShowAiSuggestions(false)}
         />
       )}
+      {draftEnError && (
+        <div className="message-input-en-error" role="alert">
+          {draftEnError}
+        </div>
+      )}
+      {draftEnPreview !== null && (
+        <div className="message-input-en-preview" role="region" aria-label="Переклад чернетки англійською">
+          <div className="message-input-en-preview-label">English (preview)</div>
+          <p className="message-input-en-preview-text">{draftEnPreview}</p>
+          <div className="message-input-en-preview-actions">
+            <button
+              type="button"
+              className="message-input-en-preview-btn message-input-en-preview-btn--primary"
+              onClick={() => {
+                setText(draftEnPreview);
+                setDraftEnPreview(null);
+                setDraftEnError(null);
+                if (textareaRef.current) {
+                  textareaRef.current.focus();
+                  textareaRef.current.style.height = 'auto';
+                  textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+                }
+              }}
+            >
+              Замінити чернетку
+            </button>
+            <button
+              type="button"
+              className="message-input-en-preview-btn"
+              onClick={() => {
+                setDraftEnPreview(null);
+                setDraftEnError(null);
+              }}
+            >
+              Скасувати
+            </button>
+          </div>
+        </div>
+      )}
       <form className="message-input" onSubmit={handleSubmit}>
         {attachments.length > 0 && (
         <div className="message-input-attachments">
@@ -461,6 +526,24 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSend, onSendPayment, disa
                   💳
                 </button>
               )}
+              <button
+                type="button"
+                className="message-input-translate-en-btn"
+                disabled={disabled || !text.trim() || draftEnLoading}
+                onClick={() => {
+                  setShowAiSuggestions(false);
+                  setShowEmojiPicker(false);
+                  setShowQuickReplies(false);
+                  handleTranslateToEn();
+                }}
+                title="Перекласти чернетку англійською"
+              >
+                {draftEnLoading ? (
+                  <span className="message-input-en-spinner" aria-hidden />
+                ) : (
+                  <IconLanguage size={18} stroke={1.5} />
+                )}
+              </button>
               <button
                 type="button"
                 className={`message-input-ai-btn ${showAiSuggestions ? 'active' : ''}`}

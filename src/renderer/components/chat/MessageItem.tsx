@@ -11,9 +11,19 @@ interface MessageItemProps {
   message: Message;
   onUpdate?: () => void;
   searchQuery?: string;
+  /** When set, bubble shows this text instead of message.body (e.g. Ukrainian translation). */
+  displayBody?: string;
+  /** Changes with view mode to replay a subtle transition animation. */
+  contentTransitionKey?: string;
 }
 
-const MessageItem: React.FC<MessageItemProps> = ({ message, onUpdate, searchQuery = '' }) => {
+const MessageItem: React.FC<MessageItemProps> = ({
+  message,
+  onUpdate,
+  searchQuery = '',
+  displayBody,
+  contentTransitionKey,
+}) => {
   const { user: currentUser } = useAuthStore();
   const queryClient = useQueryClient();
   const [showContextMenu, setShowContextMenu] = useState(false);
@@ -28,7 +38,7 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, onUpdate, searchQuer
   const messageRef = useRef<HTMLDivElement>(null);
 
   // API uses from_manager (boolean) - true if from manager, false if from client
-  const messageText = message.body || '';
+  const bodyForDisplay = displayBody !== undefined ? displayBody : (message.body || '');
   const messageType = message.type || 'text';
   
   // Determine if message is from client (from_manager === false)
@@ -141,9 +151,8 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, onUpdate, searchQuer
   // Мемоизируем результат подсветки, чтобы избежать лишних ререндеров
   // Используем message.body напрямую, чтобы избежать лишних пересчетов
   const highlightedText = React.useMemo(() => {
-    const text = message.body || '';
-    return highlightText(text, searchQuery);
-  }, [message.body, searchQuery]);
+    return highlightText(bodyForDisplay, searchQuery);
+  }, [bodyForDisplay, searchQuery]);
 
   const paymentUrl =
     message.type === 'payment_url' && message.metadata && typeof message.metadata.payment_url === 'string'
@@ -364,8 +373,13 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, onUpdate, searchQuer
               )}
               {paymentUrl ? (
                 <div className="message-payment-block">
-                  {message.body && String(message.body).trim() ? (
-                    <div className="message-text message-payment-caption">{highlightedText}</div>
+                  {bodyForDisplay.trim() ? (
+                    <div
+                      key={contentTransitionKey ? `pay-${contentTransitionKey}` : 'pay-caption'}
+                      className="message-text message-payment-caption message-text--translate-swap"
+                    >
+                      {highlightedText}
+                    </div>
                   ) : null}
                   <a
                     href={paymentUrl}
@@ -378,7 +392,8 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, onUpdate, searchQuer
                 </div>
               ) : (
                 <div
-                  className="message-text"
+                  key={contentTransitionKey ?? 'msg-text'}
+                  className="message-text message-text--translate-swap"
                   onCopy={(e) => {
                     e.stopPropagation();
                   }}
@@ -499,6 +514,8 @@ export default React.memo(MessageItem, (prevProps, nextProps) => {
     prevProps.message.unread === nextProps.message.unread &&
     prevProps.message.created_at === nextProps.message.created_at &&
     prevProps.searchQuery === nextProps.searchQuery &&
+    prevProps.displayBody === nextProps.displayBody &&
+    prevProps.contentTransitionKey === nextProps.contentTransitionKey &&
     JSON.stringify(prevProps.message.metadata) === JSON.stringify(nextProps.message.metadata) &&
     JSON.stringify(prevProps.message.files) === JSON.stringify(nextProps.message.files)
   );

@@ -53,5 +53,6 @@ export {
   IconAdjustments,
   IconCircle,
   IconSparkles,
+  IconLanguage,
 } from '@tabler/icons-react';
 

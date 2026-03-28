@@ -1038,6 +1038,28 @@ class ApiClient {
   }
 
   // Mark AI suggestion as used (for learning)
+  async translateChatMessages(
+    chatId: number,
+    messageIds: number[]
+  ): Promise<{ success: boolean; data?: { translations: Record<string, string> }; error?: string }> {
+    const response = await this.client.post(
+      `/api/manager-client-chats/${chatId}/ai/translate-messages`,
+      { message_ids: messageIds }
+    );
+    return response.data;
+  }
+
+  async translateDraft(
+    chatId: number,
+    text: string
+  ): Promise<{ success: boolean; data?: { translated_text: string }; error?: string }> {
+    const response = await this.client.post(
+      `/api/manager-client-chats/${chatId}/ai/translate-draft`,
+      { text }
+    );
+    return response.data;
+  }
+
   async markAiSuggestionUsed(chatId: number, suggestionId: string): Promise<any> {
     console.log("✅ Marking AI suggestion as used:", { chatId, suggestionId });
     try {
