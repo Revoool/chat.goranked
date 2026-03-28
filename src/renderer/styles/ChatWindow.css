@@ -641,11 +641,3 @@
   flex-direction: column;
 }
 
-.chat-translate-loading-overlay {
-  position: absolute;
-  inset: 0;
-  z-index: 3;
-  background: color-mix(in srgb, var(--v2-bg-panel) 55%, transparent);
-  backdrop-filter: blur(1px);
-  pointer-events: none;
-}

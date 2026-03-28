@@ -37,6 +37,9 @@ interface ChatWindowProps {
   chatId: number;
 }
 
+/** Останні N повідомлень у запит перекладу (вартість/затримка; API макс. 100 id). */
+const TRANSLATE_MESSAGE_WINDOW = 80;
+
 const ChatWindow: React.FC<ChatWindowProps> = ({ chatId }) => {
   const [translateLoading, setTranslateLoading] = useState(false);
   const [translateError, setTranslateError] = useState<string | null>(null);
@@ -91,9 +94,10 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId }) => {
   const handleLoadTranslations = async () => {
     if (translateReqRef.current || translateLoading) return;
     const list: Message[] = Array.isArray(rawMessages) ? rawMessages : [];
+    const recent = list.slice(-TRANSLATE_MESSAGE_WINDOW);
     const store = useTranslationStore.getState();
     const idsNeeding: number[] = [];
-    for (const m of list) {
+    for (const m of recent) {
       const t = m.type || 'text';
       const body = m.body != null ? String(m.body).trim() : '';
       if (!body) continue;
@@ -522,9 +526,6 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId }) => {
       )}
 
       <div className="chat-message-list-host">
-        {translateLoading && (
-          <div className="chat-translate-loading-overlay" aria-busy="true" aria-label="Завантаження перекладу" />
-        )}
         <MessageList
           messages={messagesData?.data || messagesData || []}
           chatId={chatId}
