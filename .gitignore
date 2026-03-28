@@ -66,6 +66,12 @@ coverage/
 # Sentry / прочие CLI с токенами
 .sentryclirc
 
+# Локальні інструкції / ТЗ (не в репозиторії)
+GITHUB-SECRETS.md
+RELEASE.md
+design.md
+tz.md
+
 # Служебные артефакты
 *.orig
 .temp/
