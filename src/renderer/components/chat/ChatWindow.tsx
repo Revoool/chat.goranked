@@ -44,6 +44,8 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId }) => {
   const [translateLoading, setTranslateLoading] = useState(false);
   const [translateError, setTranslateError] = useState<string | null>(null);
   const translateReqRef = useRef(false);
+  const chatIdRef = useRef(chatId);
+  const [sendError, setSendError] = useState<{ message: string; retryVars: any | null } | null>(null);
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [showTagsModal, setShowTagsModal] = useState(false);
@@ -116,9 +118,11 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId }) => {
       return;
     }
 
+    const requestChatId = chatId;
     setTranslateLoading(true);
     try {
-      const res = await apiClient.translateChatMessages(chatId, idsNeeding);
+      const res = await apiClient.translateChatMessages(requestChatId, idsNeeding);
+      if (chatIdRef.current !== requestChatId) { translateReqRef.current = false; return; }
       if (res?.success && res.data?.translations) {
         const mapNum: Record<number, string> = {};
         for (const [id, text] of Object.entries(res.data.translations)) {
@@ -140,35 +144,20 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId }) => {
   };
 
   useEffect(() => {
+    chatIdRef.current = chatId;
     setTranslateError(null);
+    setSendError(null);
+    translateReqRef.current = false;
   }, [chatId]);
-
-  console.log('💬 ChatWindow state:', {
-    chatId,
-    chatData,
-    chatLoading,
-    chatError,
-    messagesData,
-    messagesLoading,
-    messagesError,
-  });
 
   const sendMessageMutation = useMutation({
     mutationFn: ({ body, file, metadata }: { body: string; file?: File; metadata?: any }) => {
-      console.log('📤 Sending message:', { chatId, body, hasFile: !!file, metadata });
       return apiClient.sendMessage(chatId, body, file, undefined, metadata);
     },
     onSuccess: (responseData, variables) => {
-      console.log('✅ Message sent successfully, full response:', responseData);
       
-      // API returns { data: { message object }, chat: {...} }
-      // According to API_QUESTIONS.md, response format is:
-      // { data: { id, chat_id, from_manager, user_id, body, type, ... }, chat: {...} }
       const message = responseData.data;
       
-      console.log('📝 Extracted message from response:', message);
-      
-      // Если сообщение было отправлено с AI suggestion - сохраняем feedback
       if (variables.metadata?.from_ai_suggestion && variables.metadata?.ai_run_id && message?.id) {
         apiClient.saveAiFeedback(chatId, {
           ai_run_id: variables.metadata.ai_run_id,
@@ -177,52 +166,28 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId }) => {
             : null,
           final_sent_content: variables.body,
           final_sent_message_id: message.id,
-          was_edited: variables.metadata.was_edited || false, // Используем was_edited из метаданных
-        } as any).catch(() => {
-          // Игнорируем ошибки сохранения feedback
-        });
+          was_edited: variables.metadata.was_edited || false,
+        } as any).catch(() => {});
       }
       
-      // Optimistically add message to the list immediately
       if (message && message.id) {
-        console.log('📝 Adding message to cache optimistically:', message);
         queryClient.setQueryData(['messages', chatId], (oldData: any) => {
           // Handle both formats: { data: [...] } or just [...]
           const currentMessages = oldData?.data || oldData || [];
           
-          // Check if message already exists (avoid duplicates)
-          if (Array.isArray(currentMessages) && currentMessages.some((m: any) => m.id === message.id)) {
-            console.log('⚠️ Message already in cache, skipping');
-            return oldData;
-          }
+          if (Array.isArray(currentMessages) && currentMessages.some((m: any) => m.id === message.id)) return oldData;
           
-          // Add new message to the end
           const newMessages = [...currentMessages, message];
-          console.log('📝 Updated messages count:', newMessages.length);
-          
-          // Return in the same format as received
-          if (oldData?.data) {
-            return { ...oldData, data: newMessages };
-          }
-          return newMessages;
+          return oldData?.data ? { ...oldData, data: newMessages } : newMessages;
         });
-      } else {
-        console.warn('⚠️ No message data in response, will refetch');
       }
       
-      // Refetch to ensure consistency (in case WebSocket doesn't fire immediately)
-      setTimeout(() => {
-        refetch();
-        queryClient.invalidateQueries({ queryKey: ['chats'] });
-        queryClient.invalidateQueries({ queryKey: ['chat', chatId] });
-      }, 500);
+      setSendError(null);
+      queryClient.invalidateQueries({ queryKey: ['chats'] });
     },
-    onError: (error: any) => {
-      console.error('❌ Error sending message:', error);
-      console.error('❌ Error response:', error.response);
-      console.error('❌ Error status:', error.response?.status);
-      console.error('❌ Error data:', error.response?.data);
-      alert(`Помилка відправки повідомлення: ${error.response?.data?.message || error.message || 'Невідома помилка'}`);
+    onError: (error: any, variables) => {
+      const msg = error.response?.data?.message || error.message || 'Невідома помилка';
+      setSendError({ message: msg, retryVars: error.response?.status !== 401 ? variables : null });
     },
   });
 
@@ -248,14 +213,10 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId }) => {
           return newMessages;
         });
       }
-      setTimeout(() => {
-        refetch();
-        queryClient.invalidateQueries({ queryKey: ['chats'] });
-        queryClient.invalidateQueries({ queryKey: ['chat', chatId] });
-      }, 500);
+      queryClient.invalidateQueries({ queryKey: ['chats'] });
     },
     onError: (error: any) => {
-      alert(`Помилка відправки посилання: ${error.response?.data?.message || error.message || 'Невідома помилка'}`);
+      setSendError({ message: error.response?.data?.message || error.message || 'Невідома помилка', retryVars: null });
     },
   });
 
@@ -536,6 +497,20 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ chatId }) => {
         />
       </div>
 
+      {sendError && (
+        <div className="send-error-bar">
+          <span className="send-error-bar__text">Помилка: {sendError.message}</span>
+          {sendError.retryVars && (
+            <button
+              className="send-error-bar__retry"
+              onClick={() => { setSendError(null); sendMessageMutation.mutate(sendError.retryVars); }}
+            >
+              Повторити
+            </button>
+          )}
+          <button className="send-error-bar__close" onClick={() => setSendError(null)}>✕</button>
+        </div>
+      )}
       <MessageInput
         onSend={handleSendMessage}
         onSendPayment={handleSendPayment}

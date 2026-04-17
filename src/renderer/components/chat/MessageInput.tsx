@@ -50,7 +50,7 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSend, onSendPayment, disa
       if (newKey !== sendMessageKey) {
         setSendMessageKey(newKey);
       }
-    }, 500);
+    }, 5000);
     
     return () => {
       window.removeEventListener('storage', handleStorageChange);

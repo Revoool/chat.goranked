@@ -34,8 +34,10 @@ const ChatList: React.FC = () => {
     };
     
     updateHeight();
-    window.addEventListener('resize', updateHeight);
-    return () => window.removeEventListener('resize', updateHeight);
+    let resizeTimer: ReturnType<typeof setTimeout>;
+    const debouncedUpdate = () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(updateHeight, 100); };
+    window.addEventListener('resize', debouncedUpdate);
+    return () => { window.removeEventListener('resize', debouncedUpdate); clearTimeout(resizeTimer); };
   }, []);
 
   // Debounce поискового запроса (500ms задержка) - только для подсветки в сообщениях

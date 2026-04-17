@@ -19,6 +19,7 @@ import { Task, TasksSubdata } from '../types';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { isMacOSElectron } from '../utils/platform';
 import '../styles/MainDesk.css';
+import ConnectionStatus from '../components/common/ConnectionStatus';
 
 const MainDesk: React.FC = () => {
   const { user, logout } = useAuthStore();
@@ -94,6 +95,7 @@ const MainDesk: React.FC = () => {
 
   return (
     <div className="main-desk-root">
+      <ConnectionStatus />
       {isMacOSElectron() && (
         <div
           className="app-titlebar-macos"

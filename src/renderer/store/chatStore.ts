@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { Chat, ChatFilters } from '../types';
 
 export type MenuItem = 'inbox' | 'assigned' | 'closed' | 'settings' | 'tasks' | 'order-chats' | 'product-chats';
+export type ConnectionStatus = 'connected' | 'reconnecting' | 'disconnected';
 
 interface TypingInfo {
   isTyping: boolean;
@@ -11,20 +12,21 @@ interface TypingInfo {
 
 interface ChatState {
   selectedChatId: number | null;
-  selectedOrderChatId: number | null; // ID заказа для order chats
-  selectedProductChatId: string | number | null; // ID чата по вопросам к товарам (формат "productId_buyerId" или число)
+  selectedOrderChatId: number | null;
+  selectedProductChatId: string | number | null;
   filters: ChatFilters;
   chats: Chat[];
   activeMenu: MenuItem;
   isClientCardOpen: boolean;
-  typingIndicators: Record<number | string, TypingInfo>; // chatId -> typing info (supports both number and string)
-  searchQuery: string; // Текущий поисковый запрос для подсветки
+  typingIndicators: Record<number | string, TypingInfo>;
+  searchQuery: string;
+  connectionStatus: ConnectionStatus;
   setSelectedChat: (chatId: number | null) => void;
-  setSelectedOrderChat: (orderId: number | null) => void; // Выбрать чат заказа
-  setSelectedProductChat: (orderId: number | null) => void; // Выбрать чат заказа маркетплейса
+  setSelectedOrderChat: (orderId: number | null) => void;
+  setSelectedProductChat: (orderId: number | null) => void;
   setFilters: (filters: Partial<ChatFilters>) => void;
   setChats: (chats: Chat[]) => void;
-  appendChats: (chats: Chat[]) => void; // Добавить чаты к существующим (для пагинации)
+  appendChats: (chats: Chat[]) => void;
   updateChat: (chatId: number, updates: Partial<Chat>) => void;
   addChat: (chat: Chat) => void;
   setActiveMenu: (menu: MenuItem) => void;
@@ -32,6 +34,7 @@ interface ChatState {
   setClientCardOpen: (isOpen: boolean) => void;
   setTypingIndicator: (chatId: number | string, typingInfo: TypingInfo | null) => void;
   setSearchQuery: (query: string) => void;
+  setConnectionStatus: (status: ConnectionStatus) => void;
 }
 
 export const useChatStore = create<ChatState>((set) => ({
@@ -44,40 +47,31 @@ export const useChatStore = create<ChatState>((set) => ({
   isClientCardOpen: false,
   typingIndicators: {},
   searchQuery: '',
-  setSelectedChat: (chatId) => set({ selectedChatId: chatId, selectedOrderChatId: null, selectedProductChatId: null, isClientCardOpen: false }), // Close card when switching chats
-  setSelectedOrderChat: (orderId) => set({ selectedOrderChatId: orderId, selectedChatId: null, selectedProductChatId: null, isClientCardOpen: false }), // Close card when switching order chats
-  setSelectedProductChat: (chatId) => set({ selectedProductChatId: chatId, selectedChatId: null, selectedOrderChatId: null, isClientCardOpen: false }), // Close card when switching product inquiry chats
+  connectionStatus: 'disconnected',
+  setSelectedChat: (chatId) => set({ selectedChatId: chatId, selectedOrderChatId: null, selectedProductChatId: null, isClientCardOpen: false }),
+  setSelectedOrderChat: (orderId) => set({ selectedOrderChatId: orderId, selectedChatId: null, selectedProductChatId: null, isClientCardOpen: false }),
+  setSelectedProductChat: (chatId) => set({ selectedProductChatId: chatId, selectedChatId: null, selectedOrderChatId: null, isClientCardOpen: false }),
   setFilters: (filters) => set((state) => ({ filters: { ...state.filters, ...filters } })),
   setSearchQuery: (query) => set({ searchQuery: query }),
+  setConnectionStatus: (status) => set({ connectionStatus: status }),
   setChats: (chats) => {
-    // Ensure chats is always an array
     const safeChats = Array.isArray(chats) ? chats : [];
-    console.log('💾 Setting chats in store:', safeChats.length, 'chats');
-    console.log('💾 Chats data:', safeChats);
     set({ chats: safeChats });
   },
   appendChats: (newChats) => {
-    // Добавляем новые чаты к существующим, избегая дубликатов
     const safeNewChats = Array.isArray(newChats) ? newChats : [];
     set((state) => {
       const existingIds = new Set(state.chats.map((chat) => chat.id));
       const uniqueNewChats = safeNewChats.filter((chat) => !existingIds.has(chat.id));
-      const allChats = [...state.chats, ...uniqueNewChats];
-      console.log('💾 Appending chats to store:', uniqueNewChats.length, 'new chats, total:', allChats.length);
-      return { chats: allChats };
+      return { chats: [...state.chats, ...uniqueNewChats] };
     });
   },
   updateChat: (chatId, updates) =>
     set((state) => ({
       chats: state.chats.map((chat) => {
-        if (chat.id === chatId) {
-          // Deep merge for metadata to preserve existing fields
-          if (updates.metadata && chat.metadata) {
-            return { ...chat, ...updates, metadata: { ...chat.metadata, ...updates.metadata } };
-          }
-          return { ...chat, ...updates };
-        }
-        return chat;
+        if (chat.id !== chatId) return chat;
+        if (updates.metadata && chat.metadata) return { ...chat, ...updates, metadata: { ...chat.metadata, ...updates.metadata } };
+        return { ...chat, ...updates };
       }),
     })),
   addChat: (chat) =>
@@ -93,12 +87,6 @@ export const useChatStore = create<ChatState>((set) => ({
         const { [chatId]: _, ...rest } = state.typingIndicators;
         return { typingIndicators: rest };
       }
-      return {
-        typingIndicators: {
-          ...state.typingIndicators,
-          [chatId]: typingInfo,
-        },
-      };
+      return { typingIndicators: { ...state.typingIndicators, [chatId]: typingInfo } };
     }),
 }));
-
