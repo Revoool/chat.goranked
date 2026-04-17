@@ -66,6 +66,21 @@ const App: React.FC = () => {
     };
   }, [token, user]);
 
+  useEffect(() => {
+    if (!token || !user) return;
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        wsClient.reconnectIfNeeded(token);
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [token, user]);
+
   // Listen for update events from main process
   useEffect(() => {
     if (!window.electronAPI) return;

@@ -45,11 +45,12 @@ type QueryClient = {
 class WebSocketClient {
   private ws: WebSocket | null = null;
   private reconnectAttempts = 0;
-  private maxReconnectAttempts = 5;
+  private maxReconnectAttempts = 10;
   private reconnectDelay = 1000;
   private isConnecting = false;
   private queryClient: QueryClient | null = null;
   private currentToken: string | null = null;
+  private pingInterval: ReturnType<typeof setInterval> | null = null;
 
   setQueryClient(queryClient: QueryClient) {
     this.queryClient = queryClient;
@@ -90,6 +91,7 @@ class WebSocketClient {
         console.log('WebSocket connected to Reverb');
         this.reconnectAttempts = 0;
         this.isConnecting = false;
+        this.startPing();
       };
 
       this.ws.onmessage = (event) => {
@@ -114,7 +116,6 @@ class WebSocketClient {
       };
 
       this.ws.onclose = (event) => {
-        // Only log if it wasn't a normal closure
         if (event.code !== 1000 && event.code !== 1001) {
           console.log('WebSocket closed:', {
             code: event.code,
@@ -123,13 +124,12 @@ class WebSocketClient {
           });
         }
         this.isConnecting = false;
-        
-        // Only attempt reconnect if it wasn't a manual disconnect
-        // and we haven't exceeded max attempts
+        this.stopPing();
+
         if (this.reconnectAttempts < this.maxReconnectAttempts) {
           this.attemptReconnect(token);
-        } else if (this.reconnectAttempts === this.maxReconnectAttempts) {
-          console.error('Max WebSocket reconnection attempts reached. Please refresh the page.');
+        } else {
+          console.error('Max WebSocket reconnection attempts reached. Will retry on next visibility.');
         }
       };
     } catch (error) {
@@ -177,12 +177,17 @@ class WebSocketClient {
     // Handle Pusher connection events
     if (event === 'pusher:connection_established') {
       console.log('Pusher connection established');
-      // Subscribe to channels after connection
       this.subscribeToChannels();
       return;
     }
 
-    // Handle Pusher subscription success
+    if (event === 'pusher:ping') {
+      if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+        this.ws.send(JSON.stringify({ event: 'pusher:pong', data: {} }));
+      }
+      return;
+    }
+
     if (event === 'pusher:subscription_succeeded') {
       console.log('Subscribed to channel:', channel);
       return;
@@ -441,7 +446,34 @@ class WebSocketClient {
     }
   }
 
+  reconnectIfNeeded(token: string) {
+    if (!token) return;
+    if (this.isConnecting) return;
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) return;
+
+    console.log('WebSocket reconnect triggered (visibility restored)');
+    this.reconnectAttempts = 0;
+    this.connect(token);
+  }
+
+  private startPing() {
+    this.stopPing();
+    this.pingInterval = setInterval(() => {
+      if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+        this.ws.send(JSON.stringify({ event: 'pusher:ping', data: {} }));
+      }
+    }, 30000);
+  }
+
+  private stopPing() {
+    if (this.pingInterval !== null) {
+      clearInterval(this.pingInterval);
+      this.pingInterval = null;
+    }
+  }
+
   disconnect() {
+    this.stopPing();
     if (this.ws) {
       this.ws.close();
       this.ws = null;
